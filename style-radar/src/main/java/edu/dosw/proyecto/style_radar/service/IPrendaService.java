@@ -1,6 +1,10 @@
 package edu.dosw.proyecto.style_radar.service;
 
-public interface IPrendaService {
+import java.util.List;
 
+import edu.dosw.proyecto.style_radar.model.domain.Prenda;
+
+public interface IPrendaService {
+    List<Prenda> obtenerPrendas();
     
 }
