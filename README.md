@@ -1,4 +1,25 @@
 # **StyleRadar**
+StyleRadar es una plataforma web que conecta compradores con almacenes de moda locales. Los almacenes publican su inventario (fotos, tallas y disponibilidad) y el usuario puede buscar prendas, consultar tiendas cercanas y probarlas virtualmente con IA. También permite publicar ropa usada para vender o donar a una fundación aliada.
+StyleRadar no es un marketplace: es el puente entre la intención de compra digital y la tienda física.
+
+### Cómo levantar el proyecto localmente
+
+1. Descarga o clona el repositorio con el comando `git clone https://github.com/CatrachoINXS/StyleRadar-Backend.git` 
+2. Dirigete al directorio donde clonaste el repositorio e ingresa a la carpeta del proyecto `(.../StyleRadar-Backend/style-radar)` y en la terminal ejecuta `mvn clean compile` para compilar el proyecto.
+3. Ingresa el comando `mvn spring-boot:run` para ejecutar el proyecto.
+4. Una vez iniciado, estará disponible en el puerto configurado. 
+
+## Diagrama de Contexto
+
+![](style-radar/docs/uml/diagrama-contexto-style-radar.jpeg)
+
+## Diagrama de Componentes General
+
+![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
+
+## Diagrama de Componentes Especifico
+
+![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
 
 ## Diagrama de Clases
 En el siguiente diagrama de clases se pueden observar los objetos del dominio así como sus interacciones.
