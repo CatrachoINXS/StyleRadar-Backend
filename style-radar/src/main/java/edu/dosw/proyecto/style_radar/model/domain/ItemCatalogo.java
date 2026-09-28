@@ -14,10 +14,26 @@ public class ItemCatalogo {
 
     private Long id;
     private Double precio;
-    private byte[] imagen;
-    private Integer stock;
     private EstadoItem estado;
-    private List<Talla> tallasDisponibles = new ArrayList<>();
     private Prenda prenda;
     private String almacenNit;
+    private List<InventarioTalla> inventario = new ArrayList<>();
+
+    public Integer getStock() {
+        return inventario == null ? 0 : inventario.stream()
+                .map(InventarioTalla::getUnidades)
+                .filter(java.util.Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    public List<Talla> getTallasDisponibles() {
+        if (inventario == null) {
+            return List.of();
+        }
+        return inventario.stream()
+                .filter(item -> item.getUnidades() != null && item.getUnidades() > 0)
+                .map(InventarioTalla::getTalla)
+                .toList();
+    }
 }

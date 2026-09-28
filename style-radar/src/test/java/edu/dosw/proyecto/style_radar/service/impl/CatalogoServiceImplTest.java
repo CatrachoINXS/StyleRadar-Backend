@@ -135,7 +135,7 @@ class CatalogoServiceImplTest {
         assertThat(itemCaptor.getValue().getStock()).isZero();
         assertThat(itemCaptor.getValue().getEstado()).isEqualTo(EstadoItem.AGOTADA);
         assertThat(itemCaptor.getValue().getTallasDisponibles()).isEmpty();
-        assertThat(itemCaptor.getValue().getImagen()).isNull();
+        assertThat(itemCaptor.getValue().getInventario()).isEmpty();
         verify(prendaRepository, times(1)).save(prendaEntity);
         verify(itemCatalogoRepository, times(1)).save(itemSinGuardar);
     }
@@ -178,7 +178,7 @@ class CatalogoServiceImplTest {
         assertThat(cambiosEntity.getId()).isEqualTo(5L);
         assertThat(item.getPrecio()).isEqualTo(125000.0);
         assertThat(item.getPrenda()).isSameAs(cambiosEntity);
-        assertThat(item.getStock()).isZero();
+        assertThat(item.getInventario()).isEmpty();
         assertThat(item.getEstado()).isEqualTo(EstadoItem.AGOTADA);
         verify(prendaRepository).save(cambiosEntity);
         verify(itemCatalogoRepository).save(item);
@@ -242,12 +242,12 @@ class CatalogoServiceImplTest {
     }
 
     private ItemCatalogoEntity itemEntity(Long id) {
-        return new ItemCatalogoEntity(id, 89000.0, null, 0, EstadoItem.AGOTADA, new ArrayList<>(),
-                almacenEntity(), prendaEntity(5L));
+        return new ItemCatalogoEntity(id, 89000.0, EstadoItem.AGOTADA,
+                almacenEntity(), prendaEntity(5L), new ArrayList<>(), new ArrayList<>());
     }
 
     private ItemCatalogo itemDomain(Long id) {
-        return new ItemCatalogo(id, 89000.0, null, 0, EstadoItem.AGOTADA, new ArrayList<>(),
-                prendaDomain(5L), NIT);
+        return new ItemCatalogo(id, 89000.0, EstadoItem.AGOTADA,
+                prendaDomain(5L), NIT, new ArrayList<>());
     }
 }

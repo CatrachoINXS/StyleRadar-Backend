@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
-import edu.dosw.proyecto.style_radar.model.domain.Talla;
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,6 +14,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,19 +35,8 @@ public class ItemCatalogoEntity {
 
     private Double precio;
 
-    @Column(columnDefinition = "bytea")
-    private byte[] imagen;
-
-    private Integer stock;
-
     @Enumerated(EnumType.STRING)
     private EstadoItem estado;
-
-    @ElementCollection
-    @CollectionTable(name = "item_catalogo_tallas", joinColumns = @JoinColumn(name = "item_catalogo_id"))
-    @Column(name = "talla")
-    @Enumerated(EnumType.STRING)
-    private List<Talla> tallasDisponibles = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_nit", nullable = false)
@@ -58,4 +45,10 @@ public class ItemCatalogoEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "prenda_id", nullable = false)
     private PrendaEntity prenda;
+
+    @OneToMany(mappedBy = "itemCatalogo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<InventarioTallaEntity> inventario = new ArrayList<>();
+
+    @OneToMany(mappedBy = "itemCatalogo", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ImagenCatalogoEntity> imagenes = new ArrayList<>();
 }

@@ -6,9 +6,12 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import edu.dosw.proyecto.style_radar.model.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,6 +57,20 @@ public class GlobalExceptionHandler {
                 "La solicitud contiene datos inválidos",
                 request.getRequestURI(),
                 validationErrors);
+    }
+
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class,
+            MissingServletRequestPartException.class
+    })
+    public ResponseEntity<ErrorResponseDTO> handleInvalidHttpRequest(
+            Exception exception, HttpServletRequest request) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "La solicitud contiene parámetros inválidos",
+                request.getRequestURI(),
+                Map.of());
     }
 
     @ExceptionHandler(Exception.class)

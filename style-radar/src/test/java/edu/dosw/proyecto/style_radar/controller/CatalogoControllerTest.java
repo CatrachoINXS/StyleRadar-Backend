@@ -205,7 +205,7 @@ class CatalogoControllerTest {
     }
 
     private ItemCatalogo item() {
-        return new ItemCatalogo(10L, 89000.0, null, 0, EstadoItem.AGOTADA, new ArrayList<>(), prenda(), NIT);
+        return new ItemCatalogo(10L, 89000.0, EstadoItem.AGOTADA, prenda(), NIT, new ArrayList<>());
     }
 
     private CatalogoItemResponseDTO response() {

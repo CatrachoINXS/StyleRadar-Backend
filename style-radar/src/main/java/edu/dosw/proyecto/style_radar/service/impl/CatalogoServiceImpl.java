@@ -56,12 +56,10 @@ public class CatalogoServiceImpl implements ICatalogoService {
         ItemCatalogo nuevoItem = new ItemCatalogo(
                 null,
                 precio,
-                null,
-                0,
                 EstadoItem.AGOTADA,
-                new ArrayList<>(),
                 prendaEntityMapper.toDomain(prendaGuardada),
-                nit);
+                nit,
+                new ArrayList<>());
         ItemCatalogoEntity itemEntity = itemCatalogoEntityMapper.toEntity(nuevoItem);
         itemEntity.setAlmacen(almacen);
         itemEntity.setPrenda(prendaGuardada);

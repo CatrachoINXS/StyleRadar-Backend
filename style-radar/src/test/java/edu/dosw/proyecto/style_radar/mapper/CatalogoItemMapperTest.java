@@ -10,6 +10,7 @@ import org.mapstruct.factory.Mappers;
 import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.ItemCatalogo;
+import edu.dosw.proyecto.style_radar.model.domain.InventarioTalla;
 import edu.dosw.proyecto.style_radar.model.domain.Prenda;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
@@ -50,8 +51,8 @@ class CatalogoItemMapperTest {
         // Arrange
         Prenda prenda = new Prenda(5L, "Camiseta", "Camiseta de algodón", TipoPrenda.SUPERIOR,
                 "StyleRadar", "Negro", Estilo.CASUAL);
-        ItemCatalogo item = new ItemCatalogo(10L, 89000.0, null, 0, EstadoItem.AGOTADA,
-                List.of(Talla.M), prenda, "900123456");
+        ItemCatalogo item = new ItemCatalogo(10L, 89000.0, EstadoItem.DISPONIBLE,
+                prenda, "900123456", List.of(new InventarioTalla(Talla.S, 0), new InventarioTalla(Talla.M, 4)));
 
         // Act
         CatalogoItemResponseDTO result = mapper.toResponse(item);
@@ -62,8 +63,8 @@ class CatalogoItemMapperTest {
         assertThat(result.getAlmacenNit()).isEqualTo("900123456");
         assertThat(result.getNombre()).isEqualTo("Camiseta");
         assertThat(result.getPrecio()).isEqualTo(89000.0);
-        assertThat(result.getStock()).isZero();
-        assertThat(result.getEstado()).isEqualTo(EstadoItem.AGOTADA);
+        assertThat(result.getStock()).isEqualTo(4);
+        assertThat(result.getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
         assertThat(result.getTallasDisponibles()).containsExactly(Talla.M);
     }
 }
