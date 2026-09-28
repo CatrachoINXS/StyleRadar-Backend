@@ -18,4 +18,6 @@ public class ItemCatalogo {
     private Integer stock;
     private EstadoItem estado;
     private List<Talla> tallasDisponibles = new ArrayList<>();
+    private Prenda prenda;
+    private String almacenNit;
 }
