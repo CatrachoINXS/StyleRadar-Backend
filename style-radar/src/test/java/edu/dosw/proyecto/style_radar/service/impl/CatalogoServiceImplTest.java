@@ -8,14 +8,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,20 +27,25 @@ import edu.dosw.proyecto.style_radar.mapper.ItemCatalogoEntityMapper;
 import edu.dosw.proyecto.style_radar.mapper.PrendaEntityMapper;
 import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.InventarioTalla;
 import edu.dosw.proyecto.style_radar.model.domain.ItemCatalogo;
 import edu.dosw.proyecto.style_radar.model.domain.Prenda;
+import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.model.entity.AlmacenEntity;
+import edu.dosw.proyecto.style_radar.model.entity.InventarioTallaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.model.entity.PrendaEntity;
 import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.PrendaRepository;
+import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogoServiceImplTest {
 
     private static final String NIT = "900123456";
+    private static final Instant AHORA = Instant.parse("2026-09-08T10:00:00Z");
 
     @Mock
     private AlmacenRepository almacenRepository;
@@ -54,14 +62,26 @@ class CatalogoServiceImplTest {
     @Mock
     private ItemCatalogoEntityMapper itemCatalogoEntityMapper;
 
-    @InjectMocks
     private CatalogoServiceImpl catalogoService;
+
+    @BeforeEach
+    void setUp() {
+        Clock clock = Clock.fixed(AHORA, ZoneOffset.UTC);
+        catalogoService = new CatalogoServiceImpl(
+                almacenRepository,
+                prendaRepository,
+                itemCatalogoRepository,
+                prendaEntityMapper,
+                itemCatalogoEntityMapper,
+                new EstadoItemCalculator(clock),
+                clock);
+    }
 
     @Test
     void obtenerCatalogoShouldReturnItemsWhenStoreExists() {
         // Arrange
         ItemCatalogoEntity entity = itemEntity(10L);
-        ItemCatalogo domain = itemDomain(10L);
+        ItemCatalogo domain = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
         when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
@@ -71,8 +91,68 @@ class CatalogoServiceImplTest {
 
         // Assert
         assertThat(result).containsExactly(domain);
+        assertThat(result.getFirst().getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
         verify(itemCatalogoRepository).findByAlmacen_Nit(NIT);
         verify(itemCatalogoEntityMapper).toDomain(entity);
+    }
+
+    @Test
+    void obtenerCatalogoShouldReturnNewArrival() {
+        ItemCatalogoEntity entity = itemEntity(11L);
+        ItemCatalogo domain = itemDomain(11L, AHORA, 4);
+        when(almacenRepository.existsById(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
+
+        List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
+
+        assertThat(result).containsExactly(domain);
+        assertThat(result.getFirst().getEstado()).isEqualTo(EstadoItem.NUEVA_PRENDA);
+    }
+
+    @Test
+    void obtenerCatalogoShouldReturnLastUnits() {
+        ItemCatalogoEntity entity = itemEntity(12L);
+        ItemCatalogo domain = itemDomain(12L, AHORA, 3);
+        when(almacenRepository.existsById(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
+
+        List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
+
+        assertThat(result).containsExactly(domain);
+        assertThat(result.getFirst().getEstado()).isEqualTo(EstadoItem.ULTIMAS_UNIDADES);
+    }
+
+    @Test
+    void obtenerCatalogoShouldHideExhaustedItemFromMixedCatalog() {
+        ItemCatalogoEntity disponibleEntity = itemEntity(10L);
+        ItemCatalogoEntity agotadaEntity = itemEntity(13L);
+        ItemCatalogo disponible = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
+        ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
+        when(almacenRepository.existsById(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findByAlmacen_Nit(NIT))
+                .thenReturn(List.of(disponibleEntity, agotadaEntity));
+        when(itemCatalogoEntityMapper.toDomain(disponibleEntity)).thenReturn(disponible);
+        when(itemCatalogoEntityMapper.toDomain(agotadaEntity)).thenReturn(agotada);
+
+        List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
+
+        assertThat(result).containsExactly(disponible);
+        assertThat(result).doesNotContain(agotada);
+    }
+
+    @Test
+    void obtenerCatalogoShouldReturnEmptyListWhenAllItemsAreExhausted() {
+        ItemCatalogoEntity entity = itemEntity(13L);
+        ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
+        when(almacenRepository.existsById(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(agotada);
+
+        List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
+
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -134,6 +214,7 @@ class CatalogoServiceImplTest {
         verify(itemCatalogoEntityMapper).toEntity(itemCaptor.capture());
         assertThat(itemCaptor.getValue().getStock()).isZero();
         assertThat(itemCaptor.getValue().getEstado()).isEqualTo(EstadoItem.AGOTADA);
+        assertThat(itemCaptor.getValue().getFechaPublicacion()).isEqualTo(AHORA);
         assertThat(itemCaptor.getValue().getTallasDisponibles()).isEmpty();
         assertThat(itemCaptor.getValue().getInventario()).isEmpty();
         verify(prendaRepository, times(1)).save(prendaEntity);
@@ -157,11 +238,15 @@ class CatalogoServiceImplTest {
     void actualizarShouldUpdateGarmentAndPriceForStoreItem() {
         // Arrange
         ItemCatalogoEntity item = itemEntity(10L);
+        Instant fechaPublicacionOriginal = AHORA.minusSeconds(8 * 24 * 60 * 60);
+        item.setFechaPublicacion(fechaPublicacionOriginal);
+        item.setEstado(EstadoItem.NUEVA_PRENDA);
+        item.getInventario().add(new InventarioTallaEntity(null, Talla.M, 4, item));
         Prenda cambios = new Prenda(null, "Chaqueta", "Chaqueta formal", TipoPrenda.SUPERIOR,
                 "Radar", "Azul", Estilo.FORMAL);
         PrendaEntity cambiosEntity = new PrendaEntity(null, "Chaqueta", "Chaqueta formal",
                 TipoPrenda.SUPERIOR, "Radar", "Azul", Estilo.FORMAL);
-        ItemCatalogo resultadoEsperado = itemDomain(10L);
+        ItemCatalogo resultadoEsperado = itemDomain(10L, fechaPublicacionOriginal, 4);
 
         when(almacenRepository.existsById(NIT)).thenReturn(true);
         when(itemCatalogoRepository.findByIdAndAlmacen_Nit(10L, NIT)).thenReturn(Optional.of(item));
@@ -178,8 +263,13 @@ class CatalogoServiceImplTest {
         assertThat(cambiosEntity.getId()).isEqualTo(5L);
         assertThat(item.getPrecio()).isEqualTo(125000.0);
         assertThat(item.getPrenda()).isSameAs(cambiosEntity);
-        assertThat(item.getInventario()).isEmpty();
-        assertThat(item.getEstado()).isEqualTo(EstadoItem.AGOTADA);
+        assertThat(item.getInventario()).singleElement()
+                .extracting(InventarioTallaEntity::getUnidades)
+                .isEqualTo(4);
+        assertThat(item.getEstado()).isEqualTo(EstadoItem.NUEVA_PRENDA);
+        assertThat(item.getFechaPublicacion()).isEqualTo(fechaPublicacionOriginal);
+        assertThat(result.getFechaPublicacion()).isEqualTo(fechaPublicacionOriginal);
+        assertThat(result.getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
         verify(prendaRepository).save(cambiosEntity);
         verify(itemCatalogoRepository).save(item);
     }
@@ -242,12 +332,19 @@ class CatalogoServiceImplTest {
     }
 
     private ItemCatalogoEntity itemEntity(Long id) {
-        return new ItemCatalogoEntity(id, 89000.0, EstadoItem.AGOTADA,
+        return new ItemCatalogoEntity(id, 89000.0, EstadoItem.AGOTADA, AHORA,
                 almacenEntity(), prendaEntity(5L), new ArrayList<>(), new ArrayList<>());
     }
 
     private ItemCatalogo itemDomain(Long id) {
-        return new ItemCatalogo(id, 89000.0, EstadoItem.AGOTADA,
-                prendaDomain(5L), NIT, new ArrayList<>());
+        return itemDomain(id, AHORA, 0);
+    }
+
+    private ItemCatalogo itemDomain(Long id, Instant fechaPublicacion, int stock) {
+        List<InventarioTalla> inventario = stock == 0
+                ? new ArrayList<>()
+                : List.of(new InventarioTalla(Talla.M, stock));
+        return new ItemCatalogo(id, 89000.0, EstadoItem.AGOTADA, fechaPublicacion,
+                prendaDomain(5L), NIT, inventario);
     }
 }

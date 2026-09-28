@@ -21,7 +21,7 @@ import jakarta.validation.Valid;
 @Tag(name = "Catálogo", description = "Operaciones del catálogo de un almacén")
 public interface CatalogoApi {
 
-    @Operation(summary = "Consultar catálogo", description = "Retorna los ítems publicados por el almacén.")
+    @Operation(summary = "Consultar catálogo", description = "Retorna los ítems disponibles publicados por el almacén.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Catálogo consultado correctamente"),
             @ApiResponse(responseCode = "404", description = "Almacén no encontrado"),

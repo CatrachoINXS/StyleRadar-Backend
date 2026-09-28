@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -51,7 +52,8 @@ class CatalogoItemMapperTest {
         // Arrange
         Prenda prenda = new Prenda(5L, "Camiseta", "Camiseta de algodón", TipoPrenda.SUPERIOR,
                 "StyleRadar", "Negro", Estilo.CASUAL);
-        ItemCatalogo item = new ItemCatalogo(10L, 89000.0, EstadoItem.DISPONIBLE,
+        Instant fechaPublicacion = Instant.parse("2026-09-01T10:00:00Z");
+        ItemCatalogo item = new ItemCatalogo(10L, 89000.0, EstadoItem.DISPONIBLE, fechaPublicacion,
                 prenda, "900123456", List.of(new InventarioTalla(Talla.S, 0), new InventarioTalla(Talla.M, 4)));
 
         // Act
@@ -65,6 +67,7 @@ class CatalogoItemMapperTest {
         assertThat(result.getPrecio()).isEqualTo(89000.0);
         assertThat(result.getStock()).isEqualTo(4);
         assertThat(result.getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
+        assertThat(result.getFechaPublicacion()).isEqualTo(fechaPublicacion);
         assertThat(result.getTallasDisponibles()).containsExactly(Talla.M);
     }
 }

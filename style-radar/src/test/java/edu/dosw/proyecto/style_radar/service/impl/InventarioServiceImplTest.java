@@ -7,6 +7,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +32,7 @@ import edu.dosw.proyecto.style_radar.model.entity.InventarioTallaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
+import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.validator.InventarioValidator;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +40,7 @@ class InventarioServiceImplTest {
 
     private static final String NIT = "900123456";
     private static final Long ITEM_ID = 10L;
+    private static final Instant AHORA = Instant.parse("2026-09-08T10:00:00Z");
 
     @Mock
     private AlmacenRepository almacenRepository;
@@ -54,7 +59,8 @@ class InventarioServiceImplTest {
                 almacenRepository,
                 itemCatalogoRepository,
                 itemCatalogoEntityMapper,
-                new InventarioValidator());
+                new InventarioValidator(),
+                new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)));
     }
 
     @Test
@@ -166,7 +172,7 @@ class InventarioServiceImplTest {
     }
 
     @Test
-    void actualizarDisponibilidadShouldChangeExhaustedToAvailable() {
+    void actualizarDisponibilidadShouldChangeExhaustedToLastUnitsWithStockOne() {
         // Arrange
         ItemCatalogoEntity item = item(EstadoItem.AGOTADA);
         item.getInventario().add(inventario(item, Talla.M, 0));
@@ -176,6 +182,40 @@ class InventarioServiceImplTest {
         inventarioService.actualizarDisponibilidad(NIT, ITEM_ID, Talla.M, 1);
 
         // Assert
+        assertThat(item.getEstado()).isEqualTo(EstadoItem.ULTIMAS_UNIDADES);
+    }
+
+    @Test
+    void actualizarDisponibilidadShouldSetLastUnitsWithStockThree() {
+        ItemCatalogoEntity item = item(EstadoItem.AGOTADA);
+        item.getInventario().add(inventario(item, Talla.M, 0));
+        prepararItem(item);
+
+        inventarioService.actualizarDisponibilidad(NIT, ITEM_ID, Talla.M, 3);
+
+        assertThat(item.getEstado()).isEqualTo(EstadoItem.ULTIMAS_UNIDADES);
+    }
+
+    @Test
+    void actualizarDisponibilidadShouldSetNewArrivalWithStockFourWithinSevenDays() {
+        ItemCatalogoEntity item = item(EstadoItem.AGOTADA);
+        item.getInventario().add(inventario(item, Talla.M, 0));
+        prepararItem(item);
+
+        inventarioService.actualizarDisponibilidad(NIT, ITEM_ID, Talla.M, 4);
+
+        assertThat(item.getEstado()).isEqualTo(EstadoItem.NUEVA_PRENDA);
+    }
+
+    @Test
+    void actualizarDisponibilidadShouldSetAvailableWithStockFourAfterSevenDays() {
+        ItemCatalogoEntity item = item(EstadoItem.NUEVA_PRENDA);
+        item.setFechaPublicacion(AHORA.minusSeconds(8 * 24 * 60 * 60));
+        item.getInventario().add(inventario(item, Talla.M, 0));
+        prepararItem(item);
+
+        inventarioService.actualizarDisponibilidad(NIT, ITEM_ID, Talla.M, 4);
+
         assertThat(item.getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
     }
 
@@ -236,9 +276,7 @@ class InventarioServiceImplTest {
         when(almacenRepository.existsById(NIT)).thenReturn(true);
         when(itemCatalogoRepository.findByIdAndAlmacen_Nit(ITEM_ID, NIT)).thenReturn(Optional.of(item));
         when(itemCatalogoRepository.save(item)).thenReturn(item);
-        when(itemCatalogoEntityMapper.toDomain(item)).thenReturn(domainItem(item.getInventario().stream()
-                .map(entry -> new InventarioTalla(entry.getTalla(), entry.getUnidades()))
-                .toList()));
+        when(itemCatalogoEntityMapper.toDomain(item)).thenAnswer(invocation -> domainItem(item));
     }
 
     private ItemCatalogoEntity item(EstadoItem estado) {
@@ -246,6 +284,7 @@ class InventarioServiceImplTest {
         item.setId(ITEM_ID);
         item.setPrecio(89000.0);
         item.setEstado(estado);
+        item.setFechaPublicacion(AHORA);
         item.setInventario(new ArrayList<>());
         item.setImagenes(new ArrayList<>());
         return item;
@@ -264,6 +303,14 @@ class InventarioServiceImplTest {
     }
 
     private ItemCatalogo domainItem(List<InventarioTalla> inventario) {
-        return new ItemCatalogo(ITEM_ID, 89000.0, EstadoItem.AGOTADA, null, NIT, inventario);
+        return new ItemCatalogo(ITEM_ID, 89000.0, EstadoItem.AGOTADA, AHORA, null, NIT, inventario);
+    }
+
+    private ItemCatalogo domainItem(ItemCatalogoEntity item) {
+        List<InventarioTalla> inventario = item.getInventario().stream()
+                .map(entry -> new InventarioTalla(entry.getTalla(), entry.getUnidades()))
+                .toList();
+        return new ItemCatalogo(item.getId(), item.getPrecio(), item.getEstado(), item.getFechaPublicacion(),
+                null, NIT, inventario);
     }
 }

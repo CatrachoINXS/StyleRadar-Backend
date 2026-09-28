@@ -1,10 +1,12 @@
 package edu.dosw.proyecto.style_radar.model.entity;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
 import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -37,6 +39,9 @@ public class ItemCatalogoEntity {
 
     @Enumerated(EnumType.STRING)
     private EstadoItem estado;
+
+    @Column(nullable = false, updatable = false)
+    private Instant fechaPublicacion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "almacen_nit", nullable = false)

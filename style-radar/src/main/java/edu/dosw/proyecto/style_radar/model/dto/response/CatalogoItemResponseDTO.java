@@ -1,5 +1,6 @@
 package edu.dosw.proyecto.style_radar.model.dto.response;
 
+import java.time.Instant;
 import java.util.List;
 
 import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
@@ -29,5 +30,6 @@ public class CatalogoItemResponseDTO {
     private Double precio;
     private Integer stock;
     private EstadoItem estado;
+    private Instant fechaPublicacion;
     private List<Talla> tallasDisponibles;
 }

@@ -14,18 +14,22 @@ import edu.dosw.proyecto.style_radar.model.entity.InventarioTallaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
+import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.IInventarioService;
 import edu.dosw.proyecto.style_radar.validator.InventarioValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class InventarioServiceImpl implements IInventarioService {
 
     private final AlmacenRepository almacenRepository;
     private final ItemCatalogoRepository itemCatalogoRepository;
     private final ItemCatalogoEntityMapper itemCatalogoEntityMapper;
     private final InventarioValidator inventarioValidator;
+    private final EstadoItemCalculator estadoItemCalculator;
 
     @Override
     @Transactional
@@ -68,13 +72,12 @@ public class InventarioServiceImpl implements IInventarioService {
     }
 
     private void actualizarEstado(ItemCatalogoEntity item) {
-        int stockTotal = item.getInventario().stream()
-                .mapToInt(InventarioTallaEntity::getUnidades)
-                .sum();
-        if (stockTotal == 0) {
-            item.setEstado(EstadoItem.AGOTADA);
-        } else if (item.getEstado() == EstadoItem.AGOTADA) {
-            item.setEstado(EstadoItem.DISPONIBLE);
+        EstadoItem estadoAnterior = item.getEstado();
+        ItemCatalogo itemDominio = itemCatalogoEntityMapper.toDomain(item);
+        EstadoItem estadoActual = estadoItemCalculator.calcular(itemDominio);
+        item.setEstado(estadoActual);
+        if (estadoAnterior != estadoActual) {
+            log.info("Estado del item {} actualizado de {} a {}", item.getId(), estadoAnterior, estadoActual);
         }
     }
 }

@@ -1,5 +1,6 @@
 package edu.dosw.proyecto.style_radar.service.impl;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import edu.dosw.proyecto.style_radar.model.entity.PrendaEntity;
 import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.PrendaRepository;
+import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.ICatalogoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,8 @@ public class CatalogoServiceImpl implements ICatalogoService {
     private final ItemCatalogoRepository itemCatalogoRepository;
     private final PrendaEntityMapper prendaEntityMapper;
     private final ItemCatalogoEntityMapper itemCatalogoEntityMapper;
+    private final EstadoItemCalculator estadoItemCalculator;
+    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,6 +45,8 @@ public class CatalogoServiceImpl implements ICatalogoService {
 
         List<ItemCatalogo> catalogo = itemCatalogoRepository.findByAlmacen_Nit(nit).stream()
                 .map(itemCatalogoEntityMapper::toDomain)
+                .map(this::aplicarEstadoEfectivo)
+                .filter(item -> item.getEstado() != EstadoItem.AGOTADA)
                 .toList();
 
         log.info("Consulta de catálogo completada para el almacén con NIT {}. Total: {}", nit, catalogo.size());
@@ -56,15 +62,18 @@ public class CatalogoServiceImpl implements ICatalogoService {
         ItemCatalogo nuevoItem = new ItemCatalogo(
                 null,
                 precio,
-                EstadoItem.AGOTADA,
+                null,
+                clock.instant(),
                 prendaEntityMapper.toDomain(prendaGuardada),
                 nit,
                 new ArrayList<>());
+        nuevoItem.setEstado(estadoItemCalculator.calcular(nuevoItem));
         ItemCatalogoEntity itemEntity = itemCatalogoEntityMapper.toEntity(nuevoItem);
         itemEntity.setAlmacen(almacen);
         itemEntity.setPrenda(prendaGuardada);
 
-        ItemCatalogo resultado = itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(itemEntity));
+        ItemCatalogo resultado = aplicarEstadoEfectivo(
+                itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(itemEntity)));
         log.info("Publicación completada para el item {} en el almacén con NIT {}", resultado.getId(), nit);
         return resultado;
     }
@@ -82,7 +91,8 @@ public class CatalogoServiceImpl implements ICatalogoService {
         itemEntity.setPrenda(prendaActualizada);
         itemEntity.setPrecio(precio);
 
-        ItemCatalogo resultado = itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(itemEntity));
+        ItemCatalogo resultado = aplicarEstadoEfectivo(
+                itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(itemEntity)));
         log.info("Actualización completada para el item {} del almacén con NIT {}", itemId, nit);
         return resultado;
     }
@@ -118,5 +128,10 @@ public class CatalogoServiceImpl implements ICatalogoService {
                     return new RecursoNoEncontradoException(
                             "No existe el item " + itemId + " en el catálogo del almacén con NIT " + nit);
                 });
+    }
+
+    private ItemCatalogo aplicarEstadoEfectivo(ItemCatalogo item) {
+        item.setEstado(estadoItemCalculator.calcular(item));
+        return item;
     }
 }

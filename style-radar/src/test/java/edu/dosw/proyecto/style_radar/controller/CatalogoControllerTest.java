@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,16 +120,29 @@ class CatalogoControllerTest {
     }
 
     @Test
-    void obtenerCatalogoShouldReturnOk() throws Exception {
-        // Arrange
-        ItemCatalogo item = item();
-        when(catalogoService.obtenerCatalogo(NIT)).thenReturn(List.of(item));
-        when(catalogoItemMapper.toResponse(item)).thenReturn(response());
+    void obtenerCatalogoShouldReturnAllVisibleAutomaticStates() throws Exception {
+        ItemCatalogo disponible = item(10L, EstadoItem.DISPONIBLE);
+        ItemCatalogo nueva = item(11L, EstadoItem.NUEVA_PRENDA);
+        ItemCatalogo ultimas = item(12L, EstadoItem.ULTIMAS_UNIDADES);
+        when(catalogoService.obtenerCatalogo(NIT)).thenReturn(List.of(disponible, nueva, ultimas));
+        when(catalogoItemMapper.toResponse(disponible)).thenReturn(response(10L, EstadoItem.DISPONIBLE));
+        when(catalogoItemMapper.toResponse(nueva)).thenReturn(response(11L, EstadoItem.NUEVA_PRENDA));
+        when(catalogoItemMapper.toResponse(ultimas)).thenReturn(response(12L, EstadoItem.ULTIMAS_UNIDADES));
 
-        // Act & Assert
         mockMvc.perform(get(BASE_PATH))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].itemId").value(10L));
+                .andExpect(jsonPath("$[0].estado").value("DISPONIBLE"))
+                .andExpect(jsonPath("$[1].estado").value("NUEVA_PRENDA"))
+                .andExpect(jsonPath("$[2].estado").value("ULTIMAS_UNIDADES"));
+    }
+
+    @Test
+    void obtenerCatalogoShouldReturnEmptyArrayWhenServiceFiltersAllExhaustedItems() throws Exception {
+        when(catalogoService.obtenerCatalogo(NIT)).thenReturn(List.of());
+
+        mockMvc.perform(get(BASE_PATH))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
     }
 
     @Test
@@ -205,12 +219,24 @@ class CatalogoControllerTest {
     }
 
     private ItemCatalogo item() {
-        return new ItemCatalogo(10L, 89000.0, EstadoItem.AGOTADA, prenda(), NIT, new ArrayList<>());
+        return item(10L, EstadoItem.AGOTADA);
+    }
+
+    private ItemCatalogo item(Long id, EstadoItem estado) {
+        return new ItemCatalogo(id, 89000.0, estado,
+                Instant.parse("2026-09-01T10:00:00Z"), prenda(), NIT, new ArrayList<>());
     }
 
     private CatalogoItemResponseDTO response() {
         return new CatalogoItemResponseDTO(10L, 5L, NIT, "Camiseta", "Camiseta de algodón",
                 TipoPrenda.SUPERIOR, "StyleRadar", "Negro", Estilo.CASUAL, 89000.0, 0,
-                EstadoItem.AGOTADA, List.of());
+                EstadoItem.AGOTADA, Instant.parse("2026-09-01T10:00:00Z"), List.of());
+    }
+
+    private CatalogoItemResponseDTO response(Long itemId, EstadoItem estado) {
+        CatalogoItemResponseDTO response = response();
+        response.setItemId(itemId);
+        response.setEstado(estado);
+        return response;
     }
 }

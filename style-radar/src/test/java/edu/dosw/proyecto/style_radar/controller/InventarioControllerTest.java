@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -153,7 +154,8 @@ class InventarioControllerTest {
     }
 
     private ItemCatalogo item() {
-        return new ItemCatalogo(10L, 89000.0, EstadoItem.DISPONIBLE, null, NIT,
+        return new ItemCatalogo(10L, 89000.0, EstadoItem.DISPONIBLE,
+                Instant.parse("2026-09-01T10:00:00Z"), null, NIT,
                 List.of(new InventarioTalla(Talla.M, 4)));
     }
 

@@ -1,5 +1,6 @@
 package edu.dosw.proyecto.style_radar.model.domain;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ public class ItemCatalogo {
     private Long id;
     private Double precio;
     private EstadoItem estado;
+    private Instant fechaPublicacion;
     private Prenda prenda;
     private String almacenNit;
     private List<InventarioTalla> inventario = new ArrayList<>();
