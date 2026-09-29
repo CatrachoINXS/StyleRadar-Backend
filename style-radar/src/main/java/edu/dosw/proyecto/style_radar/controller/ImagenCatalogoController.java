@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import edu.dosw.proyecto.style_radar.controller.docs.ImagenCatalogoApi;
-import edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException;
 import edu.dosw.proyecto.style_radar.mapper.ImagenCatalogoMapper;
 import edu.dosw.proyecto.style_radar.model.domain.ImagenCatalogo;
 import edu.dosw.proyecto.style_radar.model.dto.response.ImagenCatalogoResponseDTO;
@@ -36,7 +35,7 @@ public class ImagenCatalogoController implements ImagenCatalogoApi {
                     nit, itemId, archivo.getContentType(), archivo.getBytes());
             return ResponseEntity.status(HttpStatus.CREATED).body(imagenCatalogoMapper.toResponse(imagen));
         } catch (IOException exception) {
-            throw new ReglaDeNegocioException("No fue posible procesar la fotografía recibida");
+            throw new IllegalStateException("No fue posible procesar la fotografía recibida", exception);
         }
     }
 }

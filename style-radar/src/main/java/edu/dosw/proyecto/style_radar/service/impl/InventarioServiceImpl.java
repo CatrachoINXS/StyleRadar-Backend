@@ -64,11 +64,15 @@ public class InventarioServiceImpl implements IInventarioService {
 
     private ItemCatalogoEntity obtenerItemDelAlmacen(String nit, Long itemId) {
         if (!almacenRepository.existsById(nit)) {
+            log.warn("No existe un almacén con NIT {}", nit);
             throw new RecursoNoEncontradoException("No existe un almacén con NIT " + nit);
         }
         return itemCatalogoRepository.findByIdAndAlmacen_Nit(itemId, nit)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No existe el item " + itemId + " en el catálogo del almacén con NIT " + nit));
+                .orElseThrow(() -> {
+                    log.warn("No existe el item {} en el catálogo del almacén con NIT {}", itemId, nit);
+                    return new RecursoNoEncontradoException(
+                            "No existe el item " + itemId + " en el catálogo del almacén con NIT " + nit);
+                });
     }
 
     private void actualizarEstado(ItemCatalogoEntity item) {

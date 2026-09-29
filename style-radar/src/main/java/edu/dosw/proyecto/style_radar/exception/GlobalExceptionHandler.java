@@ -4,15 +4,16 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.validation.BindException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import edu.dosw.proyecto.style_radar.model.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,16 +29,15 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI(), Map.of());
     }
 
-    @ExceptionHandler(ConflictoException.class)
-    public ResponseEntity<ErrorResponseDTO> handleConflicto(
-            ConflictoException exception, HttpServletRequest request) {
-        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request.getRequestURI(), Map.of());
-    }
-
-    @ExceptionHandler(EstadoInvalidoException.class)
-    public ResponseEntity<ErrorResponseDTO> handleEstadoInvalido(
-            EstadoInvalidoException exception, HttpServletRequest request) {
-        return buildResponse(HttpStatus.UNPROCESSABLE_CONTENT, exception.getMessage(), request.getRequestURI(), Map.of());
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolation(
+            DataIntegrityViolationException exception, HttpServletRequest request) {
+        log.warn("Conflicto de integridad al procesar la ruta {}", request.getRequestURI());
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                "La operación entra en conflicto con el estado actual de los datos",
+                request.getRequestURI(),
+                Map.of());
     }
 
     @ExceptionHandler(ReglaDeNegocioException.class)

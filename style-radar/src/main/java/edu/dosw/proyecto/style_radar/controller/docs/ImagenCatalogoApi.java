@@ -21,7 +21,8 @@ public interface ImagenCatalogoApi {
             @ApiResponse(responseCode = "201", description = "Fotografía registrada correctamente"),
             @ApiResponse(responseCode = "400", description = "Parte multipart ausente o inválida"),
             @ApiResponse(responseCode = "404", description = "Almacén o item no encontrado"),
-            @ApiResponse(responseCode = "422", description = "Archivo vacío o tipo de contenido no válido")
+            @ApiResponse(responseCode = "422", description = "Archivo vacío o tipo de contenido no válido"),
+            @ApiResponse(responseCode = "500", description = "No fue posible procesar el archivo recibido")
     })
     @PostMapping(value = "/{itemId}/imagenes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ImagenCatalogoResponseDTO> registrar(

@@ -1,9 +1,12 @@
 package edu.dosw.proyecto.style_radar.controller;
 
+import java.io.IOException;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -90,5 +94,19 @@ class ImagenCatalogoControllerTest {
         mockMvc.perform(multipart(PATH).file(archivo))
                 .andExpect(status().isUnprocessableEntity());
         verify(imagenService).registrar(eq(NIT), eq(10L), eq("application/pdf"), any(byte[].class));
+    }
+
+    @Test
+    void registrarShouldConvertFileReadFailureToTechnicalException() throws Exception {
+        // Arrange
+        MultipartFile archivo = org.mockito.Mockito.mock(MultipartFile.class);
+        when(archivo.getBytes()).thenThrow(new IOException("disk detail"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> new ImagenCatalogoController(imagenService, imagenMapper)
+                .registrar(NIT, 10L, archivo))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("No fue posible procesar la fotografía recibida")
+                .hasCauseInstanceOf(IOException.class);
     }
 }
