@@ -10,7 +10,13 @@ import edu.dosw.proyecto.style_radar.model.entity.AlmacenEntity;
 public interface AlmacenEntityMapper {
 
     @Mapping(target = "itemsCatalogo", ignore = true)
+    @Mapping(target = "latitud", source = "latitud")
+    @Mapping(target = "longitud", source = "longitud")
+    @Mapping(target = "reputacion", source = "reputacion")
     AlmacenEntity toEntity(Almacen almacen);
 
+    @Mapping(target = "latitud", source = "latitud")
+    @Mapping(target = "longitud", source = "longitud")
+    @Mapping(target = "reputacion", source = "reputacion")
     Almacen toDomain(AlmacenEntity almacenEntity);
 }

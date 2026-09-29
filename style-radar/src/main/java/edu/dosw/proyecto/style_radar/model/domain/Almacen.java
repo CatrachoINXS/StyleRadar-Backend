@@ -14,4 +14,16 @@ public class Almacen {
     private String descripcion;
     private String telefono;
     private String correoContacto;
+    private Double latitud;
+    private Double longitud;
+    private Double reputacion;
+
+    public Almacen(
+            String nit,
+            String nombreComercial,
+            String descripcion,
+            String telefono,
+            String correoContacto) {
+        this(nit, nombreComercial, descripcion, telefono, correoContacto, null, null, null);
+    }
 }

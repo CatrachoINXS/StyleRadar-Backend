@@ -1,10 +1,12 @@
 package edu.dosw.proyecto.style_radar.model.dto.request;
 
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.OrdenCatalogo;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +41,16 @@ public class BusquedaCatalogoRequestDTO {
 
     private Estilo estilo;
 
+    private OrdenCatalogo orden;
+
+    @DecimalMin(value = "-90.0", message = "latitudUsuario debe ser mayor o igual a -90")
+    @DecimalMax(value = "90.0", message = "latitudUsuario debe ser menor o igual a 90")
+    private Double latitudUsuario;
+
+    @DecimalMin(value = "-180.0", message = "longitudUsuario debe ser mayor o igual a -180")
+    @DecimalMax(value = "180.0", message = "longitudUsuario debe ser menor o igual a 180")
+    private Double longitudUsuario;
+
     @Min(value = 0, message = "page debe ser mayor o igual a 0")
     @NotNull(message = "page es obligatorio cuando se proporciona")
     private Integer page = 0;
@@ -51,5 +63,15 @@ public class BusquedaCatalogoRequestDTO {
     @AssertTrue(message = "precioMin no puede ser mayor que precioMax")
     public boolean isRangoPrecioValido() {
         return precioMin == null || precioMax == null || precioMin <= precioMax;
+    }
+
+    @AssertTrue(message = "latitudUsuario y longitudUsuario deben proporcionarse juntas; son obligatorias para DISTANCIA")
+    public boolean isCoordenadasValidas() {
+        boolean tieneLatitud = latitudUsuario != null;
+        boolean tieneLongitud = longitudUsuario != null;
+        if (tieneLatitud != tieneLongitud) {
+            return false;
+        }
+        return orden != OrdenCatalogo.DISTANCIA || tieneLatitud;
     }
 }

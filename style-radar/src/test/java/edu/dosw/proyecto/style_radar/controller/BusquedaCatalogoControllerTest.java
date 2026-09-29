@@ -72,6 +72,89 @@ class BusquedaCatalogoControllerTest {
     }
 
     @Test
+    void distanceOrderWithValidCoordinatesShouldReturnOk() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("orden", "DISTANCIA")
+                .param("latitudUsuario", "4.7110")
+                .param("longitudUsuario", "-74.0721"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void distanceOrderWithoutLatitudeShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("orden", "DISTANCIA")
+                .param("longitudUsuario", "-74.0721"))
+                .andExpect(status().isBadRequest());
+        verify(service, never()).buscar(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void distanceOrderWithoutLongitudeShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("orden", "DISTANCIA")
+                .param("latitudUsuario", "4.7110"))
+                .andExpect(status().isBadRequest());
+        verify(service, never()).buscar(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void isolatedLatitudeWithoutDistanceOrderShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH).param("latitudUsuario", "4.7110"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void isolatedLongitudeWithoutDistanceOrderShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH).param("longitudUsuario", "-74.0721"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void latitudeBelowMinimumShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("latitudUsuario", "-90.1")
+                .param("longitudUsuario", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void latitudeAboveMaximumShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("latitudUsuario", "90.1")
+                .param("longitudUsuario", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void longitudeBelowMinimumShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("latitudUsuario", "0")
+                .param("longitudUsuario", "-180.1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void longitudeAboveMaximumShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH)
+                .param("latitudUsuario", "0")
+                .param("longitudUsuario", "180.1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void reputationOrderWithoutCoordinatesShouldReturnOk() throws Exception {
+        mockMvc.perform(get(PATH).param("orden", "REPUTACION"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void invalidOrderShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get(PATH).param("orden", "POPULARIDAD"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void validQShouldReturnOk() throws Exception {
         mockMvc.perform(get(PATH).param("q", "camiseta"))
                 .andExpect(status().isOk());

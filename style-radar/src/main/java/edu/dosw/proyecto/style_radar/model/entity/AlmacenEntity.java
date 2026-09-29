@@ -32,6 +32,26 @@ public class AlmacenEntity {
 
     private String correoContacto;
 
+    /** Latitud esperada entre -90 y 90; opcional para registros existentes. */
+    private Double latitud;
+
+    /** Longitud esperada entre -180 y 180; opcional para registros existentes. */
+    private Double longitud;
+
+    /** Reputacion esperada entre 0.0 y 5.0; su calculo pertenece al modulo de almacenes. */
+    private Double reputacion;
+
     @OneToMany(mappedBy = "almacen", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemCatalogoEntity> itemsCatalogo = new ArrayList<>();
+
+    public AlmacenEntity(
+            String nit,
+            String nombreComercial,
+            String descripcion,
+            String telefono,
+            String correoContacto,
+            List<ItemCatalogoEntity> itemsCatalogo) {
+        this(nit, nombreComercial, descripcion, telefono, correoContacto,
+                null, null, null, itemsCatalogo);
+    }
 }

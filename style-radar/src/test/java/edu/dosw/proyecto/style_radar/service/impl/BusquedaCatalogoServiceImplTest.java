@@ -31,6 +31,7 @@ import edu.dosw.proyecto.style_radar.model.domain.ItemCatalogo;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
+import edu.dosw.proyecto.style_radar.service.DistanciaCalculator;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +53,8 @@ class BusquedaCatalogoServiceImplTest {
         service = new BusquedaCatalogoServiceImpl(
                 itemCatalogoRepository,
                 itemCatalogoEntityMapper,
-                new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)));
+                new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)),
+                new DistanciaCalculator());
         criteria = BusquedaCatalogoCriteria.builder().q("camiseta").build();
     }
 

@@ -11,6 +11,7 @@ import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +22,8 @@ public interface BusquedaCatalogoApi {
 
     @Operation(
             summary = "Buscar en el catálogo global",
-            description = "Busca ítems disponibles mediante criterios combinables con AND y orden estable por id ascendente.")
+            description = "Busca ítems disponibles mediante criterios combinables con AND. "
+                    + "Sin orden solicitado usa id ascendente; DISTANCIA y REPUTACION se aplican globalmente antes de paginar.")
     @Parameters({
             @Parameter(name = "q", description = "Texto parcial para nombre, descripción, marca o color"),
             @Parameter(name = "tipo", description = "Tipo exacto de prenda"),
@@ -31,6 +33,16 @@ public interface BusquedaCatalogoApi {
             @Parameter(name = "precioMax", description = "Precio máximo inclusivo"),
             @Parameter(name = "marca", description = "Marca exacta sin distinguir mayúsculas/minúsculas"),
             @Parameter(name = "estilo", description = "Estilo exacto"),
+            @Parameter(
+                    name = "orden",
+                    description = "Orden opcional de los resultados",
+                    schema = @Schema(allowableValues = { "DISTANCIA", "REPUTACION" })),
+            @Parameter(
+                    name = "latitudUsuario",
+                    description = "Latitud entre -90 y 90; DISTANCIA requiere ambas coordenadas"),
+            @Parameter(
+                    name = "longitudUsuario",
+                    description = "Longitud entre -180 y 180; DISTANCIA requiere ambas coordenadas"),
             @Parameter(name = "page", description = "Página desde cero; por defecto 0"),
             @Parameter(name = "size", description = "Tamaño de página entre 1 y 100; por defecto 20")
     })

@@ -15,4 +15,7 @@ public class BusquedaCatalogoCriteria {
     Double precioMax;
     String marca;
     Estilo estilo;
+    OrdenCatalogo orden;
+    Double latitudUsuario;
+    Double longitudUsuario;
 }

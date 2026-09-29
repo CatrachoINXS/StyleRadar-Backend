@@ -26,6 +26,9 @@ public class BusquedaCatalogoMapper {
                 .precioMax(request.getPrecioMax())
                 .marca(normalizar(request.getMarca()))
                 .estilo(request.getEstilo())
+                .orden(request.getOrden())
+                .latitudUsuario(request.getLatitudUsuario())
+                .longitudUsuario(request.getLongitudUsuario())
                 .build();
     }
 
