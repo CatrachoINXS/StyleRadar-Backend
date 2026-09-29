@@ -3,6 +3,7 @@ package edu.dosw.proyecto.style_radar.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -33,6 +34,7 @@ import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.service.DistanciaCalculator;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
+import edu.dosw.proyecto.style_radar.service.SimilaridadPrendaCalculator;
 
 @ExtendWith(MockitoExtension.class)
 class BusquedaCatalogoServiceImplTest {
@@ -54,7 +56,8 @@ class BusquedaCatalogoServiceImplTest {
                 itemCatalogoRepository,
                 itemCatalogoEntityMapper,
                 new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)),
-                new DistanciaCalculator());
+                new DistanciaCalculator(),
+                new SimilaridadPrendaCalculator());
         criteria = BusquedaCatalogoCriteria.builder().q("camiseta").build();
     }
 
@@ -70,6 +73,7 @@ class BusquedaCatalogoServiceImplTest {
 
         assertThat(result.getContent()).containsExactly(domain);
         assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(itemCatalogoRepository, never()).findAll(anySpecification());
     }
 
     @Test
@@ -81,6 +85,30 @@ class BusquedaCatalogoServiceImplTest {
 
         assertThat(result).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    void buscarSinQNoDebeActivarFallback() {
+        criteria = BusquedaCatalogoCriteria.builder().marca("inexistente").build();
+        when(itemCatalogoRepository.findAll(anySpecification(), any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 20)));
+
+        Page<ItemCatalogo> result = service.buscar(criteria, 0, 20);
+
+        assertThat(result.getTotalElements()).isZero();
+        verify(itemCatalogoRepository, never()).findAll(anySpecification());
+    }
+
+    @Test
+    void paginaDirectaVaciaConTotalPositivoNoDebeActivarFallback() {
+        when(itemCatalogoRepository.findAll(anySpecification(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(2, 2), 3));
+
+        Page<ItemCatalogo> result = service.buscar(criteria, 2, 2);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(3);
+        verify(itemCatalogoRepository, never()).findAll(anySpecification());
     }
 
     @Test

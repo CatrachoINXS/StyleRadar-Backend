@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -157,7 +158,35 @@ class BusquedaCatalogoControllerTest {
     @Test
     void validQShouldReturnOk() throws Exception {
         mockMvc.perform(get(PATH).param("q", "camiseta"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void qSinCoincidenciaDirectaPeroConSimilarShouldReturnOk() throws Exception {
+        CatalogoItemResponseDTO similar = CatalogoItemResponseDTO.builder()
+                .itemId(7L)
+                .nombre("Camiseta urbana")
+                .build();
+        when(mapper.toResponse(any())).thenReturn(new PageResponseDTO<>(
+                List.of(similar), 0, 20, 1, 1, true, true));
+
+        mockMvc.perform(get(PATH).param("q", "camiseta negra"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].itemId").value(7))
+                .andExpect(jsonPath("$.content[0].nombre").value("Camiseta urbana"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void qSinCoincidenciasNiSimilaresShouldReturnOkConContenidoVacio() throws Exception {
+        mockMvc.perform(get(PATH).param("q", "inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

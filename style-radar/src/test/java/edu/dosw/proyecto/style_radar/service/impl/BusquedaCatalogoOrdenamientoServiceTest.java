@@ -32,6 +32,7 @@ import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.service.DistanciaCalculator;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
+import edu.dosw.proyecto.style_radar.service.SimilaridadPrendaCalculator;
 
 @ExtendWith(MockitoExtension.class)
 class BusquedaCatalogoOrdenamientoServiceTest {
@@ -52,7 +53,8 @@ class BusquedaCatalogoOrdenamientoServiceTest {
                 repository,
                 mapper,
                 new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)),
-                new DistanciaCalculator());
+                new DistanciaCalculator(),
+                new SimilaridadPrendaCalculator());
     }
 
     @Test

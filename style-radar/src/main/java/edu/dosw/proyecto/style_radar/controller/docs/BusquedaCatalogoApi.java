@@ -23,9 +23,13 @@ public interface BusquedaCatalogoApi {
     @Operation(
             summary = "Buscar en el catálogo global",
             description = "Busca ítems disponibles mediante criterios combinables con AND. "
-                    + "Sin orden solicitado usa id ascendente; DISTANCIA y REPUTACION se aplican globalmente antes de paginar.")
+                    + "Primero realiza la búsqueda textual directa. Si q no obtiene coincidencias directas, "
+                    + "retorna prendas similares que siguen cumpliendo todos los demás filtros. "
+                    + "En el fallback la similitud es prioritaria y DISTANCIA o REPUTACION solo desempatan; "
+                    + "el orden se aplica globalmente antes de paginar.")
     @Parameters({
-            @Parameter(name = "q", description = "Texto parcial para nombre, descripción, marca o color"),
+            @Parameter(name = "q", description = "Texto parcial para nombre, descripción, marca o color. "
+                    + "Si no hay coincidencias directas, activa similares conservando los demás filtros."),
             @Parameter(name = "tipo", description = "Tipo exacto de prenda"),
             @Parameter(name = "color", description = "Color exacto sin distinguir mayúsculas/minúsculas"),
             @Parameter(name = "talla", description = "Talla con unidades disponibles"),

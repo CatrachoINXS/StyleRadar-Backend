@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -181,6 +182,32 @@ class ItemCatalogoSpecificationsTest {
         Page<ItemCatalogoEntity> result = buscar(criteria, 0, 20);
 
         assertThat(result.getContent()).extracting(ItemCatalogoEntity::getId).containsExactly(esperado.getId());
+    }
+
+    @Test
+    void specificationSinTextoDebeIgnorarQYConservarLosDemasFiltros() {
+        ItemCatalogoEntity esperado = persistirItem("Camiseta deportiva", "Entrenamiento", TipoPrenda.SUPERIOR,
+                "Adidas", "Negro", Estilo.DEPORTIVO, 120000.0, EstadoItem.DISPONIBLE, Talla.M, 3);
+        persistirItem("Camiseta casual", "Algodón", TipoPrenda.SUPERIOR,
+                "Adidas", "Negro", Estilo.CASUAL, 120000.0, EstadoItem.DISPONIBLE, Talla.M, 3);
+
+        BusquedaCatalogoCriteria criteria = BusquedaCatalogoCriteria.builder()
+                .q("texto inexistente")
+                .tipo(TipoPrenda.SUPERIOR)
+                .color("negro")
+                .talla(Talla.M)
+                .precioMin(100000.0)
+                .precioMax(120000.0)
+                .marca("adidas")
+                .estilo(Estilo.DEPORTIVO)
+                .build();
+
+        entityManager.flush();
+        entityManager.clear();
+        List<ItemCatalogoEntity> result = repository.findAll(
+                ItemCatalogoSpecifications.conCriteriosSinTexto(criteria));
+
+        assertThat(result).extracting(ItemCatalogoEntity::getId).containsExactly(esperado.getId());
     }
 
     @Test

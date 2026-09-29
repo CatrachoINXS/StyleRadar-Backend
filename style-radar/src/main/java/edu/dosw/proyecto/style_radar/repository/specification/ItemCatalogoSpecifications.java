@@ -21,8 +21,12 @@ public final class ItemCatalogoSpecifications {
     }
 
     public static Specification<ItemCatalogoEntity> conCriterios(BusquedaCatalogoCriteria criteria) {
+        return conCriteriosSinTexto(criteria)
+                .and(textoLibre(criteria.getQ()));
+    }
+
+    public static Specification<ItemCatalogoEntity> conCriteriosSinTexto(BusquedaCatalogoCriteria criteria) {
         return noAgotado()
-                .and(textoLibre(criteria.getQ()))
                 .and(tipo(criteria.getTipo()))
                 .and(color(criteria.getColor()))
                 .and(tallaDisponible(criteria.getTalla()))

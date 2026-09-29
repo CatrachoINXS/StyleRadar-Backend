@@ -22,6 +22,7 @@ import edu.dosw.proyecto.style_radar.repository.specification.ItemCatalogoSpecif
 import edu.dosw.proyecto.style_radar.service.DistanciaCalculator;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.IBusquedaCatalogoService;
+import edu.dosw.proyecto.style_radar.service.SimilaridadPrendaCalculator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,13 +36,22 @@ public class BusquedaCatalogoServiceImpl implements IBusquedaCatalogoService {
     private final ItemCatalogoEntityMapper itemCatalogoEntityMapper;
     private final EstadoItemCalculator estadoItemCalculator;
     private final DistanciaCalculator distanciaCalculator;
+    private final SimilaridadPrendaCalculator similaridadPrendaCalculator;
 
     @Override
     public Page<ItemCatalogo> buscar(BusquedaCatalogoCriteria criteria, int page, int size) {
-        if (criteria.getOrden() != null) {
-            return buscarConOrdenEspecial(criteria, page, size);
+        Page<ItemCatalogo> resultadoDirecto = criteria.getOrden() != null
+                ? buscarDirectoConOrdenEspecial(criteria, page, size)
+                : buscarDirecto(criteria, page, size);
+
+        if (resultadoDirecto.getTotalElements() > 0 || criteria.getQ() == null) {
+            return resultadoDirecto;
         }
 
+        return buscarSimilares(criteria, page, size);
+    }
+
+    private Page<ItemCatalogo> buscarDirecto(BusquedaCatalogoCriteria criteria, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
         Page<ItemCatalogo> resultado = itemCatalogoRepository
                 .findAll(ItemCatalogoSpecifications.conCriterios(criteria), pageable)
@@ -58,7 +68,7 @@ public class BusquedaCatalogoServiceImpl implements IBusquedaCatalogoService {
      * para conservar portabilidad entre PostgreSQL y H2. Debe sustituirse por una
      * estrategia escalable si el catalogo crece a millones de registros.
      */
-    private Page<ItemCatalogo> buscarConOrdenEspecial(
+    private Page<ItemCatalogo> buscarDirectoConOrdenEspecial(
             BusquedaCatalogoCriteria criteria, int page, int size) {
         List<ItemCatalogoEntity> candidatos = itemCatalogoRepository
                 .findAll(ItemCatalogoSpecifications.conCriterios(criteria));
@@ -76,6 +86,59 @@ public class BusquedaCatalogoServiceImpl implements IBusquedaCatalogoService {
         log.info("Busqueda global de catalogo procesada con orden {}. Resultados encontrados: {}",
                 criteria.getOrden(), resultado.getTotalElements());
         return resultado;
+    }
+
+    /**
+     * Trade-off consciente: RF-16 calcula la similitud en memoria sobre todos los
+     * candidatos que ya cumplen los filtros estructurados. Es apropiado para el
+     * alcance académico actual, pero requeriría otra estrategia a gran escala.
+     */
+    private Page<ItemCatalogo> buscarSimilares(
+            BusquedaCatalogoCriteria criteria, int page, int size) {
+        List<ResultadoSimilar> similares = itemCatalogoRepository
+                .findAll(ItemCatalogoSpecifications.conCriteriosSinTexto(criteria))
+                .stream()
+                .map(entity -> crearResultadoSimilar(entity, criteria.getQ()))
+                .filter(resultado -> resultado.score() > 0.0)
+                .sorted(comparadorSimilitud(criteria))
+                .toList();
+
+        Pageable pageable = PageRequest.of(page, size);
+        List<ItemCatalogo> contenido = pagina(similares, pageable).stream()
+                .map(ResultadoSimilar::item)
+                .map(this::aplicarEstadoEfectivo)
+                .toList();
+
+        log.info("No se encontraron coincidencias directas. Se aplica búsqueda de prendas similares. Similares obtenidos: {}",
+                similares.size());
+        return new PageImpl<>(contenido, pageable, similares.size());
+    }
+
+    private ResultadoSimilar crearResultadoSimilar(ItemCatalogoEntity entity, String consulta) {
+        ItemCatalogo item = itemCatalogoEntityMapper.toDomain(entity);
+        return new ResultadoSimilar(
+                entity,
+                item,
+                similaridadPrendaCalculator.calcular(consulta, item.getPrenda()));
+    }
+
+    private Comparator<ResultadoSimilar> comparadorSimilitud(BusquedaCatalogoCriteria criteria) {
+        Comparator<ResultadoSimilar> comparador = Comparator
+                .comparingDouble(ResultadoSimilar::score)
+                .reversed();
+
+        if (criteria.getOrden() == OrdenCatalogo.DISTANCIA) {
+            comparador = comparador.thenComparing(
+                    resultado -> distanciaDesdeUsuario(
+                            resultado.entity(), criteria.getLatitudUsuario(), criteria.getLongitudUsuario()),
+                    Comparator.nullsLast(Comparator.naturalOrder()));
+        } else if (criteria.getOrden() == OrdenCatalogo.REPUTACION) {
+            comparador = comparador.thenComparing(
+                    resultado -> resultado.entity().getAlmacen().getReputacion(),
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+        }
+
+        return comparador.thenComparing(resultado -> resultado.item().getId());
     }
 
     private Comparator<ItemCatalogoEntity> comparadorDistancia(double latitudUsuario, double longitudUsuario) {
@@ -108,7 +171,7 @@ public class BusquedaCatalogoServiceImpl implements IBusquedaCatalogoService {
                 almacen.getLongitud());
     }
 
-    private List<ItemCatalogoEntity> pagina(List<ItemCatalogoEntity> ordenados, Pageable pageable) {
+    private <T> List<T> pagina(List<T> ordenados, Pageable pageable) {
         long offset = pageable.getOffset();
         if (offset >= ordenados.size()) {
             return List.of();
@@ -121,5 +184,8 @@ public class BusquedaCatalogoServiceImpl implements IBusquedaCatalogoService {
     private ItemCatalogo aplicarEstadoEfectivo(ItemCatalogo item) {
         item.setEstado(estadoItemCalculator.calcular(item));
         return item;
+    }
+
+    private record ResultadoSimilar(ItemCatalogoEntity entity, ItemCatalogo item, double score) {
     }
 }
