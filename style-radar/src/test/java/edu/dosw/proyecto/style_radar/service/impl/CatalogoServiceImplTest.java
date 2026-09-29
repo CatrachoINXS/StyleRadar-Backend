@@ -312,7 +312,7 @@ class CatalogoServiceImplTest {
         // Act & Assert
         assertThatThrownBy(() -> catalogoService.retirar(NIT, 10L))
                 .isInstanceOf(RecursoNoEncontradoException.class);
-        verify(itemCatalogoRepository, never()).delete(any());
+        verify(itemCatalogoRepository, never()).delete(any(ItemCatalogoEntity.class));
         verify(prendaRepository, never()).delete(any());
     }
 

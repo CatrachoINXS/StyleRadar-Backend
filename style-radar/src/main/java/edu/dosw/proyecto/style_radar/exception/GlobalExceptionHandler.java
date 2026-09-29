@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.validation.BindException;
 
 import edu.dosw.proyecto.style_radar.model.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,6 +49,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
+        Map<String, String> validationErrors = new LinkedHashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(error ->
+                validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "La solicitud contiene datos inválidos",
+                request.getRequestURI(),
+                validationErrors);
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponseDTO> handleBindingValidation(
+            BindException exception, HttpServletRequest request) {
         Map<String, String> validationErrors = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
                 validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
