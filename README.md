@@ -1,77 +1,176 @@
-# **StyleRadar**
-StyleRadar es una plataforma web que conecta compradores con almacenes de moda locales. Los almacenes publican su inventario (fotos, tallas y disponibilidad) y el usuario puede buscar prendas, consultar tiendas cercanas y probarlas virtualmente con IA. También permite publicar ropa usada para vender o donar a una fundación aliada.
+# StyleRadar
+
+StyleRadar es una plataforma web que conecta compradores con almacenes de moda locales. Los almacenes publican su inventario —fotografías, tallas y disponibilidad— y los usuarios pueden buscar prendas y consultar tiendas cercanas. El producto general también contempla experiencias como el probador virtual, la venta de ropa usada y las donaciones.
+
 StyleRadar no es un marketplace: es el puente entre la intención de compra digital y la tienda física.
 
-### Cómo levantar el proyecto localmente
+## Backend Sprint 2: catálogo y búsqueda
 
-1. Descarga o clona el repositorio con el comando `git clone https://github.com/CatrachoINXS/StyleRadar-Backend.git` 
-2. Dirigete al directorio donde clonaste el repositorio e ingresa a la carpeta del proyecto `(.../StyleRadar-Backend/style-radar)` y en la terminal ejecuta `mvn clean compile` para compilar el proyecto.
-3. Ingresa el comando `mvn spring-boot:run` para ejecutar el proyecto.
-4. Una vez iniciado, estará disponible en el puerto configurado. 
+### Requisitos
 
-## Diagrama de Contexto
+- Java 21.
+- Maven.
+- PostgreSQL.
+
+### Configuración local
+
+La aplicación obtiene la conexión a PostgreSQL exclusivamente de estas variables de entorno:
+
+- `DB_URL`: URL JDBC, por ejemplo `jdbc:postgresql://localhost:5432/styleradar`.
+- `DB_USERNAME`: usuario de la base de datos.
+- `DB_PASSWORD`: contraseña de la base de datos.
+
+No se deben versionar credenciales reales. Desde la carpeta `style-radar/` se pueden ejecutar:
+
+```shell
+mvn clean test
+mvn clean verify
+mvn spring-boot:run
+```
+
+`mvn clean verify` ejecuta las pruebas y la regla de cobertura JaCoCo configurada en el proyecto.
+
+### Swagger/OpenAPI
+
+Con la aplicación en ejecución, la interfaz y el documento OpenAPI están disponibles en:
+
+- `/swagger-ui.html`
+- `/v3/api-docs`
+
+Las interfaces del paquete `controller/docs` describen únicamente los endpoints implementados de prendas, catálogo, inventario, imágenes y búsqueda.
+
+### Arquitectura implementada
+
+El módulo mantiene una separación por responsabilidades:
+
+1. Los `Controller` atienden HTTP y delegan la conversión de contratos a los mappers de presentación.
+2. El modelo de `Domain` representa los datos usados por los casos de uso.
+3. Los `Service` coordinan reglas, validadores y operaciones del módulo.
+4. Los `Validator` y calculadores contienen reglas específicas de inventario, estados, distancia y similitud.
+5. Los mappers de persistencia convierten entre dominio y entidades JPA.
+6. Los `Repository` acceden a PostgreSQL mediante Spring Data JPA.
+7. Las `Entity` representan tablas, restricciones y relaciones de persistencia.
+
+El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> Persistence Mapper -> Repository -> Entity -> PostgreSQL`; los casos simples omiten capas que no aportan transformación o reglas.
+
+### Alcance implementado por este backend
+
+- Publicación, consulta, edición y retiro de ítems del catálogo de un almacén.
+- Inventario por talla y cálculo derivado del stock disponible.
+- Registro de múltiples imágenes y respuesta basada en metadatos.
+- Cálculo de estados: agotada, últimas unidades, nueva prenda y disponible.
+- Búsqueda global con texto libre, filtros combinados y paginación.
+- Orden por distancia y reputación del almacén.
+- Fallback de prendas similares cuando una búsqueda textual no tiene coincidencias directas.
+
+### Pruebas y calidad
+
+La suite utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
+
+## Diagramas académicos
+
+### Diagrama de contexto
 
 ![](style-radar/docs/uml/diagrama-contexto-style-radar.jpeg)
 
-## Diagrama de Componentes General
+### Diagrama de componentes general
 
 ![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
 
-## Diagrama de Componentes Especifico
+### Diagrama de componentes específico
 
 ![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
 
-## Diagrama de Clases
-En el siguiente diagrama de clases se pueden observar los objetos del dominio así como sus interacciones.
+### Diagrama de clases
+
+El diagrama existente es un artefacto académico que debe actualizarse manualmente para reflejar el código vigente del Sprint 2.
 
 ![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
 
-## Justificación Patrones de Diseño
+## Estado de los patrones de diseño
 
-### Patrón Strategy
-El patrón Strategy en el contexto de StyleRadar resuelve el problema de tener algoritmos de sugerencia para el feed que deben ser intercambiables según las preferencias del usuario. Sin este patrón, la clase encargada de administrar dichos algoritmos estaría acoplada a cada uno de ellos, lo que dificultaría su extensión y dejaría el código abierto a modificaciones que podrían romper su funcionamiento.
+Las siguientes ilustraciones conservan las propuestas de diseño del producto. Su presencia no implica que exista una implementación en el alcance actual del backend.
+
+### Strategy — diseño propuesto, no implementado
+
+La propuesta plantea algoritmos intercambiables para sugerencias del feed. El módulo actual no implementa un feed, una interfaz Strategy ni estrategias concretas.
 
 ![](style-radar/docs/images/patron_strategy_ilustracion.png)
 
-El lugar donde vive este patrón es ... (Pendiente por completar). 
+### Observer — diseño propuesto, no implementado
 
-### Patrón Observer
-
-El patrón Observer resuelve el problema de notificar automáticamente a los usuarios suscritos a la publicacion de una prenda cuando un almacen aliado sube una unidad.
+La propuesta contempla notificaciones a compradores cuando se publica una prenda. En el código actual no existen el sujeto, los observadores ni las clases `PublicaciónPrenda` y `UsuarioComprador` descritas originalmente.
 
 ![](style-radar/docs/images/patron_observer_ilustracion.png)
 
-El lugar donde vive el patrón Observer es en el dominio, específicamente en la clase `PublicaciónPrenda` quien es el sujeto y la clase `UsuarioComprador` quien es el observador notificado cuando se sube una prenda a la publicación.
-
-Así se ve el patrón en el diagrama de clases:
-
 ![](style-radar/docs/images/DC_Observer.png)
 
-### Patrón Adapter
+### Adapter — diseño propuesto, no implementado
 
-El patrón adapter nos resuelve dos problemas. El primero de ellos es la compatibilidad con diferentes pasarelas de pago; usando este patrón podemos usar una interfaz común de pagos en nuestro sistema para adaptar las pasarelas de pago externas.
+La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de esas integraciones pertenece al módulo actual y no existen implementaciones como `ProbadorVirtual` o `AdaptadorGemini`.
 
 ![](style-radar/docs/images/patron_adapter1_ilustracion.png)
 
-El segundo problema que resuelve es la compatibilidad con la Inteligencia Artificial utilizada para el probador virtual de prendas. Usando Adapter podemos integrar la interfaz de cualquier IA con nuestro sistema sin necesidad de acoplarla.
-
 ![](style-radar/docs/images/patron_adapter2_ilustracion.png)
-
-El lugar donde vive el patron adapter es el dominio, específicamente en las clases `ProbadorVirtual` y `AdaptadorGemini`.
 
 ![](style-radar/docs/images/DC_Adapter2.png)
 
+### Composite — composición del framework, no patrón propio implementado
 
-### Patrón Composite
-
-El patrón composite nos resuelve el problema de la combinacion de filtros en las búsquedas inteligentes. Con este patrón podemos crear filtros simples como FiltroTalla o FiltroColor, y filtros complejos como FiltroCompuestoAnd (que combina dos filtros) y tratarlos de la misma forma. De esta forma, evaluar si una prenda cumple con un filtro de búsqueda complejo, se vuelve más sencillo. 
+La búsqueda combina filtros con `Specification<ItemCatalogoEntity>` de Spring Data JPA en `ItemCatalogoSpecifications`. Esa composición permite unir predicados con AND y OR, pero el proyecto no define una jerarquía Composite propia como `FiltroTalla`, `FiltroColor` o `FiltroCompuestoAnd`. La ilustración se conserva como diseño conceptual.
 
 ![](style-radar/docs/images/patron_composite_ilustracion.png)
 
-El lugar donde vive el patron composite es...(Pendiente por completar)
+### Iterator — diseño propuesto, no implementado
 
-### Patrón Iterator
-
-El patron iterator por otro lado nos resuelve el problema de recorrer la colección de prendas durante la búsqueda inteligente usando filtros, pero sin exponer el contenido de las prendas. Usando este patron podemos iterar sobre los elementos y recolectar solo aquellas que cumplan con determinado filtro.
+El código utiliza colecciones, streams y mecanismos de iteración provistos por Java y Spring Data. No existe un iterador personalizado del dominio; la ilustración representa una posibilidad de diseño, no el estado del código.
 
 ![](style-radar/docs/images/patron_iterator_ilustracion.png)
+
+## Trazabilidad funcional del Sprint 2
+
+Durante este Sprint se implementó el módulo de catálogo, inventario y búsqueda de StyleRadar, cubriendo los siguientes requerimientos funcionales:
+
+| Requerimiento | Funcionalidad |
+|---|---|
+| RF-07 | Búsqueda de prendas mediante texto libre |
+| RF-08 | Filtro de prendas por tipo |
+| RF-09 | Filtro de prendas por color |
+| RF-10 | Filtro de prendas por talla disponible |
+| RF-11 | Filtro de prendas por rango de precio |
+| RF-12 | Filtro de prendas por marca |
+| RF-13 | Filtro de prendas por estilo |
+| RF-14 | Ordenamiento de resultados por distancia |
+| RF-15 | Ordenamiento por reputación del almacén |
+| RF-16 | Consulta de prendas similares cuando no existen coincidencias directas |
+| RF-22 | Consulta del catálogo de un almacén |
+| RF-50 | Publicación de prendas en el catálogo |
+| RF-51 | Registro de fotografías de prendas |
+| RF-52 | Registro de tallas disponibles |
+| RF-53 | Registro del precio de una prenda |
+| RF-54 | Registro de atributos utilizados para búsqueda |
+| RF-55 | Edición de prendas del catálogo |
+| RF-56 | Actualización de disponibilidad por talla |
+| RF-57 | Ocultamiento de prendas agotadas en resultados públicos |
+| RF-58 | Retiro de prendas del catálogo |
+| RF-59 | Identificación automática de últimas unidades |
+| RF-60 | Identificación automática de nuevas llegadas |
+
+### Endpoints principales
+
+El módulo expone, entre otros, los siguientes endpoints:
+
+```text
+GET    /api/v1/prendas
+
+GET    /api/v1/almacenes/{nit}/catalogo
+POST   /api/v1/almacenes/{nit}/catalogo
+PUT    /api/v1/almacenes/{nit}/catalogo/{itemId}
+DELETE /api/v1/almacenes/{nit}/catalogo/{itemId}
+
+PUT    /api/v1/almacenes/{nit}/catalogo/{itemId}/tallas
+PATCH  /api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}
+
+POST   /api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes
+
+GET    /api/v1/catalogo/buscar

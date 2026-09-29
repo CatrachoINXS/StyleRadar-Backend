@@ -4,6 +4,7 @@ import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PrendaRequestDTO {
+public class CatalogoItemRequestDTO {
 
     @NotBlank(message = "El nombre de la prenda es obligatorio")
     @Size(max = 100, message = "Máximo 100 caracteres")
@@ -35,4 +36,8 @@ public class PrendaRequestDTO {
 
     @NotNull(message = "El estilo es obligatorio")
     private Estilo estilo;
+
+    @NotNull(message = "El precio es obligatorio")
+    @Positive(message = "El precio debe ser mayor que cero")
+    private Double precio;
 }
