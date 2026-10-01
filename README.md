@@ -69,25 +69,64 @@ La suite utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistenc
 
 ## Diagramas académicos
 
-### Diagrama de contexto
+## Diagrama de Contexto
+En el siguiente diagrama de contexto se presenta la arquitectura general y los actores que interactúan con StyleRadar.
 
 ![](style-radar/docs/uml/diagrama-contexto-style-radar.jpeg)
 
-### Diagrama de componentes general
+### Actores
+Como actores tenemos a los *usuarios compradores, a los almacenes de moda, a las fundaciones aliadas y al administrador*.
+
+Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal y como se menciona en el diagrama.
+
+### Sistemas externos
+Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
+
+
+## Diagrama de Componentes General
+El siguiente diagrama de componentes muestra la arquitectura general del sistema, dividida en tres partes principales.
 
 ![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
 
-### Diagrama de componentes específico
+La primer parte es el ***Front-End*** que representa la interfaz de usuario con la que interactuan todos los actores. La segunda parte es el ***Back-End***, encargado de toda la lógica de negocio y de proveer la interfaz para que sea utilizada por el front. La tercera parte es la ***Base de Datos***, componente encargado de persistir la información de la plataforma y de proveer la interfaz para el back.
+
+## Diagrama de Componentes Especifico
+Este diagrama de componentes específico muestra la arquitectura interna del Back-End de StyleRadar. En él tienen cinco módulos explicados a continuacion.
 
 ![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
 
-### Diagrama de clases
+### Módulos
+Cada módulo se encarga de una parte específica de la plataforma. 
+- **Usuarios:** Gestiona y valida la información de los usuarios. 
+- **Catálogo:** Para administrar el inventario y prendas que suben los almacenes a la plataforma.
+- **Donaciones:** Maneja todo lo relacionado con las donaciones de prendas para las fundaciones aliadas.
+- **Probador virtual:** Maneja la lógica con la herramienta IA para que los usuarios compradores puedan probarse las prendas virtualmente.
+- **Suscripciones:** Se encarga de los planes de los usuarios compradores y los almacenes administrando los pagos.
+  
+### Estructura de los módulos
+En cáda módulo los componentes interactuan de la siguiente manera: Un actor envía una solicitud y esta llega al `Controller`. Este transfiere los datos a un `MapperIn` para transformarlos en objetos `DTO` y enviarlos al `Validator`, el cual comprueba que se cumplan todas las reglas de negocio. 
 
+Después de la verificacion se pasa la informacion al `Service`, quien contiene toda la lógica de negocio e interactua con los objetos de dominio. Despues de ello, se pasa al `MapperOut` para transformar la informacion y pasarla al `Repository`, el cual se encarga de la comunicación con la base de datos.
+
+Al final, todos los repositorios de cada módulo llegan a la base de datos, para almacenar y recuperar la informacion cuando se requiera.
+
+## Diagrama de Clases
 El diagrama existente es un artefacto académico que debe actualizarse manualmente para reflejar el código vigente del Sprint 2.
+
+En el siguiente diagrama de clases se pueden observar los objetos del dominio, se muestran las entidades principales, sus atributos y las interacciones que conectan el sistema.
 
 ![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
 
-## Estado de los patrones de diseño
+### Estructura general del diagrama de clases
+En el diagrama se observa en color azul todo lo relacionado con la gestión de usuarios, perfiles y catálogos de almacén. Se encuentra la clase abstracta `Usuario`, de la cual heredan los diferentes tipos de actores: el `UsuarioComprador`, el `Almacen`, el `Administrador` y la `FundacionAliada`. Además, incluye clases auxiliares como `Direccion`, `Mensaje` y una enumeración con los estados del usuario.
+
+En color amarillo se agrupa lo referente a las prendas, con la clase `Prenda` y sus enumeraciones tipo de prenda, estilo y estado. También se agrupa aquí lo relacionado con las publicaciones, mediante `PublicacionPrenda` y `PublicacionSegundaMano`.
+
+En color verde se observa una de las ideas diferenciadoras del proyecto: las Playlists de estilo, las cuales pueden contener múltiples publicaciones de prendas.
+
+En color morado se aprecia otro de los aspectos clave y diferenciadores de StyleRadar: el probador virtual, herramienta con la cual los usuarios compradores podrán probarse las prendas del catálogo.
+
+## Justificación Patrones de Diseño
 
 Las siguientes ilustraciones conservan las propuestas de diseño del producto. Su presencia no implica que exista una implementación en el alcance actual del backend.
 
@@ -118,6 +157,8 @@ La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de
 ### Composite — composición del framework, no patrón propio implementado
 
 La búsqueda combina filtros con `Specification<ItemCatalogoEntity>` de Spring Data JPA en `ItemCatalogoSpecifications`. Esa composición permite unir predicados con AND y OR, pero el proyecto no define una jerarquía Composite propia como `FiltroTalla`, `FiltroColor` o `FiltroCompuestoAnd`. La ilustración se conserva como diseño conceptual.
+
+El patrón composite nos resuelve el problema de la combinacion de filtros en las búsquedas inteligentes. Con este patrón podemos crear filtros simples como `FiltroTalla` o `FiltroColor`, y filtros complejos como `FiltroCompuestoAnd` (que combina dos filtros) y tratarlos de la misma forma. De esta forma, evaluar si una prenda cumple con un filtro de búsqueda complejo, se vuelve más sencillo. 
 
 ![](style-radar/docs/images/patron_composite_ilustracion.png)
 
