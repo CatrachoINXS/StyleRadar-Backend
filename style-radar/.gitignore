@@ -1,0 +1,12 @@
+# Environment files / local secrets
+.env
+.env.*
+.envrc
+
+# Local Spring config overrides
+application-local.properties
+**/application-local.properties
+
+# Optional local DB credentials files
+*.local
+*.local.properties
