@@ -38,6 +38,24 @@ class OpenApiSmokeTest {
                 .andExpect(jsonPath("$.paths['/api/v1/almacenes/{nit}/catalogo/{itemId}']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/almacenes/{nit}/catalogo/{itemId}/tallas']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes']").exists());
+                .andExpect(jsonPath("$.paths['/api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}/preferencias-estilo']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}/tallas-habituales']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}/busquedas-guardadas']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}/busquedas-guardadas/{busquedaId}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/segunda-mano']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/segunda-mano/{id}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/segunda-mano']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/segunda-mano/{id}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/segunda-mano/{id}/vender']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/playlists']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/playlists/{id}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/playlists']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/playlists/{id}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/playlists/{id}/prendas']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/playlists/{id}/prendas/{prendaId}']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/playlists/{id}/like']").exists());
     }
 }
