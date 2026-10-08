@@ -1,6 +1,7 @@
 # Environment files / local secrets
 .env
 .env.*
+!.env.example
 .envrc
 
 # Local Spring config overrides
