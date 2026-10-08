@@ -11,6 +11,7 @@ StyleRadar no es un marketplace: es el puente entre la intención de compra digi
 - Java 21.
 - Maven.
 - PostgreSQL.
+- Docker Desktop para la ejecución en contenedores.
 
 ### Configuración local
 
@@ -29,6 +30,61 @@ mvn spring-boot:run
 ```
 
 `mvn clean verify` ejecuta las pruebas y la regla de cobertura JaCoCo configurada en el proyecto.
+
+### Ejecución con Docker
+
+La carpeta `style-radar/` contiene un `Dockerfile` multietapa y un `docker-compose.yml` que levantan la API junto con PostgreSQL en una red compartida y con un volumen persistente para los datos.
+
+1. Instalar Docker Desktop.
+2. Crear el archivo `.env` a partir de la plantilla y ajustar los valores:
+
+```shell
+cd style-radar
+cp .env.example .env
+```
+
+3. Construir y levantar los contenedores:
+
+```shell
+docker compose up --build -d
+```
+
+4. Verificar la API en `http://localhost:8080/swagger-ui/index.html`.
+
+Comandos adicionales:
+
+```shell
+docker compose logs -f api
+docker compose down
+docker compose down -v
+```
+
+`docker compose down -v` elimina también el volumen de la base de datos.
+
+La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](https://hub.docker.com/r/juanamunoz/styleradar). Se puede descargar con:
+
+```shell
+docker pull juanamunoz/styleradar:latest
+```
+
+Cada versión publicada tiene su propio tag, por ejemplo `juanamunoz/styleradar:0.3.0`.
+
+### Variables de entorno
+
+| Variable | Descripción | Ejemplo |
+|---|---|---|
+| `DB_URL` | URL JDBC de PostgreSQL. En Docker Compose se construye a partir de `DB_NAME`. | `jdbc:postgresql://localhost:5432/styleradar` |
+| `DB_NAME` | Nombre de la base de datos creada por el contenedor de PostgreSQL. | `styleradar` |
+| `DB_USERNAME` | Usuario de la base de datos. | `styleradar` |
+| `DB_PASSWORD` | Contraseña de la base de datos. | `change-me` |
+| `DB_PORT` | Puerto expuesto de PostgreSQL en la máquina local. | `5432` |
+| `API_PORT` | Puerto expuesto de la API en la máquina local. | `8080` |
+| `SERVER_PORT` | Puerto interno de la aplicación. | `8080` |
+| `JPA_DDL_AUTO` | Estrategia de Hibernate para el esquema. | `update` |
+| `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
+| `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
+
+El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
 
 ### Swagger/OpenAPI
 
@@ -125,6 +181,30 @@ En color amarillo se agrupa lo referente a las prendas, con la clase `Prenda` y 
 En color verde se observa una de las ideas diferenciadoras del proyecto: las Playlists de estilo, las cuales pueden contener múltiples publicaciones de prendas.
 
 En color morado se aprecia otro de los aspectos clave y diferenciadores de StyleRadar: el probador virtual, herramienta con la cual los usuarios compradores podrán probarse las prendas del catálogo.
+
+## Diagrama Entidad-Relación
+El siguiente diagrama muestra las tablas de la base de datos de StyleRadar, sus columnas y las relaciones entre ellas. Se conserva el mismo código de colores del diagrama de clases.
+
+![](style-radar/docs/uml/DiagramaERStyleRadar.drawio.png)
+
+### Estructura de la base de datos
+En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se relaciona con sus preferencias de estilo, sus tallas habituales y sus búsquedas guardadas. La tabla `almacenes` se identifica por el NIT y guarda la información de contacto, la ubicación y la reputación de cada tienda.
+
+En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario disponible por talla en `inventario_tallas` y las fotografías en `imagenes_catalogo`. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
+
+En color verde se encuentran las playlists de estilo. La tabla `playlist_prendas` relaciona cada playlist con las prendas que contiene y `playlist_likes` registra los usuarios que le han dado me gusta.
+
+### Justificación de la persistencia
+Se eligió PostgreSQL, una base de datos relacional, porque la información de StyleRadar está muy conectada entre sí: un almacén tiene muchas prendas publicadas, cada prenda tiene inventario por talla e imágenes, y los usuarios crean playlists y publicaciones que hacen referencia a esas mismas prendas. Un modelo relacional permite representar estas relaciones de forma directa y consultar la información combinada, por ejemplo al buscar prendas con filtros por talla, precio o almacén.
+
+Además, la base de datos ayuda a mantener la información consistente por medio de reglas propias:
+
+- El correo de cada usuario es único.
+- Una misma prenda del catálogo no puede tener dos registros de inventario para la misma talla.
+- Las unidades disponibles nunca pueden ser negativas.
+- Las publicaciones, los inventarios y las imágenes siempre deben estar asociados a un registro existente.
+
+El acceso a los datos se realiza con Spring Data JPA, lo que permite trabajar con las tablas a partir de las clases del proyecto y mantener separada la lógica de negocio del manejo de la base de datos.
 
 ## Justificación Patrones de Diseño
 
