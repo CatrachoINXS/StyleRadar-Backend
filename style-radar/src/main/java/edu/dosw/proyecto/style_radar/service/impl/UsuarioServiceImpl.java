@@ -25,6 +25,7 @@ import edu.dosw.proyecto.style_radar.service.IUsuarioService;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import edu.dosw.proyecto.style_radar.security.EmailNormalizer;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +42,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     @Transactional
     public Usuario registrarUsuario(Usuario usuario) {
-        log.info("Registrando usuario con email: {}", usuario.getEmail());
+        log.info("Registrando nuevo usuario");
+        usuario.setEmail(EmailNormalizer.normalize(usuario.getEmail()));
         usuarioValidator.validarEmailUnico(usuario.getEmail());
 
         UsuarioEntity entity = usuarioEntityMapper.toEntity(usuario);

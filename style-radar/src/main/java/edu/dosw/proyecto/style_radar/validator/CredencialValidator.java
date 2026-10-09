@@ -22,10 +22,14 @@ public class CredencialValidator {
 
     public void validarPassword(String password) {
         // BCrypt admite hasta 72 bytes. No recortar ni normalizar el secreto.
-        if (password == null || password.isBlank() || password.indexOf('\0') >= 0
-                || password.getBytes(StandardCharsets.UTF_8).length > 72) {
+        if (!passwordAdmitido(password)) {
             throw new ReglaDeNegocioException("La contraseña no cumple los límites admitidos");
         }
+    }
+
+    public static boolean passwordAdmitido(String password) {
+        return password != null && !password.isBlank() && password.indexOf('\0') < 0
+                && password.getBytes(StandardCharsets.UTF_8).length <= 72;
     }
 
     public void validarNoExiste(Long usuarioId) {

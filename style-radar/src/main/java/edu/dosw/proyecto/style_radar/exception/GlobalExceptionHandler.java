@@ -18,10 +18,33 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import edu.dosw.proyecto.style_radar.model.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.access.AccessDeniedException;
+import edu.dosw.proyecto.style_radar.security.SecurityErrorHandler;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAuthentication(
+            AuthenticationException exception, HttpServletRequest request) {
+        if (exception instanceof InternalAuthenticationServiceException) {
+            log.error("Error interno durante autenticación en {}", request.getRequestURI());
+            return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error interno. Intente nuevamente más tarde.", request.getRequestURI(), Map.of());
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).header("WWW-Authenticate", "Bearer")
+                .body(buildResponse(HttpStatus.UNAUTHORIZED, SecurityErrorHandler.UNAUTHORIZED_MESSAGE,
+                        request.getRequestURI(), Map.of()).getBody());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(
+            AccessDeniedException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado", request.getRequestURI(), Map.of());
+    }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorResponseDTO> handleRecursoNoEncontrado(
