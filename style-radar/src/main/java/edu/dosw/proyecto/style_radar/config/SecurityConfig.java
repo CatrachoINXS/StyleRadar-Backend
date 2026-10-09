@@ -43,7 +43,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**",
                                 "/v3/api-docs", "/v3/api-docs/**",
                                 "/api/v1/prendas", "/api/v1/catalogo/buscar",
-                                "/api/v1/almacenes/{nit}/catalogo").permitAll()
+                                "/api/v1/almacenes/{nit}/catalogo",
+                                "/api/v1/almacenes",
+                                "/api/v1/almacenes/{nit}/catalogo/resumen",
+                                "/api/v1/almacenes/{nit}/catalogo/novedades",
+                                "/api/v1/almacenes/{nit}/distancia").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
                 .build();

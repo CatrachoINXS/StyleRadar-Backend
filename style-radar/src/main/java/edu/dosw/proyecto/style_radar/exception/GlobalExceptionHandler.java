@@ -72,6 +72,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
+        log.warn("Solicitud rechazada por validación en {}", request.getRequestURI());
         Map<String, String> validationErrors = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
                 validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
@@ -86,6 +87,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ErrorResponseDTO> handleBindingValidation(
             BindException exception, HttpServletRequest request) {
+        log.warn("Parámetros rechazados en {}", request.getRequestURI());
         Map<String, String> validationErrors = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
                 validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
@@ -104,6 +106,7 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponseDTO> handleInvalidHttpRequest(
             Exception exception, HttpServletRequest request) {
+        log.warn("Solicitud HTTP inválida en {}", request.getRequestURI());
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 "La solicitud contiene parámetros inválidos",

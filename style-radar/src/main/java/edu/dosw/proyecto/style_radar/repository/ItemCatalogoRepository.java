@@ -9,11 +9,30 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.Instant;
 
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 
 public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity, Long>,
         JpaSpecificationExecutor<ItemCatalogoEntity> {
+
+    /** Inventario no negativo: existe disponibilidad si alguna talla tiene unidades positivas. */
+    @Query("""
+            select i.id from ItemCatalogoEntity i
+            where i.almacen.nit = :nit
+            and exists (select v.id from InventarioTallaEntity v
+                        where v.itemCatalogo = i and v.unidades > 0)
+            and (:inicio is null or i.fechaPublicacion >= :inicio)
+            and (:fin is null or i.fechaPublicacion <= :fin)
+            order by i.fechaPublicacion desc, i.id asc
+            """)
+    Page<Long> findIdsPublicosDelAlmacen(@Param("nit") String nit,
+            @Param("inicio") Instant inicio, @Param("fin") Instant fin, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
+    List<ItemCatalogoEntity> findByIdIn(List<Long> ids);
 
     @Override
     @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
