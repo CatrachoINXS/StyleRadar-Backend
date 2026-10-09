@@ -13,6 +13,8 @@ import edu.dosw.proyecto.style_radar.mapper.BusquedaGuardadaEntityMapper;
 import edu.dosw.proyecto.style_radar.mapper.UsuarioEntityMapper;
 import edu.dosw.proyecto.style_radar.model.domain.BusquedaGuardada;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.Usuario;
 import edu.dosw.proyecto.style_radar.model.entity.BusquedaGuardadaEntity;
@@ -43,6 +45,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuarioValidator.validarEmailUnico(usuario.getEmail());
 
         UsuarioEntity entity = usuarioEntityMapper.toEntity(usuario);
+        // Este servicio conserva el registro público; nunca aprovisiona roles privilegiados.
+        entity.setRoles(new HashSet<>(Set.of(Rol.COMPRADOR)));
+        entity.setEstadoCuenta(EstadoCuenta.ACTIVA);
         entity.setFechaRegistro(clock.instant());
         if (entity.getPreferenciasEstilo() == null) {
             entity.setPreferenciasEstilo(new HashSet<>());

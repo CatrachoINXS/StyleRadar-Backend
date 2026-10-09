@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -22,6 +24,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,6 +54,20 @@ public class UsuarioEntity {
 
     @Column(nullable = false, updatable = false)
     private Instant fechaRegistro;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = { "usuario_id", "rol" }))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol", nullable = false)
+    @Builder.Default
+    private Set<Rol> roles = new HashSet<>(Set.of(Rol.COMPRADOR));
+
+    // Nullable durante la transición: ddl-auto=update no completa las filas antiguas.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_cuenta")
+    @Builder.Default
+    private EstadoCuenta estadoCuenta = EstadoCuenta.ACTIVA;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "usuario_preferencias_estilo", joinColumns = @JoinColumn(name = "usuario_id"))

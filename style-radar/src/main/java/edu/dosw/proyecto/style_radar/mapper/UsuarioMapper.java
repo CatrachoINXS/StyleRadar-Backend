@@ -14,6 +14,8 @@ public interface UsuarioMapper {
     @Mapping(target = "fechaRegistro", ignore = true)
     @Mapping(target = "preferenciasEstilo", ignore = true)
     @Mapping(target = "tallasHabituales", ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "estadoCuenta", ignore = true)
     Usuario toDomain(RegistrarUsuarioRequestDTO request);
 
     UsuarioResponseDTO toResponse(Usuario usuario);
