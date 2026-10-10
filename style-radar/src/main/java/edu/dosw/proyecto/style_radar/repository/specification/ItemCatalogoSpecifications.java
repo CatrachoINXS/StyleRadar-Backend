@@ -11,8 +11,6 @@ import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.model.entity.InventarioTallaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Path;
 
 public final class ItemCatalogoSpecifications {
@@ -27,7 +25,16 @@ public final class ItemCatalogoSpecifications {
 
     public static Specification<ItemCatalogoEntity> conCriteriosSinTexto(BusquedaCatalogoCriteria criteria) {
         return noAgotado()
-                .and(tipo(criteria.getTipo()))
+                .and(filtrosEstructurados(criteria));
+    }
+
+    /** Filtros compartidos, sin imponer el estado persistido ni activar similitud. */
+    public static Specification<ItemCatalogoEntity> coincidenciaExacta(BusquedaCatalogoCriteria criteria) {
+        return filtrosEstructurados(criteria).and(textoLibre(criteria.getQ()));
+    }
+
+    private static Specification<ItemCatalogoEntity> filtrosEstructurados(BusquedaCatalogoCriteria criteria) {
+        return tipo(criteria.getTipo())
                 .and(color(criteria.getColor()))
                 .and(tallaDisponible(criteria.getTalla()))
                 .and(precioMinimo(criteria.getPrecioMin()))
@@ -78,11 +85,13 @@ public final class ItemCatalogoSpecifications {
             if (talla == null) {
                 return criteriaBuilder.conjunction();
             }
-            Join<ItemCatalogoEntity, InventarioTallaEntity> inventario = root.join("inventario", JoinType.INNER);
-            query.distinct(true);
-            return criteriaBuilder.and(
+            var subquery = query.subquery(Long.class);
+            var inventario = subquery.from(InventarioTallaEntity.class);
+            subquery.select(inventario.get("id")).where(criteriaBuilder.and(
+                    criteriaBuilder.equal(inventario.get("itemCatalogo"), root),
                     criteriaBuilder.equal(inventario.get("talla"), talla),
-                    criteriaBuilder.greaterThan(inventario.get("unidades"), 0));
+                    criteriaBuilder.greaterThan(inventario.get("unidades"), 0)));
+            return criteriaBuilder.exists(subquery);
         };
     }
 

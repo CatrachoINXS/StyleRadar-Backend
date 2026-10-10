@@ -16,7 +16,7 @@ import java.time.Instant;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 
 public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity, Long>,
-        JpaSpecificationExecutor<ItemCatalogoEntity> {
+        JpaSpecificationExecutor<ItemCatalogoEntity>, PersonalizacionCatalogoRepository {
 
     /** Inventario no negativo: existe disponibilidad si alguna talla tiene unidades positivas. */
     @Query("""
