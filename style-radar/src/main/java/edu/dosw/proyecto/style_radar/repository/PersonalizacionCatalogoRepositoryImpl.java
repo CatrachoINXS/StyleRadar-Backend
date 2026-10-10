@@ -69,7 +69,8 @@ public class PersonalizacionCatalogoRepositoryImpl implements PersonalizacionCat
 
     private Predicate elegible(Root<ItemCatalogoEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb,
             Set<Estilo> estilos, Set<Talla> tallas, boolean recomendaciones) {
-        Predicate disponible = stock(root, query, cb, Set.of());
+        Predicate disponible = cb.and(stock(root, query, cb, Set.of()),
+                edu.dosw.proyecto.style_radar.service.VisibilidadModeracion.publica().toPredicate(root, query, cb));
         if (!recomendaciones) {
             return disponible;
         }

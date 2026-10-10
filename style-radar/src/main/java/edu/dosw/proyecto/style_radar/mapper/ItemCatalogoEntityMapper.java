@@ -13,6 +13,10 @@ public interface ItemCatalogoEntityMapper {
 
     @Mapping(target = "almacen", ignore = true)
     @Mapping(target = "imagenes", ignore = true)
+    @Mapping(target = "estadoModeracion", ignore = true)
+    @Mapping(target = "fechaDecisionModeracion", ignore = true)
+    @Mapping(target = "administradorDecisionId", ignore = true)
+    @Mapping(target = "motivoModeracion", ignore = true)
     ItemCatalogoEntity toEntity(ItemCatalogo itemCatalogo);
 
     @Mapping(target = "almacenNit", source = "almacen.nit")

@@ -16,6 +16,7 @@ import org.springframework.data.jpa.repository.Lock;
 import jakarta.persistence.LockModeType;
 
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
+import edu.dosw.proyecto.style_radar.service.VisibilidadModeracion;
 
 public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity, Long>,
         JpaSpecificationExecutor<ItemCatalogoEntity>, PersonalizacionCatalogoRepository {
@@ -24,6 +25,8 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
     @Query("""
             select i.id from ItemCatalogoEntity i
             where i.almacen.nit = :nit
+            and """ + VisibilidadModeracion.JPQL + """
+
             and exists (select v.id from InventarioTallaEntity v
                         where v.itemCatalogo = i and v.unidades > 0)
             and (:inicio is null or i.fechaPublicacion >= :inicio)
@@ -42,6 +45,21 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
 
     @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
     List<ItemCatalogoEntity> findByAlmacen_Nit(String nit);
+
+    @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
+    @Query("select i from ItemCatalogoEntity i where i.almacen.nit = :nit and " + VisibilidadModeracion.JPQL
+            + " order by i.id")
+    List<ItemCatalogoEntity> findPublicosByAlmacenNit(@Param("nit") String nit);
+
+    @Query("select i.id from ItemCatalogoEntity i where i.estadoModeracion = :estado "
+            + "or (:estado = edu.dosw.proyecto.style_radar.model.domain.EstadoModeracion.NO_REQUERIDA "
+            + "and i.estadoModeracion is null) order by i.fechaPublicacion asc, i.id asc")
+    Page<Long> findIdsModeracion(@Param("estado") edu.dosw.proyecto.style_radar.model.domain.EstadoModeracion estado,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = { "almacen", "prenda" })
+    @Query("select i from ItemCatalogoEntity i where i.id in :ids")
+    List<ItemCatalogoEntity> findRevisionByIdIn(@Param("ids") List<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from ItemCatalogoEntity i where i.id = :id and i.almacen.nit = :nit")

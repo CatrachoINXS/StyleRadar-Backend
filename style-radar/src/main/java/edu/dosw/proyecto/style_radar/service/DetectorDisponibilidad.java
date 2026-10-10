@@ -31,7 +31,8 @@ public class DetectorDisponibilidad {
 
     public void inventarioActualizado(ItemCatalogoEntity item, int stockAnterior, int stockActual) {
         // Un aumento puede habilitar por primera vez la talla de una búsqueda aunque ya haya stock en otra.
-        if (stockActual <= 0 || stockActual <= stockAnterior) return;
+        if (stockActual <= 0 || stockActual <= stockAnterior
+                || !VisibilidadModeracion.visible(item.getEstadoModeracion())) return;
         boolean reposicionTotal = stockAnterior == 0;
         long ciclo = 0;
         if (reposicionTotal) {

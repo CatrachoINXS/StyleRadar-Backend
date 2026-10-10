@@ -38,6 +38,12 @@ public class SecurityConfig {
                 .requestCache(cache -> cache.disable())
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/catalogo/moderacion")
+                            .hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/catalogo/{itemId}/moderacion")
+                            .hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/admin/catalogo/{itemId}/moderacion/solicitar-revision")
+                            .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/registro",
                                 "/api/v1/usuarios").permitAll()
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**",

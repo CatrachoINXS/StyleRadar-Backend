@@ -85,7 +85,7 @@ class CatalogoServiceImplTest {
         ItemCatalogoEntity entity = itemEntity(10L);
         ItemCatalogo domain = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         // Act
@@ -94,7 +94,7 @@ class CatalogoServiceImplTest {
         // Assert
         assertThat(result).containsExactly(domain);
         assertThat(result.getFirst().getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
-        verify(itemCatalogoRepository).findByAlmacen_Nit(NIT);
+        verify(itemCatalogoRepository).findPublicosByAlmacenNit(NIT);
         verify(itemCatalogoEntityMapper).toDomain(entity);
     }
 
@@ -103,7 +103,7 @@ class CatalogoServiceImplTest {
         ItemCatalogoEntity entity = itemEntity(11L);
         ItemCatalogo domain = itemDomain(11L, AHORA, 4);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -117,7 +117,7 @@ class CatalogoServiceImplTest {
         ItemCatalogoEntity entity = itemEntity(12L);
         ItemCatalogo domain = itemDomain(12L, AHORA, 3);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -133,7 +133,7 @@ class CatalogoServiceImplTest {
         ItemCatalogo disponible = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
         ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT))
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT))
                 .thenReturn(List.of(disponibleEntity, agotadaEntity));
         when(itemCatalogoEntityMapper.toDomain(disponibleEntity)).thenReturn(disponible);
         when(itemCatalogoEntityMapper.toDomain(agotadaEntity)).thenReturn(agotada);
@@ -149,7 +149,7 @@ class CatalogoServiceImplTest {
         ItemCatalogoEntity entity = itemEntity(13L);
         ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(agotada);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -161,14 +161,14 @@ class CatalogoServiceImplTest {
     void obtenerCatalogoShouldReturnEmptyListWhenStoreHasNoItems() {
         // Arrange
         when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of());
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of());
 
         // Act
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
 
         // Assert
         assertThat(result).isEmpty();
-        verify(itemCatalogoRepository).findByAlmacen_Nit(NIT);
+        verify(itemCatalogoRepository).findPublicosByAlmacenNit(NIT);
         verify(itemCatalogoEntityMapper, never()).toDomain(any());
     }
 
@@ -180,7 +180,7 @@ class CatalogoServiceImplTest {
         // Act & Assert
         assertThatThrownBy(() -> catalogoService.obtenerCatalogo(NIT))
                 .isInstanceOf(RecursoNoEncontradoException.class);
-        verify(itemCatalogoRepository, never()).findByAlmacen_Nit(any());
+        verify(itemCatalogoRepository, never()).findPublicosByAlmacenNit(any());
     }
 
     @Test

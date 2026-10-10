@@ -46,7 +46,7 @@ public class CatalogoServiceImpl implements ICatalogoService {
         log.info("Consultando catálogo del almacén con NIT {}", nit);
         validarAlmacenExiste(nit);
 
-        List<ItemCatalogo> catalogo = itemCatalogoRepository.findByAlmacen_Nit(nit).stream()
+        List<ItemCatalogo> catalogo = itemCatalogoRepository.findPublicosByAlmacenNit(nit).stream()
                 .map(itemCatalogoEntityMapper::toDomain)
                 .map(this::aplicarEstadoEfectivo)
                 .filter(item -> item.getEstado() != EstadoItem.AGOTADA)

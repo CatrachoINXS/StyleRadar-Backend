@@ -22,7 +22,7 @@ public class PrendaServiceImpl implements IPrendaService {
 	@Override
 	public List<Prenda> obtenerPrendas() {
 		log.info("Consultando todas las prendas del catálogo");
-		List<Prenda> prendas = prendaRepository.findAll().stream()
+		List<Prenda> prendas = prendaRepository.findPublicas().stream()
 				.map(prendaEntityMapper::toDomain)
 				.toList();
 		log.info("Consulta de prendas completada. Total encontrado: {}", prendas.size());

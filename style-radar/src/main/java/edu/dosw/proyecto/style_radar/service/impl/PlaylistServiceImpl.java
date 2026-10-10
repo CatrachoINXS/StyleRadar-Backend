@@ -66,7 +66,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(entity);
         log.info("Playlist creada exitosamente con ID: {}", guardada.getId());
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -75,7 +75,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         log.info("Consultando playlist ID: {} por usuario ID: {}", id, usuarioConsultaId);
         PlaylistEntity entity = playlistValidator.validarYObtener(id);
         playlistValidator.validarAccesoLectura(entity, usuarioConsultaId);
-        return playlistEntityMapper.toDomain(entity);
+        return respuestaVisible(playlistEntityMapper.toDomain(entity));
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
                 .map(playlistEntityMapper::toDomain)
                 .toList();
         log.info("Playlists públicas obtenidas: {}", publicas.size());
-        return publicas;
+        return prendasVisibles(publicas);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
                 .map(playlistEntityMapper::toDomain)
                 .toList();
         log.info("Playlists obtenidas para usuario ID {}: {}", usuarioId, playlists.size());
-        return playlists;
+        return prendasVisibles(playlists);
     }
 
     @Override
@@ -127,7 +127,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(entity);
         log.info("Playlist ID: {} editada exitosamente", playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -150,7 +150,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         playlist.getPrendas().add(prenda);
         PlaylistEntity guardada = playlistRepository.save(playlist);
         log.info("Prenda ID: {} agregada a playlist ID: {}", prendaId, playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -167,7 +167,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(playlist);
         log.info("Prenda ID: {} retirada de playlist ID: {}", prendaId, playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -190,7 +190,24 @@ public class PlaylistServiceImpl implements IPlaylistService {
         }
 
         PlaylistEntity guardada = playlistRepository.save(playlist);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
+    }
+
+    /** Filtra solo la proyección; conserva asociaciones para retirar prendas o editar playlists. */
+    private Playlist respuestaVisible(Playlist playlist) {
+        return prendasVisibles(List.of(playlist)).getFirst();
+    }
+
+    private List<Playlist> prendasVisibles(List<Playlist> playlists) {
+        var ids = playlists.stream().filter(p -> p.getPrendas() != null)
+                .flatMap(p -> p.getPrendas().stream()).map(edu.dosw.proyecto.style_radar.model.domain.Prenda::getId)
+                .distinct().toList();
+        if (!ids.isEmpty()) {
+            var ocultas = new HashSet<>(prendaRepository.findIdsOcultas(ids));
+            playlists.stream().filter(p -> p.getPrendas() != null).forEach(p ->
+                    p.setPrendas(p.getPrendas().stream().filter(prenda -> !ocultas.contains(prenda.getId())).toList()));
+        }
+        return playlists;
     }
 
     @Override
