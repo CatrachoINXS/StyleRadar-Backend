@@ -10,10 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Isolation;
 import edu.dosw.proyecto.style_radar.exception.RecursoNoEncontradoException;
 import edu.dosw.proyecto.style_radar.mapper.ItemCatalogoEntityMapper;
-import edu.dosw.proyecto.style_radar.model.domain.BusquedaCatalogoCriteria;
 import edu.dosw.proyecto.style_radar.model.domain.ItemCatalogo;
 import edu.dosw.proyecto.style_radar.model.domain.ResultadoRecomendaciones;
-import edu.dosw.proyecto.style_radar.model.entity.BusquedaGuardadaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 import edu.dosw.proyecto.style_radar.repository.BusquedaGuardadaRepository;
@@ -23,6 +21,7 @@ import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.IPersonalizacionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import edu.dosw.proyecto.style_radar.service.CriteriosBusquedaGuardada;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class PersonalizacionServiceImpl implements IPersonalizacionService {
     public Page<ItemCatalogo> obtenerFeed(Long usuarioId, int page, int size) {
         var usuario = usuario(usuarioId);
         var criterios = busquedas.findByUsuario_IdOrderByFechaCreacionDesc(usuarioId).stream()
-                .map(this::criterios).filter(this::significativa).toList();
+                .map(CriteriosBusquedaGuardada::criterios).filter(CriteriosBusquedaGuardada::significativa).toList();
         var ids = items.findIdsFeed(usuario.getPreferenciasEstilo(), usuario.getTallasHabituales(), criterios,
                 PageRequest.of(page, size));
         var resultado = cargar(ids);
@@ -78,21 +77,6 @@ public class PersonalizacionServiceImpl implements IPersonalizacionService {
             item.setEstado(estados.calcular(item));
             return item;
         });
-    }
-
-    private BusquedaCatalogoCriteria criterios(BusquedaGuardadaEntity busqueda) {
-        return BusquedaCatalogoCriteria.builder().q(texto(busqueda.getQuery())).tipo(busqueda.getTipo())
-                .color(texto(busqueda.getColor())).talla(busqueda.getTalla()).precioMin(busqueda.getPrecioMin())
-                .precioMax(busqueda.getPrecioMax()).marca(texto(busqueda.getMarca())).estilo(busqueda.getEstilo()).build();
-    }
-
-    private String texto(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
-    }
-
-    private boolean significativa(BusquedaCatalogoCriteria c) {
-        return c.getQ() != null || c.getTipo() != null || c.getColor() != null || c.getTalla() != null
-                || c.getPrecioMin() != null || c.getPrecioMax() != null || c.getMarca() != null || c.getEstilo() != null;
     }
 
     private void registrar(Long usuarioId, String consulta, Page<?> resultado) {

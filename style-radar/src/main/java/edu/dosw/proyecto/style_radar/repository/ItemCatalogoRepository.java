@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.Instant;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 
@@ -41,6 +43,11 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
     @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
     List<ItemCatalogoEntity> findByAlmacen_Nit(String nit);
 
-    @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from ItemCatalogoEntity i where i.id = :id and i.almacen.nit = :nit")
     Optional<ItemCatalogoEntity> findByIdAndAlmacen_Nit(Long id, String nit);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from ItemCatalogoEntity i where i.id = :id")
+    Optional<ItemCatalogoEntity> findForUpdate(@Param("id") Long id);
 }

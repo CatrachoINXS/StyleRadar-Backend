@@ -64,6 +64,8 @@ class CatalogoServiceImplTest {
 
     private CatalogoServiceImpl catalogoService;
 
+    @Mock private edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad detector;
+
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(AHORA, ZoneOffset.UTC);
@@ -74,7 +76,7 @@ class CatalogoServiceImplTest {
                 prendaEntityMapper,
                 itemCatalogoEntityMapper,
                 new EstadoItemCalculator(clock),
-                clock);
+                clock, detector);
     }
 
     @Test

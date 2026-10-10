@@ -22,6 +22,8 @@ import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 import edu.dosw.proyecto.style_radar.repository.BusquedaGuardadaRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.IUsuarioService;
+import edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad;
+import edu.dosw.proyecto.style_radar.model.domain.TipoObjetivoAlerta;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final BusquedaGuardadaEntityMapper busquedaGuardadaEntityMapper;
     private final UsuarioValidator usuarioValidator;
     private final Clock clock;
+    private final DetectorDisponibilidad detector;
 
     @Override
     @Transactional
@@ -137,6 +140,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
                     return new RecursoNoEncontradoException(
                             "No existe la búsqueda guardada con ID: " + busquedaId + " para el usuario: " + usuarioId);
                 });
+        detector.objetivoEliminado(TipoObjetivoAlerta.BUSQUEDA_GUARDADA, busquedaId);
         busquedaGuardadaRepository.delete(entity);
         log.info("Búsqueda guardada ID: {} eliminada exitosamente", busquedaId);
     }

@@ -27,6 +27,20 @@ import edu.dosw.proyecto.style_radar.security.SecurityErrorHandler;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(SolicitudAlertaInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudAlertaInvalida(
+            SolicitudAlertaInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.dao.ConcurrencyFailureException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConcurrency(
+            org.springframework.dao.ConcurrencyFailureException exception, HttpServletRequest request) {
+        log.warn("Conflicto concurrente en {}", request.getRequestURI());
+        return buildResponse(HttpStatus.CONFLICT, "Conflicto concurrente; reintente la operacion",
+                request.getRequestURI(), Map.of());
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponseDTO> handleAuthentication(
             AuthenticationException exception, HttpServletRequest request) {

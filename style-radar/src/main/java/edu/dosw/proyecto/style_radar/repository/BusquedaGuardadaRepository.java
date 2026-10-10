@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import edu.dosw.proyecto.style_radar.model.entity.BusquedaGuardadaEntity;
 
@@ -11,5 +13,6 @@ public interface BusquedaGuardadaRepository extends JpaRepository<BusquedaGuarda
 
     List<BusquedaGuardadaEntity> findByUsuario_IdOrderByFechaCreacionDesc(Long usuarioId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BusquedaGuardadaEntity> findByIdAndUsuario_Id(Long id, Long usuarioId);
 }

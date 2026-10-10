@@ -16,6 +16,7 @@ import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.IInventarioService;
+import edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad;
 import edu.dosw.proyecto.style_radar.validator.InventarioValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class InventarioServiceImpl implements IInventarioService {
     private final ItemCatalogoEntityMapper itemCatalogoEntityMapper;
     private final InventarioValidator inventarioValidator;
     private final EstadoItemCalculator estadoItemCalculator;
+    private final DetectorDisponibilidad detector;
 
     @Override
     @Transactional
@@ -57,9 +59,12 @@ public class InventarioServiceImpl implements IInventarioService {
     public ItemCatalogo actualizarDisponibilidad(String nit, Long itemId, Talla talla, Integer unidades) {
         ItemCatalogoEntity item = obtenerItemDelAlmacen(nit, itemId);
         InventarioTallaEntity inventario = inventarioValidator.obtenerTallaRegistrada(item.getInventario(), talla);
+        int stockAnterior = itemCatalogoEntityMapper.toDomain(item).getStock();
         inventario.setUnidades(unidades);
         actualizarEstado(item);
-        return itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(item));
+        ItemCatalogo resultado = itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(item));
+        detector.inventarioActualizado(item, stockAnterior, resultado.getStock());
+        return resultado;
     }
 
     private ItemCatalogoEntity obtenerItemDelAlmacen(String nit, Long itemId) {

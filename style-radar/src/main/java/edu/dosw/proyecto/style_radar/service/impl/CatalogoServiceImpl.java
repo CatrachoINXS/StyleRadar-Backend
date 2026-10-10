@@ -21,6 +21,8 @@ import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.PrendaRepository;
 import edu.dosw.proyecto.style_radar.service.EstadoItemCalculator;
 import edu.dosw.proyecto.style_radar.service.ICatalogoService;
+import edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad;
+import edu.dosw.proyecto.style_radar.model.domain.TipoObjetivoAlerta;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,6 +38,7 @@ public class CatalogoServiceImpl implements ICatalogoService {
     private final ItemCatalogoEntityMapper itemCatalogoEntityMapper;
     private final EstadoItemCalculator estadoItemCalculator;
     private final Clock clock;
+    private final DetectorDisponibilidad detector;
 
     @Override
     @Transactional(readOnly = true)
@@ -72,8 +75,9 @@ public class CatalogoServiceImpl implements ICatalogoService {
         itemEntity.setAlmacen(almacen);
         itemEntity.setPrenda(prendaGuardada);
 
-        ItemCatalogo resultado = aplicarEstadoEfectivo(
-                itemCatalogoEntityMapper.toDomain(itemCatalogoRepository.save(itemEntity)));
+        ItemCatalogoEntity guardado = itemCatalogoRepository.save(itemEntity);
+        detector.registrarPublicacion(guardado);
+        ItemCatalogo resultado = aplicarEstadoEfectivo(itemCatalogoEntityMapper.toDomain(guardado));
         log.info("Publicación completada para el item {} en el almacén con NIT {}", resultado.getId(), nit);
         return resultado;
     }
@@ -102,6 +106,7 @@ public class CatalogoServiceImpl implements ICatalogoService {
     public void retirar(String nit, Long itemId) {
         validarAlmacenExiste(nit);
         ItemCatalogoEntity itemEntity = obtenerItemDelAlmacen(nit, itemId);
+        detector.objetivoEliminado(TipoObjetivoAlerta.ITEM_CATALOGO, itemId);
         itemCatalogoRepository.delete(itemEntity);
         log.info("Retiro completado para el item {} del almacén con NIT {}", itemId, nit);
     }
