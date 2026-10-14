@@ -4,6 +4,13 @@ StyleRadar es una plataforma web que conecta compradores con almacenes de moda l
 
 StyleRadar no es un marketplace: es el puente entre la intención de compra digital y la tienda física.
 
+### Despliegues
+
+| Ambiente | Swagger |
+|---|---|
+| QA | [styleradar-backend-qa.azurewebsites.net](https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html) |
+| PROD | [styleradar-backend-prod.azurewebsites.net](https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html) |
+
 ## Backend Sprint 2: catálogo y búsqueda
 
 ### Requisitos
@@ -90,13 +97,22 @@ El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
 
 ### Integración y despliegue continuo
 
-El repositorio cuenta con un pipeline en GitHub Actions definido en `.github/workflows/ci-qa.yml`. Cada vez que se integran cambios en la rama `main` se ejecutan los siguientes pasos:
+El repositorio cuenta con dos pipelines en GitHub Actions.
+
+**QA** (`.github/workflows/ci-qa.yml`). Cada vez que se integran cambios en la rama `main` se ejecutan los siguientes pasos:
 
 1. **Pruebas y cobertura:** se ejecutan todas las pruebas y se verifica que la cobertura sea de al menos 85 %.
 2. **Imagen QA:** se construye la imagen del backend y se publica en Docker Hub con los tags `qa-latest` y `qa-<commit>`.
 3. **Despliegue en QA:** la nueva imagen se despliega en el App Service de QA en Azure y se comprueba que la documentación de la API responda correctamente.
 
 Las pruebas también se ejecutan en cada pull request hacia `main` o `develop`, sin publicar ni desplegar.
+
+**PROD** (`.github/workflows/ci-prod.yml`). Se ejecuta al publicar un tag de versión con el formato `v*.*.*`, por ejemplo `v1.0.0`:
+
+1. **Pruebas y cobertura:** se repite la validación de las pruebas y de la cobertura mínima.
+2. **Imagen de la versión:** se publica la imagen en Docker Hub con el número de versión y con el tag `latest`.
+3. **Aprobación manual:** el despliegue queda en espera hasta que un revisor autorizado lo apruebe en el ambiente `production` de GitHub.
+4. **Despliegue en PROD:** la imagen aprobada se despliega en el App Service de producción y se comprueba que la API responda correctamente.
 
 El historial de ejecuciones está disponible en la pestaña [Actions](https://github.com/CatrachoINXS/StyleRadar-Backend/actions) del repositorio.
 
@@ -112,6 +128,8 @@ Secrets utilizados por el pipeline (los valores no se publican):
 | `DB_USERNAME_QA` | Ambiente `qa` | Usuario de la base de datos de QA. |
 | `DB_PASSWORD_QA` | Ambiente `qa` | Contraseña de la base de datos de QA. |
 | `JWT_SECRET_QA` | Ambiente `qa` | Clave de los tokens de acceso en QA. |
+
+En producción, la conexión a la base de datos y la clave de los tokens se configuran directamente como variables de entorno del App Service, por lo que el pipeline de PROD solo utiliza los secrets del repositorio.
 
 ### Swagger/OpenAPI
 
@@ -148,7 +166,7 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 
 ### Pruebas y calidad
 
-La suite utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
+La suite cuenta actualmente con 260 pruebas y una cobertura de líneas del 92,2 %. Utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
 
 ## Diagramas académicos
 
@@ -165,6 +183,18 @@ Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal
 ### Sistemas externos
 Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
 
+
+## Diagrama de Despliegue
+El siguiente diagrama muestra cómo se construye y se publica el backend de StyleRadar, desde el repositorio hasta los ambientes de QA y producción en Azure. Se conserva el mismo código de colores de los demás diagramas.
+
+![](style-radar/docs/uml/DiagramaDespliegueStyleRadar.drawio.png)
+
+### Descripción del despliegue
+Los cambios del equipo se integran en el repositorio de GitHub. Cada integración en la rama `main` activa el pipeline de QA, y cada tag de versión activa el pipeline de producción. Ambos pipelines ejecutan las pruebas, construyen la imagen del backend y la publican en Docker Hub.
+
+En Azure, cada ambiente tiene su propio grupo de recursos con un App Service, donde se ejecuta el contenedor de la aplicación, y una base de datos PostgreSQL independiente. De esta forma, las pruebas realizadas en QA no afectan la información de producción. El despliegue en producción requiere además una aprobación manual en GitHub.
+
+Los usuarios acceden a la API por HTTPS a través de la URL pública del App Service.
 
 ## Diagrama de Componentes General
 El siguiente diagrama de componentes muestra la arquitectura general del sistema, dividida en tres partes principales.
