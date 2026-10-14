@@ -83,6 +83,9 @@ Cada versión publicada tiene su propio tag, por ejemplo `juanamunoz/styleradar:
 | `JPA_DDL_AUTO` | Estrategia de Hibernate para el esquema. | `update` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
+| `JWT_SECRET_BASE64` | Clave HS256 en Base64, mínimo 256 bits. Obligatoria: sin ella la API no arranca. | `openssl rand -base64 32` |
+| `JWT_DURATION` | Vigencia del token (ISO-8601). | `PT60M` |
+| `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
 
 El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
 
@@ -94,6 +97,31 @@ Con la aplicación en ejecución, la interfaz y el documento OpenAPI están disp
 - `/v3/api-docs`
 
 Las interfaces del paquete `controller/docs` describen únicamente los endpoints implementados de prendas, catálogo, inventario, imágenes y búsqueda.
+
+### Seguridad: roles y permisos
+
+Autenticación stateless con JWT (HS256) y contraseñas con BCrypt. `POST /api/v1/auth/login` devuelve el token; se envía como `Authorization: Bearer <token>` (botón **Authorize** en Swagger). Cada endpoint protegido declara `@PreAuthorize` en su interfaz `controller/docs/*Api` y `/api/v1/admin/**` además exige `ADMIN_STYLERADAR` en `SecurityConfig`. El usuario de las rutas `/me` sale siempre del token, nunca de la URL.
+
+Respuestas: sin token o token inválido → **401**; rol incorrecto → **403**; recurso ajeno → **404** o **422** sin revelar datos. CORS solo admite `CORS_ALLOWED_ORIGINS`.
+
+| Endpoint | Público | COMPRADOR | ADMIN_ALMACEN | REPRESENTANTE_FUNDACION | ADMIN_STYLERADAR |
+|---|:-:|:-:|:-:|:-:|:-:|
+| `POST /api/v1/auth/login`, `POST /api/v1/auth/registro`, `POST /api/v1/usuarios` | ✅ | | | | |
+| `GET` catálogo público, búsqueda, almacenes, Swagger | ✅ | | | | |
+| `/api/v1/usuarios/me` (perfil, preferencias, tallas, búsquedas guardadas) | | ✅ | | | |
+| `GET /api/v1/usuarios/{id}` | | | | | ✅ |
+| `/api/v1/usuarios/me/alertas`, `/notificaciones`, `/feed`, `/recomendaciones` | | ✅ | | | |
+| `GET /api/v1/segunda-mano`, `GET /api/v1/segunda-mano/{id}`, `GET /api/v1/playlists`, `GET /api/v1/playlists/{id}` | | ✅ | ✅ | ✅ | ✅ |
+| `POST /api/v1/segunda-mano`, `/api/v1/usuarios/me/segunda-mano/**` (editar, vender, donar, retirar) | | ✅ | | | |
+| `POST /api/v1/playlists`, `/api/v1/usuarios/me/playlists/**`, `POST /api/v1/playlists/{id}/like`, `/guardar` | | ✅ | | | |
+| `/api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/**`, `/api/v1/usuarios/me/conversaciones` | | ✅ | | | |
+| `/api/v1/usuarios/me/probador/**` | | ✅ | | | |
+| `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | | ✅ | | | |
+| `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | | | | ✅ | |
+| `PATCH /api/v1/donaciones/{id}/recogida` (solo participantes) | | ✅ | | ✅ | |
+| `/api/v1/admin/fundaciones/**`, `/api/v1/admin/catalogo/**` | | | | | ✅ |
+
+Las cuentas sin roles registrados se tratan como `COMPRADOR`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
 
 ### Arquitectura implementada
 
@@ -118,6 +146,27 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 - Búsqueda global con texto libre, filtros combinados y paginación.
 - Orden por distancia y reputación del almacén.
 - Fallback de prendas similares cuando una búsqueda textual no tiene coincidencias directas.
+
+### Alcance Sprint 3 — Juan Diego Valderrama (líder técnico)
+
+| RF | Funcionalidad | Endpoint |
+|---|---|---|
+| RF-23 | Cargar fotografía frontal (JPEG/PNG, ≤ 5 MB, ≥ 300x400, vertical) | `POST /api/v1/usuarios/me/probador/foto` |
+| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la composición aproximada y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-27 | Eliminar la fotografía del probador | `DELETE /api/v1/usuarios/me/probador/foto` |
+| RF-40 | Iniciar chat con el vendedor (sin tiempo real; WebSockets en el Corte 3) | `POST /api/v1/segunda-mano/{id}/conversaciones` |
+| RF-41 | Coordinar la entrega por mensajes privados | `GET/POST /api/v1/conversaciones/{id}/mensajes` |
+| RF-42 | Marcar prenda de segunda mano para donación | `PATCH /api/v1/usuarios/me/segunda-mano/{id}/donacion` |
+| RF-43 | Consultar fundaciones activas cercanas, filtrables por tipo de prenda | `GET /api/v1/fundaciones` |
+| RF-44, RF-45 | Seleccionar fundación y enviar la solicitud | `POST /api/v1/usuarios/me/donaciones` |
+| RF-46 | Consultar solicitudes de la fundación | `GET /api/v1/fundaciones/mi-fundacion/solicitudes` |
+| RF-47 | Aceptar o rechazar (motivo obligatorio al rechazar) | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/decision` |
+| RF-48 | Coordinar punto y franja de recogida | `PATCH /api/v1/donaciones/{id}/recogida` |
+| RF-49 | Confirmar recepción; la prenda queda DONADA | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/recepcion` |
+| RF-63, RF-64, RF-65 | Registrar, editar y desactivar fundaciones aliadas | `/api/v1/admin/fundaciones` |
+| RF-71, RNF-12 | Guardar playlist en el perfil; máximo 15 prendas por playlist | `POST /api/v1/playlists/{id}/guardar` |
+
+Ciclo de una donación: `PENDIENTE → ACEPTADA | RECHAZADA → COORDINADA → RECIBIDA`. Una prenda solo tiene una solicitud en curso; si se rechaza, puede ofrecerse a otra fundación.
 
 ### Pruebas y calidad
 
