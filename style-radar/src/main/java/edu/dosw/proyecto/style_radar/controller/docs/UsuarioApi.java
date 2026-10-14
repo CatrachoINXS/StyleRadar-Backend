@@ -47,6 +47,7 @@ public interface UsuarioApi {
     @Operation(summary = "Configurar preferencias de estilo", description = "Actualiza las preferencias de estilo favoritas de un usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Preferencias de estilo actualizadas"),
+            @ApiResponse(responseCode = "403", description = "id no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -59,6 +60,7 @@ public interface UsuarioApi {
     @Operation(summary = "Configurar tallas habituales", description = "Actualiza las tallas habituales de un usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tallas habituales actualizadas"),
+            @ApiResponse(responseCode = "403", description = "id no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -71,6 +73,7 @@ public interface UsuarioApi {
     @Operation(summary = "Guardar búsqueda en el perfil", description = "Almacena los filtros o consulta de búsqueda frecuente del usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Búsqueda guardada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "id no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -83,6 +86,7 @@ public interface UsuarioApi {
     @Operation(summary = "Consultar búsquedas guardadas", description = "Retorna el historial de búsquedas guardadas de un usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Búsquedas guardadas consultadas"),
+            @ApiResponse(responseCode = "403", description = "id no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
@@ -92,6 +96,7 @@ public interface UsuarioApi {
     @Operation(summary = "Eliminar búsqueda guardada", description = "Elimina una búsqueda guardada del perfil del usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Búsqueda guardada eliminada"),
+            @ApiResponse(responseCode = "403", description = "id no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o búsqueda no encontrada"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })

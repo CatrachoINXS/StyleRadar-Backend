@@ -29,6 +29,7 @@ public interface SegundaManoApi {
     @Operation(summary = "Publicar prenda de segunda mano", description = "Publica una prenda usada con su estado de conservación y precio.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Prenda de segunda mano publicada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "422", description = "Regla de negocio no cumplida"),
@@ -69,6 +70,7 @@ public interface SegundaManoApi {
     @Operation(summary = "Editar publicación de segunda mano", description = "Actualiza los datos de una prenda usada disponible.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Publicación actualizada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario o publicación no encontrada"),
             @ApiResponse(responseCode = "422", description = "No se puede editar si está vendida o retirada"),
@@ -83,6 +85,7 @@ public interface SegundaManoApi {
     @Operation(summary = "Marcar prenda como vendida", description = "Actualiza el estado de la publicación a VENDIDA.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Prenda marcada como vendida"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o publicación no encontrada"),
             @ApiResponse(responseCode = "422", description = "Transición de estado inválida"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -95,6 +98,7 @@ public interface SegundaManoApi {
     @Operation(summary = "Retirar publicación de segunda mano", description = "Retira la publicación del catálogo público.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Publicación retirada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o publicación no encontrada"),
             @ApiResponse(responseCode = "422", description = "La publicación ya estaba retirada"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")

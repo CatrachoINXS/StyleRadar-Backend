@@ -209,6 +209,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity playlist = playlistRepository.findForUpdate(playlistId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe una playlist con ID: " + playlistId));
+        playlistValidator.validarAccesoLectura(playlist, usuarioId);
         if (playlist.getLikesUsuarios() == null) {
             playlist.setLikesUsuarios(new HashSet<>());
         }

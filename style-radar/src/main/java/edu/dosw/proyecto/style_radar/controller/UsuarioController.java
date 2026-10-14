@@ -1,6 +1,7 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import java.util.List;
+import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,7 @@ public class UsuarioController implements UsuarioApi {
     private final IUsuarioService usuarioService;
     private final UsuarioMapper usuarioMapper;
     private final BusquedaGuardadaMapper busquedaGuardadaMapper;
+    private final IdentidadAutenticada identidad;
 
     @Override
     public ResponseEntity<UsuarioResponseDTO> registrar(@Valid @RequestBody RegistrarUsuarioRequestDTO request) {
@@ -50,6 +52,7 @@ public class UsuarioController implements UsuarioApi {
     public ResponseEntity<UsuarioResponseDTO> actualizarPreferenciasEstilo(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarPreferenciasEstiloRequestDTO request) {
+        identidad.exigirUsuario(id);
         Usuario actualizado = usuarioService.actualizarPreferenciasEstilo(id, request.getPreferencias());
         return ResponseEntity.ok(usuarioMapper.toResponse(actualizado));
     }
@@ -58,6 +61,7 @@ public class UsuarioController implements UsuarioApi {
     public ResponseEntity<UsuarioResponseDTO> actualizarTallasHabituales(
             @PathVariable Long id,
             @Valid @RequestBody ActualizarTallasHabitualesRequestDTO request) {
+        identidad.exigirUsuario(id);
         Usuario actualizado = usuarioService.actualizarTallasHabituales(id, request.getTallas());
         return ResponseEntity.ok(usuarioMapper.toResponse(actualizado));
     }
@@ -66,6 +70,7 @@ public class UsuarioController implements UsuarioApi {
     public ResponseEntity<BusquedaGuardadaResponseDTO> guardarBusqueda(
             @PathVariable Long id,
             @Valid @RequestBody GuardarBusquedaRequestDTO request) {
+        identidad.exigirUsuario(id);
         BusquedaGuardada busqueda = busquedaGuardadaMapper.toDomain(request);
         BusquedaGuardada guardada = usuarioService.guardarBusqueda(id, busqueda);
         return ResponseEntity.status(HttpStatus.CREATED).body(busquedaGuardadaMapper.toResponse(guardada));
@@ -73,6 +78,7 @@ public class UsuarioController implements UsuarioApi {
 
     @Override
     public ResponseEntity<List<BusquedaGuardadaResponseDTO>> obtenerBusquedasGuardadas(@PathVariable Long id) {
+        identidad.exigirUsuario(id);
         List<BusquedaGuardadaResponseDTO> busquedas = usuarioService.obtenerBusquedasGuardadas(id).stream()
                 .map(busquedaGuardadaMapper::toResponse)
                 .toList();
@@ -83,6 +89,7 @@ public class UsuarioController implements UsuarioApi {
     public ResponseEntity<Void> eliminarBusquedaGuardada(
             @PathVariable Long id,
             @PathVariable Long busquedaId) {
+        identidad.exigirUsuario(id);
         usuarioService.eliminarBusquedaGuardada(id, busquedaId);
         return ResponseEntity.noContent().build();
     }

@@ -1,0 +1,125 @@
+{
+  "phase": "reproduccion",
+  "totals": {
+    "tests": 26,
+    "failures": 18,
+    "errors": 0,
+    "skipped": 0
+  },
+  "coverage": [],
+  "suites": [
+    {
+      "name": "edu.dosw.proyecto.style_radar.controller.CierreSeguridadHttpIntegrationTest",
+      "tests": 26,
+      "failures": 18,
+      "errors": 0,
+      "skipped": 0,
+      "cases": [
+        {
+          "name": "propietarioCambiaVisibilidadYRankingPorHTTPConservandoLikes",
+          "result": "passed"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[1]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[2]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[3]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[4]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[5]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[6]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[7]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[8]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[9]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[10]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[11]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[12]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[13]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[14]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[15]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[16]",
+          "result": "failure"
+        },
+        {
+          "name": "identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String)[17]",
+          "result": "passed"
+        },
+        {
+          "name": "likeDeOtroUsuarioNoExponePlaylistPrivadaNiEscribe",
+          "result": "failure"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[1]",
+          "result": "passed"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[2]",
+          "result": "passed"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[3]",
+          "result": "passed"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[4]",
+          "result": "passed"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[5]",
+          "result": "passed"
+        },
+        {
+          "name": "jwtRechazadoNoPuedeEliminarDatos(String)[6]",
+          "result": "passed"
+        },
+        {
+          "name": "identidadJWTResuelveConsultaPrivadaSinParametroCliente",
+          "result": "failure"
+        }
+      ]
+    }
+  ]
+}
