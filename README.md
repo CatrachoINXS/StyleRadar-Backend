@@ -4,6 +4,13 @@ StyleRadar es una plataforma web que conecta compradores con almacenes de moda l
 
 StyleRadar no es un marketplace: es el puente entre la intención de compra digital y la tienda física.
 
+### Despliegues
+
+| Ambiente | Swagger |
+|---|---|
+| QA | [styleradar-backend-qa.azurewebsites.net](https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html) |
+| PROD | [styleradar-backend-prod.azurewebsites.net](https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html) |
+
 ## Backend Sprint 2: catálogo y búsqueda
 
 ### Requisitos
@@ -90,13 +97,22 @@ El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
 
 ### Integración y despliegue continuo
 
-El repositorio cuenta con un pipeline en GitHub Actions definido en `.github/workflows/ci-qa.yml`. Cada vez que se integran cambios en la rama `main` se ejecutan los siguientes pasos:
+El repositorio cuenta con dos pipelines en GitHub Actions.
+
+**QA** (`.github/workflows/ci-qa.yml`). Cada vez que se integran cambios en las ramas `develop` o `main` se ejecutan los siguientes pasos:
 
 1. **Pruebas y cobertura:** se ejecutan todas las pruebas y se verifica que la cobertura sea de al menos 85 %.
 2. **Imagen QA:** se construye la imagen del backend y se publica en Docker Hub con los tags `qa-latest` y `qa-<commit>`.
 3. **Despliegue en QA:** la nueva imagen se despliega en el App Service de QA en Azure y se comprueba que la documentación de la API responda correctamente.
 
 Las pruebas también se ejecutan en cada pull request hacia `main` o `develop`, sin publicar ni desplegar.
+
+**PROD** (`.github/workflows/ci-prod.yml`). Se ejecuta al publicar un tag de versión con el formato `v*.*.*`, por ejemplo `v1.0.0`:
+
+1. **Pruebas y cobertura:** se repite la validación de las pruebas y de la cobertura mínima.
+2. **Imagen de la versión:** se publica la imagen en Docker Hub con el número de versión y con el tag `latest`.
+3. **Aprobación manual:** el despliegue queda en espera hasta que un revisor autorizado lo apruebe en el ambiente `production` de GitHub.
+4. **Despliegue en PROD:** la imagen aprobada se despliega en el App Service de producción y se comprueba que la API responda correctamente.
 
 El historial de ejecuciones está disponible en la pestaña [Actions](https://github.com/CatrachoINXS/StyleRadar-Backend/actions) del repositorio.
 
@@ -112,6 +128,8 @@ Secrets utilizados por el pipeline (los valores no se publican):
 | `DB_USERNAME_QA` | Ambiente `qa` | Usuario de la base de datos de QA. |
 | `DB_PASSWORD_QA` | Ambiente `qa` | Contraseña de la base de datos de QA. |
 | `JWT_SECRET_QA` | Ambiente `qa` | Clave de los tokens de acceso en QA. |
+
+En producción, la conexión a la base de datos y la clave de los tokens se configuran directamente como variables de entorno del App Service, por lo que el pipeline de PROD solo utiliza los secrets del repositorio.
 
 ### Swagger/OpenAPI
 
@@ -148,7 +166,7 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 
 ### Pruebas y calidad
 
-La suite utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
+La suite cuenta actualmente con 260 pruebas y una cobertura de líneas del 92,2 %. Utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
 
 ## Diagramas académicos
 
@@ -166,48 +184,54 @@ Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal
 Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
 
 
+## Diagrama de Despliegue
+El siguiente diagrama muestra cómo se construye y se publica el backend de StyleRadar, desde el repositorio hasta los ambientes de QA y producción en Azure. Se conserva el mismo código de colores de los demás diagramas.
+
+![](style-radar/docs/uml/DiagramaDespliegueStyleRadar.drawio.png)
+
+### Descripción del despliegue
+Los cambios del equipo se integran en el repositorio de GitHub. Cada integración en las ramas `develop` o `main` activa el pipeline de QA, y cada tag de versión activa el pipeline de producción. Ambos pipelines ejecutan las pruebas, construyen la imagen del backend y la publican en Docker Hub.
+
+En Azure, cada ambiente tiene su propio grupo de recursos con un App Service, donde se ejecuta el contenedor de la aplicación, y una base de datos PostgreSQL independiente. De esta forma, las pruebas realizadas en QA no afectan la información de producción. El despliegue en producción requiere además una aprobación manual en GitHub.
+
+Los usuarios acceden a la API por HTTPS a través de la URL pública del App Service.
+
 ## Diagrama de Componentes General
-El siguiente diagrama de componentes muestra la arquitectura general del sistema, dividida en tres partes principales.
+El siguiente diagrama de componentes muestra la arquitectura general del sistema.
 
 ![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
 
-La primer parte es el ***Front-End*** que representa la interfaz de usuario con la que interactuan todos los actores. La segunda parte es el ***Back-End***, encargado de toda la lógica de negocio y de proveer la interfaz para que sea utilizada por el front. La tercera parte es la ***Base de Datos***, componente encargado de persistir la información de la plataforma y de proveer la interfaz para el back.
+El ***Front-End*** representa la interfaz con la que interactúan los usuarios y consume la API REST del ***Back-End*** por HTTPS en la ruta `/api/v1`. El Back-End, construido con Spring Boot, contiene la lógica de negocio y publica su documentación con Swagger/OpenAPI. La ***Base de Datos*** PostgreSQL almacena la información de la plataforma y el Back-End accede a ella por medio de JDBC.
 
 ## Diagrama de Componentes Especifico
-Este diagrama de componentes específico muestra la arquitectura interna del Back-End de StyleRadar. En él tienen cinco módulos explicados a continuacion.
+Este diagrama muestra la arquitectura interna del Back-End de StyleRadar según los módulos implementados actualmente.
 
 ![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
 
 ### Módulos
-Cada módulo se encarga de una parte específica de la plataforma. 
-- **Usuarios:** Gestiona y valida la información de los usuarios. 
-- **Catálogo:** Para administrar el inventario y prendas que suben los almacenes a la plataforma.
-- **Donaciones:** Maneja todo lo relacionado con las donaciones de prendas para las fundaciones aliadas.
-- **Probador virtual:** Maneja la lógica con la herramienta IA para que los usuarios compradores puedan probarse las prendas virtualmente.
-- **Suscripciones:** Se encarga de los planes de los usuarios compradores y los almacenes administrando los pagos.
-  
+Cada módulo se encarga de una parte específica de la plataforma:
+- **Usuarios:** registro y consulta de usuarios, preferencias de estilo, tallas habituales y búsquedas guardadas.
+- **Catálogo de almacén:** publicación, edición y retiro de prendas, inventario por talla e imágenes del catálogo de cada almacén.
+- **Búsqueda de prendas:** búsqueda global con filtros, orden por distancia y reputación, y consulta de prendas similares.
+- **Segunda mano:** publicación, búsqueda, edición y venta de prendas usadas entre usuarios.
+- **Playlists:** creación de playlists de estilo, gestión de sus prendas e interacción de otros usuarios.
+
+Además, existen componentes transversales para el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
+
 ### Estructura de los módulos
-En cáda módulo los componentes interactuan de la siguiente manera: Un actor envía una solicitud y esta llega al `Controller`. Este transfiere los datos a un `MapperIn` para transformarlos en objetos `DTO` y enviarlos al `Validator`, el cual comprueba que se cumplan todas las reglas de negocio. 
-
-Después de la verificacion se pasa la informacion al `Service`, quien contiene toda la lógica de negocio e interactua con los objetos de dominio. Despues de ello, se pasa al `MapperOut` para transformar la informacion y pasarla al `Repository`, el cual se encarga de la comunicación con la base de datos.
-
-Al final, todos los repositorios de cada módulo llegan a la base de datos, para almacenar y recuperar la informacion cuando se requiera.
+En cada módulo los componentes interactúan de la siguiente manera: la solicitud llega al `Controller`, que usa un `Mapper` para convertir los datos recibidos en objetos del dominio. Luego, el `Service` aplica la lógica de negocio apoyándose en los `Validator` y calculadores, que verifican las reglas del módulo. Para guardar o consultar información, el `EntityMapper` convierte los objetos del dominio en entidades, y el `Repository` se comunica con la base de datos.
 
 ## Diagrama de Clases
-El diagrama existente es un artefacto académico que debe actualizarse manualmente para reflejar el código vigente del Sprint 2.
-
-En el siguiente diagrama de clases se pueden observar los objetos del dominio, se muestran las entidades principales, sus atributos y las interacciones que conectan el sistema.
+En el siguiente diagrama de clases se observan las clases del dominio implementadas en el backend, con sus atributos, métodos y relaciones.
 
 ![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
 
 ### Estructura general del diagrama de clases
-En el diagrama se observa en color azul todo lo relacionado con la gestión de usuarios, perfiles y catálogos de almacén. Se encuentra la clase abstracta `Usuario`, de la cual heredan los diferentes tipos de actores: el `UsuarioComprador`, el `Almacen`, el `Administrador` y la `FundacionAliada`. Además, incluye clases auxiliares como `Direccion`, `Mensaje` y una enumeración con los estados del usuario.
+En color azul se encuentra lo relacionado con los usuarios y los almacenes. La clase `Usuario` guarda las preferencias de estilo y las tallas habituales, y se relaciona con sus búsquedas guardadas (`BusquedaGuardada`). La clase `Almacen` contiene la información de contacto, la ubicación y la reputación de cada tienda.
 
-En color amarillo se agrupa lo referente a las prendas, con la clase `Prenda` y sus enumeraciones tipo de prenda, estilo y estado. También se agrupa aquí lo relacionado con las publicaciones, mediante `PublicacionPrenda` y `PublicacionSegundaMano`.
+En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la prenda; `ItemCatalogo` representa su publicación en el catálogo de un almacén, con su inventario por talla (`InventarioTalla`) y sus imágenes (`ImagenCatalogo`). También se encuentran las publicaciones de segunda mano (`PublicacionSegundaMano`), los criterios de búsqueda y las enumeraciones de tipo, estilo, talla y estados.
 
-En color verde se observa una de las ideas diferenciadoras del proyecto: las Playlists de estilo, las cuales pueden contener múltiples publicaciones de prendas.
-
-En color morado se aprecia otro de los aspectos clave y diferenciadores de StyleRadar: el probador virtual, herramienta con la cual los usuarios compradores podrán probarse las prendas del catálogo.
+En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta.
 
 ## Diagrama Entidad-Relación
 El siguiente diagrama muestra las tablas de la base de datos de StyleRadar, sus columnas y las relaciones entre ellas. Se conserva el mismo código de colores del diagrama de clases.
