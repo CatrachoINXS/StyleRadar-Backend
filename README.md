@@ -81,10 +81,37 @@ Cada versión publicada tiene su propio tag, por ejemplo `juanamunoz/styleradar:
 | `API_PORT` | Puerto expuesto de la API en la máquina local. | `8080` |
 | `SERVER_PORT` | Puerto interno de la aplicación. | `8080` |
 | `JPA_DDL_AUTO` | Estrategia de Hibernate para el esquema. | `update` |
+| `JWT_SECRET_BASE64` | Clave para firmar los tokens de acceso, codificada en Base64 y de al menos 256 bits. Se puede generar con `openssl rand -base64 32`. | `change-me-base64-key` |
+| `JWT_DURATION` | Tiempo de validez de los tokens de acceso. | `PT60M` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
 
 El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
+
+### Integración y despliegue continuo
+
+El repositorio cuenta con un pipeline en GitHub Actions definido en `.github/workflows/ci-qa.yml`. Cada vez que se integran cambios en la rama `main` se ejecutan los siguientes pasos:
+
+1. **Pruebas y cobertura:** se ejecutan todas las pruebas y se verifica que la cobertura sea de al menos 85 %.
+2. **Imagen QA:** se construye la imagen del backend y se publica en Docker Hub con los tags `qa-latest` y `qa-<commit>`.
+3. **Despliegue en QA:** la nueva imagen se despliega en el App Service de QA en Azure y se comprueba que la documentación de la API responda correctamente.
+
+Las pruebas también se ejecutan en cada pull request hacia `main` o `develop`, sin publicar ni desplegar.
+
+El historial de ejecuciones está disponible en la pestaña [Actions](https://github.com/CatrachoINXS/StyleRadar-Backend/actions) del repositorio.
+
+Secrets utilizados por el pipeline (los valores no se publican):
+
+| Secret | Ámbito | Uso |
+|---|---|---|
+| `DOCKERHUB_USERNAME` | Repositorio | Usuario de Docker Hub. |
+| `DOCKERHUB_TOKEN` | Repositorio | Token de acceso a Docker Hub. |
+| `AZURE_CREDENTIALS` | Repositorio | Credenciales para desplegar en Azure. |
+| `AZURE_WEBAPP_NAME_QA` | Ambiente `qa` | Nombre del App Service de QA. |
+| `DB_URL_QA` | Ambiente `qa` | URL de la base de datos de QA. |
+| `DB_USERNAME_QA` | Ambiente `qa` | Usuario de la base de datos de QA. |
+| `DB_PASSWORD_QA` | Ambiente `qa` | Contraseña de la base de datos de QA. |
+| `JWT_SECRET_QA` | Ambiente `qa` | Clave de los tokens de acceso en QA. |
 
 ### Swagger/OpenAPI
 
