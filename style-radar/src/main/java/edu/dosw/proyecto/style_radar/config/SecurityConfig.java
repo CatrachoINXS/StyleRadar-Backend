@@ -38,6 +38,15 @@ public class SecurityConfig {
                 .requestCache(cache -> cache.disable())
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/admin/almacenes/{nit}/administradores/{usuarioId}")
+                            .hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/almacenes/{nit}/suscripciones")
+                            .hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/almacenes/{nit}/suscripciones",
+                                "/api/v1/almacenes/{nit}/suscripciones/vigente").hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/almacenes/{nit}/suscripciones/{id}/renovacion")
+                            .hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/planes-suscripcion").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/usuarios", "/api/v1/admin/usuarios/{id}")
                             .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/usuarios/{id}/estado")
