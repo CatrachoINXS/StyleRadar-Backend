@@ -25,6 +25,8 @@ public class DetectorDisponibilidad {
     private final ItemCatalogoRepository items;
     private final Clock clock;
     private final AlmacenRepository almacenes;
+    private final BloqueoCuentaService cuentas;
+    private final UsuarioRepository usuarios;
 
     public void registrarPublicacion(ItemCatalogoEntity item) {
         disponibilidad.save(nuevoEstado(item, false));
@@ -54,11 +56,18 @@ public class DetectorDisponibilidad {
         if (reposicionTotal) ids.addAll(alertas.findIdsActivasDelObjetivo(TipoObjetivoAlerta.ITEM_CATALOGO, item.getId()));
         var candidatas = ids.stream().map(id -> alertas.findForUpdate(id).orElseThrow())
                 .filter(AlertaEntity::isActiva).toList();
+        // Item -> almacén -> alertas -> usuarios ASC. RF66 toma solo usuarios, sin invertir el orden.
+        // Consultar estado escalar bajo lock evita refresh con cascadas a búsquedas del contexto.
+        var destinatarios = cuentas.bloquear(candidatas.stream().map(a -> a.getUsuario().getId()).toList());
         var busquedasPorId = busquedas.findAllById(candidatas.stream()
                 .filter(a -> a.getTipoObjetivo() == TipoObjetivoAlerta.BUSQUEDA_GUARDADA)
                 .map(AlertaEntity::getIdentificadorObjetivo).distinct().toList()).stream()
                 .collect(Collectors.toMap(BusquedaGuardadaEntity::getId, Function.identity()));
         for (var alerta : candidatas) {
+            var usuario = destinatarios.get(alerta.getUsuario().getId());
+            if (usuario == null) continue;
+            var estadoCuenta = usuarios.findEstadoActual(usuario.getId());
+            if (estadoCuenta != null && estadoCuenta != EstadoCuenta.ACTIVA) continue;
             if (alerta.getTipoObjetivo() == TipoObjetivoAlerta.ITEM_CATALOGO) {
                 registrar(alerta, item.getId(), TipoEventoNotificacion.DISPONIBILIDAD_RESTABLECIDA, ciclo);
             } else if (coincide(alerta, item, busquedasPorId.get(alerta.getIdentificadorObjetivo()))) {

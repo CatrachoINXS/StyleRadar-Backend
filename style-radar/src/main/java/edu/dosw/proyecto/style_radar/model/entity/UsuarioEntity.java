@@ -38,6 +38,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@org.hibernate.annotations.DynamicUpdate
 public class UsuarioEntity {
 
     @Id
@@ -86,4 +87,17 @@ public class UsuarioEntity {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<BusquedaGuardadaEntity> busquedasGuardadas = new ArrayList<>();
+
+    private Instant fechaCambioEstado;
+    private Long administradorCambioEstadoId;
+    @Column(length = 1000)
+    private String motivoCambioEstado;
+
+    // Conserva el constructor previo; la trazabilidad de cuentas históricas es nullable.
+    public UsuarioEntity(Long id, String nombre, String email, String telefono, Instant fechaRegistro,
+            Set<Rol> roles, EstadoCuenta estadoCuenta, Set<Estilo> preferenciasEstilo,
+            Set<Talla> tallasHabituales, List<BusquedaGuardadaEntity> busquedasGuardadas) {
+        this(id, nombre, email, telefono, fechaRegistro, roles, estadoCuenta, preferenciasEstilo,
+                tallasHabituales, busquedasGuardadas, null, null, null);
+    }
 }

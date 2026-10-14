@@ -38,6 +38,10 @@ public class SecurityConfig {
                 .requestCache(cache -> cache.disable())
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/usuarios", "/api/v1/admin/usuarios/{id}")
+                            .hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/usuarios/{id}/estado")
+                            .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/almacenes/verificacion",
                                 "/api/v1/admin/almacenes/{nit}/verificacion").hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/almacenes/{nit}/verificacion")

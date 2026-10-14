@@ -16,6 +16,9 @@ import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 public interface UsuarioEntityMapper {
 
     @Mapping(target = "busquedasGuardadas", ignore = true)
+    @Mapping(target = "fechaCambioEstado", ignore = true)
+    @Mapping(target = "administradorCambioEstadoId", ignore = true)
+    @Mapping(target = "motivoCambioEstado", ignore = true)
     UsuarioEntity toEntity(Usuario usuario);
 
     @Mapping(target = "roles", source = "roles", qualifiedByName = "rolesCompatibles")
