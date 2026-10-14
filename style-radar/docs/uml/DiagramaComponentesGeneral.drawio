@@ -1,0 +1,17 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="Componentes General StyleRadar" name="Componentes General StyleRadar">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="520" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="front" value="&lt;b&gt;StyleRadar&lt;br&gt;Front-End&lt;/b&gt;" style="shape=module;align=center;html=1;whiteSpace=wrap;jettyWidth=14;jettyHeight=8;spacingLeft=14;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="70" width="240" height="110" as="geometry"/></mxCell>
+        <mxCell id="back" value="&lt;b&gt;StyleRadar&lt;br&gt;Back-End&lt;br&gt;API REST Spring Boot&lt;/b&gt;" style="shape=module;align=center;html=1;whiteSpace=wrap;jettyWidth=14;jettyHeight=8;spacingLeft=14;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" vertex="1" parent="1"><mxGeometry x="420" y="70" width="260" height="110" as="geometry"/></mxCell>
+        <mxCell id="swagger" value="Documentación&lt;br&gt;Swagger / OpenAPI" style="shape=module;align=center;html=1;whiteSpace=wrap;jettyWidth=14;jettyHeight=8;spacingLeft=14;fillColor=#ffffff;strokeColor=#333333;fontSize=11;" vertex="1" parent="1"><mxGeometry x="820" y="70" width="240" height="110" as="geometry"/></mxCell>
+        <mxCell id="db" value="Base de datos&lt;br&gt;PostgreSQL" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#fff2a8;strokeColor=#333333;fontSize=13;" vertex="1" parent="1"><mxGeometry x="455" y="300" width="190" height="140" as="geometry"/></mxCell>
+        <mxCell id="e1" value="HTTPS · /api/v1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;endArrow=oval;endFill=0;endSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="front" target="back"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="/v3/api-docs" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;endArrow=oval;endFill=0;endSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="back" target="swagger"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="JDBC" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#333333;fontSize=11;labelBackgroundColor=#ffffff;endArrow=oval;endFill=0;endSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="back" target="db"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
