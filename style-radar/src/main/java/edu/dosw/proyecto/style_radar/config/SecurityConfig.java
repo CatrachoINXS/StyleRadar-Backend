@@ -38,6 +38,12 @@ public class SecurityConfig {
                 .requestCache(cache -> cache.disable())
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/almacenes/verificacion",
+                                "/api/v1/admin/almacenes/{nit}/verificacion").hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/almacenes/{nit}/verificacion")
+                            .hasRole("ADMIN_STYLERADAR")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/admin/almacenes/{nit}/verificacion/solicitar-revision")
+                            .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.GET, "/api/v1/admin/catalogo/moderacion")
                             .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/admin/catalogo/{itemId}/moderacion")

@@ -17,7 +17,7 @@ public interface AlmacenApi {
     @Operation(summary = "Consultar almacenes geolocalizables",
             description = "Coordenadas completas y válidas. Categoría comercial opcional; page desde 0, "
                     + "size de 1 a 100 (20 por defecto). Orden nombreComercial ASC, nit ASC. "
-                    + "Actualmente no existe verificación de aliados; RF62 deberá filtrar los aprobados.")
+                    + "RF62: APROBADO o NULL legado provisional; excluye PENDIENTE y RECHAZADO.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Página de almacenes, incluso vacía"),
         @ApiResponse(responseCode = "400", description = "Categoría o paginación inválida"),

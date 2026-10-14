@@ -24,6 +24,7 @@ public class DetectorDisponibilidad {
     private final BusquedaGuardadaRepository busquedas;
     private final ItemCatalogoRepository items;
     private final Clock clock;
+    private final AlmacenRepository almacenes;
 
     public void registrarPublicacion(ItemCatalogoEntity item) {
         disponibilidad.save(nuevoEstado(item, false));
@@ -33,6 +34,11 @@ public class DetectorDisponibilidad {
         // Un aumento puede habilitar por primera vez la talla de una búsqueda aunque ya haya stock en otra.
         if (stockActual <= 0 || stockActual <= stockAnterior
                 || !VisibilidadModeracion.visible(item.getEstadoModeracion())) return;
+        // Item -> almacén -> alertas. RF62 bloquea solo almacén, sin invertir este orden.
+        // La consulta de visibilidad bajo bloqueo evita usar un estado del contexto JPA obsoleto.
+        items.flush();
+        String nit = item.getAlmacen().getNit();
+        if (almacenes.findForUpdate(nit).isEmpty() || !almacenes.existsPublicoByNit(nit)) return;
         boolean reposicionTotal = stockAnterior == 0;
         long ciclo = 0;
         if (reposicionTotal) {

@@ -32,6 +32,19 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AlmacenEntity {
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_verificacion")
+    private edu.dosw.proyecto.style_radar.model.domain.EstadoVerificacionAlmacen estadoVerificacion;
+
+    @Column(name = "fecha_decision_verificacion")
+    private java.time.Instant fechaDecisionVerificacion;
+
+    @Column(name = "administrador_decision_id")
+    private Long administradorDecisionId;
+
+    @Column(name = "motivo_verificacion", length = 1000)
+    private String motivoVerificacion;
+
     @Id
     private String nit;
 
@@ -62,6 +75,22 @@ public class AlmacenEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "categoria", nullable = false)
     private Set<CategoriaAlmacen> categorias = new HashSet<>();
+
+    /** Constructor histórico: no inventa estado ni fecha de alta. */
+    public AlmacenEntity(String nit, String nombreComercial, String descripcion, String telefono,
+            String correoContacto, Double latitud, Double longitud, Double reputacion,
+            List<ItemCatalogoEntity> itemsCatalogo, Set<CategoriaAlmacen> categorias) {
+        this.nit = nit;
+        this.nombreComercial = nombreComercial;
+        this.descripcion = descripcion;
+        this.telefono = telefono;
+        this.correoContacto = correoContacto;
+        this.latitud = latitud;
+        this.longitud = longitud;
+        this.reputacion = reputacion;
+        this.itemsCatalogo = itemsCatalogo;
+        this.categorias = categorias;
+    }
 
     public AlmacenEntity(String nit, String nombreComercial, String descripcion, String telefono,
             String correoContacto, Double latitud, Double longitud, Double reputacion,
