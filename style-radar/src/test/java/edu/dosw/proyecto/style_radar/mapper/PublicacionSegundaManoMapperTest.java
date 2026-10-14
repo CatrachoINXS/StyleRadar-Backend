@@ -39,7 +39,6 @@ class PublicacionSegundaManoMapperTest {
     void shouldMapCrearRequestToDomain() {
         PrendaRequestDTO prendaDto = new PrendaRequestDTO("Chaqueta Jean", "Vintage", TipoPrenda.SUPERIOR, "Levis", "Azul", Estilo.CASUAL);
         CrearPublicacionSegundaManoRequestDTO request = CrearPublicacionSegundaManoRequestDTO.builder()
-                .usuarioId(1L)
                 .prenda(prendaDto)
                 .talla(Talla.M)
                 .estadoConservacion(EstadoConservacion.COMO_NUEVO)
@@ -50,7 +49,7 @@ class PublicacionSegundaManoMapperTest {
         PublicacionSegundaMano domain = mapper.toDomain(request);
 
         assertThat(domain).isNotNull();
-        assertThat(domain.getUsuarioId()).isEqualTo(1L);
+        assertThat(domain.getUsuarioId()).isNull();
         assertThat(domain.getTalla()).isEqualTo(Talla.M);
         assertThat(domain.getEstadoConservacion()).isEqualTo(EstadoConservacion.COMO_NUEVO);
         assertThat(domain.getPrecio()).isEqualTo(65000.0);

@@ -20,6 +20,8 @@ public interface PlaylistRepository extends JpaRepository<PlaylistEntity, Long> 
     @EntityGraph(attributePaths = { "usuario", "prendas", "likesUsuarios" })
     Optional<PlaylistEntity> findByIdAndUsuario_Id(Long id, Long usuarioId);
 
+    List<PlaylistEntity> findByGuardadosUsuariosContainsOrderByFechaCreacionDesc(Long usuarioId);
+
     @Override
     @EntityGraph(attributePaths = { "usuario", "prendas", "likesUsuarios" })
     Optional<PlaylistEntity> findById(Long id);

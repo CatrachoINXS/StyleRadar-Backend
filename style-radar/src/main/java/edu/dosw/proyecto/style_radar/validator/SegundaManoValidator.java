@@ -39,6 +39,9 @@ public class SegundaManoValidator {
         if (publicacion.getEstado() == EstadoPublicacion.RETIRADA) {
             throw new ReglaDeNegocioException("No se puede editar una publicación que ha sido retirada");
         }
+        if (publicacion.getEstado() == EstadoPublicacion.DONADA) {
+            throw new ReglaDeNegocioException("No se puede editar una prenda que ya fue donada");
+        }
     }
 
     public void validarTransicionAVendida(PublicacionSegundaManoEntity publicacion) {
@@ -48,11 +51,23 @@ public class SegundaManoValidator {
         if (publicacion.getEstado() == EstadoPublicacion.RETIRADA) {
             throw new ReglaDeNegocioException("No se puede marcar como vendida una publicación retirada");
         }
+        if (publicacion.getEstado() == EstadoPublicacion.EN_DONACION || publicacion.getEstado() == EstadoPublicacion.DONADA) {
+            throw new ReglaDeNegocioException("No se puede vender una prenda destinada a donación");
+        }
     }
 
     public void validarTransicionARetirada(PublicacionSegundaManoEntity publicacion) {
         if (publicacion.getEstado() == EstadoPublicacion.RETIRADA) {
             throw new ReglaDeNegocioException("La publicación ya se encuentra retirada");
+        }
+        if (publicacion.getEstado() == EstadoPublicacion.DONADA) {
+            throw new ReglaDeNegocioException("No se puede retirar una prenda que ya fue donada");
+        }
+    }
+
+    public void validarTransicionADonacion(PublicacionSegundaManoEntity publicacion) {
+        if (publicacion.getEstado() != EstadoPublicacion.DISPONIBLE) {
+            throw new ReglaDeNegocioException("Solo una publicación disponible puede destinarse a donación");
         }
     }
 }

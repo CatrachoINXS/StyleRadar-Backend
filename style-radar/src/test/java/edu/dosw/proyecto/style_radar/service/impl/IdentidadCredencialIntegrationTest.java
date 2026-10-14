@@ -244,6 +244,7 @@ class IdentidadCredencialIntegrationTest {
     }
 
     @Test
+    @org.springframework.security.test.context.support.WithMockUser(roles = "ADMIN_STYLERADAR")
     void respuestaDeUsuarioNoDebeExponerHashNiCambiarSuContrato() throws Exception {
         // Arrange
         Usuario registrado = usuarioService.registrarUsuario(

@@ -181,4 +181,19 @@ public class SegundaManoServiceImpl implements ISegundaManoService {
         publicacionRepository.save(entity);
         log.info("Publicación ID: {} retirada exitosamente", publicacionId);
     }
+
+    @Override
+    @Transactional
+    public PublicacionSegundaMano marcarParaDonacion(Long usuarioId, Long publicacionId) {
+        log.info("Marcando publicación ID: {} para donación por el usuario ID: {}", publicacionId, usuarioId);
+        usuarioValidator.validarExiste(usuarioId);
+
+        PublicacionSegundaManoEntity entity = segundaManoValidator.validarYObtenerDeUsuario(publicacionId, usuarioId);
+        segundaManoValidator.validarTransicionADonacion(entity);
+
+        entity.setEstado(EstadoPublicacion.EN_DONACION);
+        PublicacionSegundaManoEntity guardada = publicacionRepository.save(entity);
+        log.info("Publicación ID: {} marcada para donación", publicacionId);
+        return publicacionEntityMapper.toDomain(guardada);
+    }
 }

@@ -1,5 +1,8 @@
 package edu.dosw.proyecto.style_radar.controller;
 
+import org.junit.jupiter.api.AfterEach;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.support.PrincipalFixtures;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -44,12 +47,18 @@ class PlaylistControllerTest {
 
     private MockMvc mockMvc;
 
+    @AfterEach
+    void limpiarSeguridad() {
+        PrincipalFixtures.limpiar();
+    }
+
     @BeforeEach
     void setUp() {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new PlaylistController(playlistService, playlistMapper))
+                .setCustomArgumentResolvers(PrincipalFixtures.autenticar(1L, Rol.COMPRADOR))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
                 .build();
@@ -59,7 +68,6 @@ class PlaylistControllerTest {
     void crearShouldReturnCreatedWhenValid() throws Exception {
         String requestBody = """
                 {
-                  "usuarioId": 1,
                   "nombre": "Looks de Fiesta",
                   "descripcion": "Colección elegante",
                   "visibilidad": "PUBLICA",
@@ -98,7 +106,7 @@ class PlaylistControllerTest {
         Playlist domain = Playlist.builder().id(10L).build();
         PlaylistResponseDTO response = PlaylistResponseDTO.builder().id(10L).build();
 
-        when(playlistService.obtenerPorId(10L, null)).thenReturn(domain);
+        when(playlistService.obtenerPorId(10L, 1L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/playlists/10"))
@@ -114,7 +122,7 @@ class PlaylistControllerTest {
         when(playlistService.obtenerPorUsuario(1L)).thenReturn(List.of(domain));
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/usuarios/1/playlists"))
+        mockMvc.perform(get("/api/v1/usuarios/me/playlists"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10L));
     }
@@ -135,7 +143,7 @@ class PlaylistControllerTest {
         when(playlistService.editar(eq(1L), eq(10L), eq("Looks de Noche"), eq("Nueva descripcion"), eq(VisibilidadPlaylist.PRIVADA), eq(Estilo.FORMAL))).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/usuarios/1/playlists/10")
+        mockMvc.perform(put("/api/v1/usuarios/me/playlists/10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -155,7 +163,7 @@ class PlaylistControllerTest {
         when(playlistService.agregarPrenda(1L, 10L, 5L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/usuarios/1/playlists/10/prendas")
+        mockMvc.perform(post("/api/v1/usuarios/me/playlists/10/prendas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -170,27 +178,20 @@ class PlaylistControllerTest {
         when(playlistService.retirarPrenda(1L, 10L, 5L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(delete("/api/v1/usuarios/1/playlists/10/prendas/5"))
+        mockMvc.perform(delete("/api/v1/usuarios/me/playlists/10/prendas/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10L));
     }
 
     @Test
     void alternarLikeShouldReturnOk() throws Exception {
-        String requestBody = """
-                {
-                  "usuarioId": 2
-                }
-                """;
         Playlist domain = Playlist.builder().id(10L).build();
         PlaylistResponseDTO response = PlaylistResponseDTO.builder().id(10L).likes(1).build();
 
-        when(playlistService.alternarLike(2L, 10L)).thenReturn(domain);
+        when(playlistService.alternarLike(1L, 10L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/playlists/10/like")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+        mockMvc.perform(post("/api/v1/playlists/10/like"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.likes").value(1));
     }
@@ -199,7 +200,7 @@ class PlaylistControllerTest {
     void eliminarShouldReturnNoContent() throws Exception {
         doNothing().when(playlistService).eliminar(1L, 10L);
 
-        mockMvc.perform(delete("/api/v1/usuarios/1/playlists/10"))
+        mockMvc.perform(delete("/api/v1/usuarios/me/playlists/10"))
                 .andExpect(status().isNoContent());
 
         verify(playlistService).eliminar(1L, 10L);

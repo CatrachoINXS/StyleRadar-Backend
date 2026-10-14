@@ -35,5 +35,9 @@ public interface IPlaylistService {
 
     Playlist alternarLike(Long usuarioId, Long playlistId);
 
+    Playlist alternarGuardado(Long usuarioId, Long playlistId);
+
+    List<Playlist> obtenerGuardadas(Long usuarioId);
+
     void eliminar(Long usuarioId, Long playlistId);
 }

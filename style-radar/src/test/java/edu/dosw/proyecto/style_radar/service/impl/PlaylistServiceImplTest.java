@@ -245,4 +245,58 @@ class PlaylistServiceImplTest {
 
         verify(playlistRepository).delete(entity);
     }
+
+    @Test
+    void agregarPrendaShouldFailWhenPlaylistIsFull() {
+        // Arrange
+        PlaylistEntity entity = PlaylistEntity.builder().id(10L).prendas(new java.util.ArrayList<>()).build();
+        when(playlistValidator.validarYObtenerDeUsuario(10L, 1L)).thenReturn(entity);
+        when(prendaRepository.findById(5L)).thenReturn(java.util.Optional.of(new edu.dosw.proyecto.style_radar.model.entity.PrendaEntity()));
+        org.mockito.Mockito.doThrow(new ReglaDeNegocioException("llena")).when(playlistValidator).validarCapacidad(entity);
+
+        // Act + Assert
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.agregarPrenda(1L, 10L, 5L))
+                .isInstanceOf(ReglaDeNegocioException.class);
+        verify(playlistRepository, org.mockito.Mockito.never()).save(entity);
+    }
+
+    @Test
+    void alternarGuardadoShouldAddAndRemoveUser() {
+        // Arrange
+        PlaylistEntity entity = PlaylistEntity.builder().id(10L).guardadosUsuarios(new HashSet<>()).build();
+        when(playlistValidator.validarYObtener(10L)).thenReturn(entity);
+        when(playlistRepository.save(entity)).thenReturn(entity);
+        when(playlistEntityMapper.toDomain(entity)).thenReturn(Playlist.builder().id(10L).build());
+
+        // Act + Assert
+        service.alternarGuardado(1L, 10L);
+        assertThat(entity.getGuardadosUsuarios()).contains(1L);
+        service.alternarGuardado(1L, 10L);
+        assertThat(entity.getGuardadosUsuarios()).doesNotContain(1L);
+    }
+
+    @Test
+    void obtenerGuardadasShouldHideOthersPrivatePlaylists() {
+        // Arrange
+        UsuarioEntity creador = UsuarioEntity.builder().id(2L).build();
+        PlaylistEntity publica = PlaylistEntity.builder().id(1L).usuario(creador).visibilidad(VisibilidadPlaylist.PUBLICA).build();
+        PlaylistEntity privada = PlaylistEntity.builder().id(2L).usuario(creador).visibilidad(VisibilidadPlaylist.PRIVADA).build();
+        when(playlistRepository.findByGuardadosUsuariosContainsOrderByFechaCreacionDesc(1L)).thenReturn(List.of(publica, privada));
+        when(playlistEntityMapper.toDomain(publica)).thenReturn(Playlist.builder().id(1L).build());
+
+        // Act
+        List<Playlist> result = service.obtenerGuardadas(1L);
+
+        // Assert
+        assertThat(result).extracting(Playlist::getId).containsExactly(1L);
+    }
+
+    @Test
+    void obtenerGuardadasShouldReturnEmptyList() {
+        // Arrange
+        when(playlistRepository.findByGuardadosUsuariosContainsOrderByFechaCreacionDesc(1L)).thenReturn(List.of());
+
+        // Act + Assert
+        assertThat(service.obtenerGuardadas(1L)).isEmpty();
+    }
 }

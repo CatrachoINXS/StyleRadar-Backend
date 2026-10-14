@@ -19,9 +19,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CrearPublicacionSegundaManoRequestDTO {
 
-    @NotNull(message = "El ID de usuario es obligatorio")
-    private Long usuarioId;
-
     @NotNull(message = "Los datos de la prenda son obligatorios")
     @Valid
     private PrendaRequestDTO prenda;

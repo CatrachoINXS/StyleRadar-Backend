@@ -146,6 +146,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         if (yaExiste) {
             throw new ReglaDeNegocioException("La prenda ya se encuentra en la playlist");
         }
+        playlistValidator.validarCapacidad(playlist);
 
         playlist.getPrendas().add(prenda);
         PlaylistEntity guardada = playlistRepository.save(playlist);
@@ -177,6 +178,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         usuarioValidator.validarExiste(usuarioId);
 
         PlaylistEntity playlist = playlistValidator.validarYObtener(playlistId);
+        playlistValidator.validarAccesoLectura(playlist, usuarioId);
         if (playlist.getLikesUsuarios() == null) {
             playlist.setLikesUsuarios(new HashSet<>());
         }
@@ -208,6 +210,38 @@ public class PlaylistServiceImpl implements IPlaylistService {
                     p.setPrendas(p.getPrendas().stream().filter(prenda -> !ocultas.contains(prenda.getId())).toList()));
         }
         return playlists;
+    }
+
+    @Override
+    @Transactional
+    public Playlist alternarGuardado(Long usuarioId, Long playlistId) {
+        log.info("Alternando guardado de playlist ID: {} por usuario ID: {}", playlistId, usuarioId);
+        usuarioValidator.validarExiste(usuarioId);
+
+        PlaylistEntity playlist = playlistValidator.validarYObtener(playlistId);
+        playlistValidator.validarAccesoLectura(playlist, usuarioId);
+        if (!playlist.getGuardadosUsuarios().remove(usuarioId)) {
+            playlist.getGuardadosUsuarios().add(usuarioId);
+            log.info("Playlist ID: {} guardada en el perfil del usuario ID: {}", playlistId, usuarioId);
+        } else {
+            log.info("Playlist ID: {} quitada del perfil del usuario ID: {}", playlistId, usuarioId);
+        }
+        return playlistEntityMapper.toDomain(playlistRepository.save(playlist));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Playlist> obtenerGuardadas(Long usuarioId) {
+        log.info("Consultando playlists guardadas por el usuario ID: {}", usuarioId);
+        usuarioValidator.validarExiste(usuarioId);
+        // Una playlist que su creador volvió privada deja de mostrarse a quien la guardó.
+        List<Playlist> guardadas = playlistRepository
+                .findByGuardadosUsuariosContainsOrderByFechaCreacionDesc(usuarioId).stream()
+                .filter(p -> p.getVisibilidad() == VisibilidadPlaylist.PUBLICA || p.getUsuario().getId().equals(usuarioId))
+                .map(playlistEntityMapper::toDomain)
+                .toList();
+        log.info("Playlists guardadas por usuario ID {}: {}", usuarioId, guardadas.size());
+        return guardadas;
     }
 
     @Override

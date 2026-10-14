@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import edu.dosw.proyecto.style_radar.model.dto.request.GuardarBusquedaRequestDTO
 import edu.dosw.proyecto.style_radar.model.dto.request.RegistrarUsuarioRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.BusquedaGuardadaResponseDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.UsuarioResponseDTO;
+import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
 import edu.dosw.proyecto.style_radar.service.IUsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,11 @@ public class UsuarioController implements UsuarioApi {
     }
 
     @Override
+    public ResponseEntity<UsuarioResponseDTO> obtenerPerfil(@AuthenticationPrincipal UsuarioPrincipal principal) {
+        return ResponseEntity.ok(usuarioMapper.toResponse(usuarioService.obtenerPorId(principal.getUsuarioId())));
+    }
+
+    @Override
     public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
         Usuario usuario = usuarioService.obtenerPorId(id);
         return ResponseEntity.ok(usuarioMapper.toResponse(usuario));
@@ -48,32 +55,33 @@ public class UsuarioController implements UsuarioApi {
 
     @Override
     public ResponseEntity<UsuarioResponseDTO> actualizarPreferenciasEstilo(
-            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody ActualizarPreferenciasEstiloRequestDTO request) {
-        Usuario actualizado = usuarioService.actualizarPreferenciasEstilo(id, request.getPreferencias());
+        Usuario actualizado = usuarioService.actualizarPreferenciasEstilo(principal.getUsuarioId(), request.getPreferencias());
         return ResponseEntity.ok(usuarioMapper.toResponse(actualizado));
     }
 
     @Override
     public ResponseEntity<UsuarioResponseDTO> actualizarTallasHabituales(
-            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody ActualizarTallasHabitualesRequestDTO request) {
-        Usuario actualizado = usuarioService.actualizarTallasHabituales(id, request.getTallas());
+        Usuario actualizado = usuarioService.actualizarTallasHabituales(principal.getUsuarioId(), request.getTallas());
         return ResponseEntity.ok(usuarioMapper.toResponse(actualizado));
     }
 
     @Override
     public ResponseEntity<BusquedaGuardadaResponseDTO> guardarBusqueda(
-            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody GuardarBusquedaRequestDTO request) {
         BusquedaGuardada busqueda = busquedaGuardadaMapper.toDomain(request);
-        BusquedaGuardada guardada = usuarioService.guardarBusqueda(id, busqueda);
+        BusquedaGuardada guardada = usuarioService.guardarBusqueda(principal.getUsuarioId(), busqueda);
         return ResponseEntity.status(HttpStatus.CREATED).body(busquedaGuardadaMapper.toResponse(guardada));
     }
 
     @Override
-    public ResponseEntity<List<BusquedaGuardadaResponseDTO>> obtenerBusquedasGuardadas(@PathVariable Long id) {
-        List<BusquedaGuardadaResponseDTO> busquedas = usuarioService.obtenerBusquedasGuardadas(id).stream()
+    public ResponseEntity<List<BusquedaGuardadaResponseDTO>> obtenerBusquedasGuardadas(
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        List<BusquedaGuardadaResponseDTO> busquedas = usuarioService.obtenerBusquedasGuardadas(principal.getUsuarioId()).stream()
                 .map(busquedaGuardadaMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(busquedas);
@@ -81,9 +89,9 @@ public class UsuarioController implements UsuarioApi {
 
     @Override
     public ResponseEntity<Void> eliminarBusquedaGuardada(
-            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long busquedaId) {
-        usuarioService.eliminarBusquedaGuardada(id, busquedaId);
+        usuarioService.eliminarBusquedaGuardada(principal.getUsuarioId(), busquedaId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -168,7 +168,7 @@ class AuthHttpIntegrationTest {
     @Test
     void tokenValidoDaAccesoAlContratoRealSinSesion() throws Exception {
         var user = fixture("valid@ejemplo.co", Rol.COMPRADOR, EstadoCuenta.ACTIVA, true);
-        var result = mvc.perform(get("/api/v1/usuarios/{id}", user.getId()).header("Authorization", "Bearer " + token(user)))
+        var result = mvc.perform(get("/api/v1/usuarios/me").header("Authorization", "Bearer " + token(user)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.email").value(user.getEmail()))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist()).andReturn();
         assertThat(result.getRequest().getSession(false)).isNull();

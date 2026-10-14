@@ -75,4 +75,10 @@ public class PlaylistEntity {
     @Column(name = "usuario_id")
     @Builder.Default
     private Set<Long> likesUsuarios = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "playlist_guardados", joinColumns = @JoinColumn(name = "playlist_id"))
+    @Column(name = "usuario_id")
+    @Builder.Default
+    private Set<Long> guardadosUsuarios = new HashSet<>();
 }
