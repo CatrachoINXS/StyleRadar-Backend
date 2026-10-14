@@ -1,0 +1,87 @@
+{
+  "branch": "feature/s3-daniel-functional-security",
+  "head": "5060379bbea86718e20ca5aad6957fcc44664388",
+  "diffCheck": "",
+  "files": [
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/PlaylistController.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/SegundaManoController.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/UsuarioController.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/docs/PlaylistApi.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/docs/SegundaManoApi.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/controller/docs/UsuarioApi.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/service/impl/PlaylistServiceImpl.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/test/java/edu/dosw/proyecto/style_radar/controller/PlaylistControllerTest.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/test/java/edu/dosw/proyecto/style_radar/controller/SegundaManoControllerTest.java"
+    },
+    {
+      "status": " M",
+      "path": "style-radar/src/test/java/edu/dosw/proyecto/style_radar/controller/UsuarioControllerTest.java"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/baseline.json"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/final.json"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/inventario-git.json"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/recopilar-evidencia.cjs"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/reproduccion.json"
+    },
+    {
+      "status": "??",
+      "path": "docs/etapa9/sql-generado-h2.txt"
+    },
+    {
+      "status": "??",
+      "path": "docs/sprint3-etapa9-cierre-seguridad.md"
+    },
+    {
+      "status": "??",
+      "path": "style-radar/src/main/java/edu/dosw/proyecto/style_radar/security/IdentidadAutenticada.java"
+    },
+    {
+      "status": "??",
+      "path": "style-radar/src/test/java/edu/dosw/proyecto/style_radar/controller/CierreSeguridadHttpIntegrationTest.java"
+    },
+    {
+      "status": "??",
+      "path": "style-radar/src/test/java/edu/dosw/proyecto/style_radar/support/PrincipalControllerFixture.java"
+    }
+  ]
+}

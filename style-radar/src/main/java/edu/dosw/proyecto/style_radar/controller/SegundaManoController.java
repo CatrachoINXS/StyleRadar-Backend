@@ -1,6 +1,7 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import java.util.List;
+import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -32,10 +33,12 @@ public class SegundaManoController implements SegundaManoApi {
     private final ISegundaManoService segundaManoService;
     private final PublicacionSegundaManoMapper publicacionMapper;
     private final PrendaMapper prendaMapper;
+    private final IdentidadAutenticada identidad;
 
     @Override
     public ResponseEntity<PublicacionSegundaManoResponseDTO> publicar(
             @Valid @RequestBody CrearPublicacionSegundaManoRequestDTO request) {
+        identidad.exigirUsuario(request.getUsuarioId());
         Prenda prenda = prendaMapper.toDomain(request.getPrenda());
         PublicacionSegundaMano publicacion = segundaManoService.publicar(
                 request.getUsuarioId(),
@@ -74,6 +77,7 @@ public class SegundaManoController implements SegundaManoApi {
             @PathVariable Long usuarioId,
             @PathVariable Long id,
             @Valid @RequestBody EditarPublicacionSegundaManoRequestDTO request) {
+        identidad.exigirUsuario(usuarioId);
         Prenda prenda = prendaMapper.toDomain(request.getPrenda());
         PublicacionSegundaMano editada = segundaManoService.editar(
                 usuarioId,
@@ -90,6 +94,7 @@ public class SegundaManoController implements SegundaManoApi {
     public ResponseEntity<PublicacionSegundaManoResponseDTO> marcarComoVendida(
             @PathVariable Long usuarioId,
             @PathVariable Long id) {
+        identidad.exigirUsuario(usuarioId);
         PublicacionSegundaMano vendida = segundaManoService.marcarComoVendida(usuarioId, id);
         return ResponseEntity.ok(publicacionMapper.toResponse(vendida));
     }
@@ -98,6 +103,7 @@ public class SegundaManoController implements SegundaManoApi {
     public ResponseEntity<Void> retirar(
             @PathVariable Long usuarioId,
             @PathVariable Long id) {
+        identidad.exigirUsuario(usuarioId);
         segundaManoService.retirar(usuarioId, id);
         return ResponseEntity.noContent().build();
     }

@@ -1,0 +1,39 @@
+Extracto SQL real de PlaylistsPopularesJpaIntegrationTest, H2 2.4.240 MODE=PostgreSQL.
+17 casos, 0 fallos/errores/omitidos; ejecución suplementaria sin instrumentación JaCoCo.
+Sentencias únicas sin bind values. No es SQL ejecutado en PostgreSQL.
+
+create table playlist_likes (playlist_id bigint not null, usuario_id bigint not null, constraint uk_playlist_like_usuario unique (playlist_id, usuario_id))
+
+alter table if exists playlist_likes add constraint FKknrkpk1wykovhi350g2c8txfm foreign key (playlist_id) references playlists
+
+select pe1_0.id from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.visibilidad='PUBLICA' group by pe1_0.id,pe1_0.fecha_creacion order by count(distinct lu1_0.usuario_id) desc,pe1_0.fecha_creacion desc,pe1_0.id fetch first ? rows only
+
+select count(pe1_0.id) from playlists pe1_0 where pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,p1_0.playlist_id,p1_1.id,p1_1.color,p1_1.descripcion,p1_1.estilo,p1_1.marca,p1_1.nombre,p1_1.tipo,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 join usuarios u1_0 on u1_0.id=pe1_0.usuario_id left join playlist_prendas p1_0 on pe1_0.id=p1_0.playlist_id left join prendas p1_1 on p1_1.id=p1_0.prenda_id where pe1_0.id in (?) and pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.id in (?)
+
+select pe1_0.id from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.visibilidad='PUBLICA' group by pe1_0.id,pe1_0.fecha_creacion order by count(distinct lu1_0.usuario_id) desc,pe1_0.fecha_creacion desc,pe1_0.id offset ? rows fetch first ? rows only
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,p1_0.playlist_id,p1_1.id,p1_1.color,p1_1.descripcion,p1_1.estilo,p1_1.marca,p1_1.nombre,p1_1.tipo,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 join usuarios u1_0 on u1_0.id=pe1_0.usuario_id left join playlist_prendas p1_0 on pe1_0.id=p1_0.playlist_id left join prendas p1_1 on p1_1.id=p1_0.prenda_id where pe1_0.id in (?,?) and pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.id in (?,?)
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,p1_0.playlist_id,p1_1.id,p1_1.color,p1_1.descripcion,p1_1.estilo,p1_1.marca,p1_1.nombre,p1_1.tipo,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 join usuarios u1_0 on u1_0.id=pe1_0.usuario_id left join playlist_prendas p1_0 on pe1_0.id=p1_0.playlist_id left join prendas p1_1 on p1_1.id=p1_0.prenda_id where pe1_0.id in (?,?,?,?) and pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.id in (?,?,?,?)
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,p1_0.playlist_id,p1_1.id,p1_1.color,p1_1.descripcion,p1_1.estilo,p1_1.marca,p1_1.nombre,p1_1.tipo,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 join usuarios u1_0 on u1_0.id=pe1_0.usuario_id left join playlist_prendas p1_0 on pe1_0.id=p1_0.playlist_id left join prendas p1_1 on p1_1.id=p1_0.prenda_id where pe1_0.id in (?,?,?) and pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.id in (?,?,?)
+
+select count(pe1_0.id) from playlists pe1_0 where pe1_0.visibilidad=?
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,p1_0.playlist_id,p1_1.id,p1_1.color,p1_1.descripcion,p1_1.estilo,p1_1.marca,p1_1.nombre,p1_1.tipo,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 join usuarios u1_0 on u1_0.id=pe1_0.usuario_id left join playlist_prendas p1_0 on pe1_0.id=p1_0.playlist_id left join prendas p1_1 on p1_1.id=p1_0.prenda_id where pe1_0.id in (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) and pe1_0.visibilidad='PUBLICA'
+
+select distinct pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id where pe1_0.id in (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+
+select pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,pe1_0.nombre,pe1_0.usuario_id,pe1_0.visibilidad from playlists pe1_0 where pe1_0.id=? for update
+
+select pe1_0.id,pe1_0.descripcion,pe1_0.estilo,pe1_0.fecha_creacion,lu1_0.playlist_id,lu1_0.usuario_id,pe1_0.nombre,pe1_0.usuario_id,u1_0.id,u1_0.administrador_cambio_estado_id,u1_0.email,u1_0.estado_cuenta,u1_0.fecha_cambio_estado,u1_0.fecha_registro,u1_0.motivo_cambio_estado,u1_0.nombre,u1_0.telefono,pe1_0.visibilidad from playlists pe1_0 left join playlist_likes lu1_0 on pe1_0.id=lu1_0.playlist_id join usuarios u1_0 on u1_0.id=pe1_0.usuario_id where pe1_0.id=?

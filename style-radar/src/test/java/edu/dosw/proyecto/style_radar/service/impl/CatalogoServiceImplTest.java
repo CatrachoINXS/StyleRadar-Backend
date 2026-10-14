@@ -64,6 +64,8 @@ class CatalogoServiceImplTest {
 
     private CatalogoServiceImpl catalogoService;
 
+    @Mock private edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad detector;
+
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(AHORA, ZoneOffset.UTC);
@@ -74,7 +76,7 @@ class CatalogoServiceImplTest {
                 prendaEntityMapper,
                 itemCatalogoEntityMapper,
                 new EstadoItemCalculator(clock),
-                clock);
+                clock, detector);
     }
 
     @Test
@@ -82,8 +84,8 @@ class CatalogoServiceImplTest {
         // Arrange
         ItemCatalogoEntity entity = itemEntity(10L);
         ItemCatalogo domain = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         // Act
@@ -92,7 +94,7 @@ class CatalogoServiceImplTest {
         // Assert
         assertThat(result).containsExactly(domain);
         assertThat(result.getFirst().getEstado()).isEqualTo(EstadoItem.DISPONIBLE);
-        verify(itemCatalogoRepository).findByAlmacen_Nit(NIT);
+        verify(itemCatalogoRepository).findPublicosByAlmacenNit(NIT);
         verify(itemCatalogoEntityMapper).toDomain(entity);
     }
 
@@ -100,8 +102,8 @@ class CatalogoServiceImplTest {
     void obtenerCatalogoShouldReturnNewArrival() {
         ItemCatalogoEntity entity = itemEntity(11L);
         ItemCatalogo domain = itemDomain(11L, AHORA, 4);
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -114,8 +116,8 @@ class CatalogoServiceImplTest {
     void obtenerCatalogoShouldReturnLastUnits() {
         ItemCatalogoEntity entity = itemEntity(12L);
         ItemCatalogo domain = itemDomain(12L, AHORA, 3);
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(domain);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -130,8 +132,8 @@ class CatalogoServiceImplTest {
         ItemCatalogoEntity agotadaEntity = itemEntity(13L);
         ItemCatalogo disponible = itemDomain(10L, AHORA.minusSeconds(8 * 24 * 60 * 60), 4);
         ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT))
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT))
                 .thenReturn(List.of(disponibleEntity, agotadaEntity));
         when(itemCatalogoEntityMapper.toDomain(disponibleEntity)).thenReturn(disponible);
         when(itemCatalogoEntityMapper.toDomain(agotadaEntity)).thenReturn(agotada);
@@ -146,8 +148,8 @@ class CatalogoServiceImplTest {
     void obtenerCatalogoShouldReturnEmptyListWhenAllItemsAreExhausted() {
         ItemCatalogoEntity entity = itemEntity(13L);
         ItemCatalogo agotada = itemDomain(13L, AHORA, 0);
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of(entity));
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of(entity));
         when(itemCatalogoEntityMapper.toDomain(entity)).thenReturn(agotada);
 
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
@@ -158,27 +160,27 @@ class CatalogoServiceImplTest {
     @Test
     void obtenerCatalogoShouldReturnEmptyListWhenStoreHasNoItems() {
         // Arrange
-        when(almacenRepository.existsById(NIT)).thenReturn(true);
-        when(itemCatalogoRepository.findByAlmacen_Nit(NIT)).thenReturn(List.of());
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(true);
+        when(itemCatalogoRepository.findPublicosByAlmacenNit(NIT)).thenReturn(List.of());
 
         // Act
         List<ItemCatalogo> result = catalogoService.obtenerCatalogo(NIT);
 
         // Assert
         assertThat(result).isEmpty();
-        verify(itemCatalogoRepository).findByAlmacen_Nit(NIT);
+        verify(itemCatalogoRepository).findPublicosByAlmacenNit(NIT);
         verify(itemCatalogoEntityMapper, never()).toDomain(any());
     }
 
     @Test
     void obtenerCatalogoShouldThrowWhenStoreDoesNotExist() {
         // Arrange
-        when(almacenRepository.existsById(NIT)).thenReturn(false);
+        when(almacenRepository.existsPublicoByNit(NIT)).thenReturn(false);
 
         // Act & Assert
         assertThatThrownBy(() -> catalogoService.obtenerCatalogo(NIT))
                 .isInstanceOf(RecursoNoEncontradoException.class);
-        verify(itemCatalogoRepository, never()).findByAlmacen_Nit(any());
+        verify(itemCatalogoRepository, never()).findPublicosByAlmacenNit(any());
     }
 
     @Test

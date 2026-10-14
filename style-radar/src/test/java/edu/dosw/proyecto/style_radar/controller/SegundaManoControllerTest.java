@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
+import edu.dosw.proyecto.style_radar.support.PrincipalControllerFixture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,13 +66,19 @@ class SegundaManoControllerTest {
 
     @BeforeEach
     void setUp() {
+        PrincipalControllerFixture.autenticar(1L);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new SegundaManoController(segundaManoService, publicacionMapper, prendaMapper))
+                .standaloneSetup(new SegundaManoController(segundaManoService, publicacionMapper, prendaMapper, new IdentidadAutenticada()))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
                 .build();
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void limpiarPrincipal() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test

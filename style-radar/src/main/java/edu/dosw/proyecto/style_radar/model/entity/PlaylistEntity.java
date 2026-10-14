@@ -23,6 +23,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,8 +72,10 @@ public class PlaylistEntity {
     private List<PrendaEntity> prendas = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "playlist_likes", joinColumns = @JoinColumn(name = "playlist_id"))
-    @Column(name = "usuario_id")
+    @CollectionTable(name = "playlist_likes", joinColumns = @JoinColumn(name = "playlist_id"),
+            uniqueConstraints = @UniqueConstraint(name = "uk_playlist_like_usuario",
+                    columnNames = { "playlist_id", "usuario_id" }))
+    @Column(name = "usuario_id", nullable = false)
     @Builder.Default
     private Set<Long> likesUsuarios = new HashSet<>();
 }

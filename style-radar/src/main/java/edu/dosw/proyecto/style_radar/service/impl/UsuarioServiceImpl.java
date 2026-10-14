@@ -13,6 +13,8 @@ import edu.dosw.proyecto.style_radar.mapper.BusquedaGuardadaEntityMapper;
 import edu.dosw.proyecto.style_radar.mapper.UsuarioEntityMapper;
 import edu.dosw.proyecto.style_radar.model.domain.BusquedaGuardada;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.Usuario;
 import edu.dosw.proyecto.style_radar.model.entity.BusquedaGuardadaEntity;
@@ -20,9 +22,12 @@ import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 import edu.dosw.proyecto.style_radar.repository.BusquedaGuardadaRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.IUsuarioService;
+import edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad;
+import edu.dosw.proyecto.style_radar.model.domain.TipoObjetivoAlerta;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import edu.dosw.proyecto.style_radar.security.EmailNormalizer;
 
 @Service
 @RequiredArgsConstructor
@@ -35,14 +40,19 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final BusquedaGuardadaEntityMapper busquedaGuardadaEntityMapper;
     private final UsuarioValidator usuarioValidator;
     private final Clock clock;
+    private final DetectorDisponibilidad detector;
 
     @Override
     @Transactional
     public Usuario registrarUsuario(Usuario usuario) {
-        log.info("Registrando usuario con email: {}", usuario.getEmail());
+        log.info("Registrando nuevo usuario");
+        usuario.setEmail(EmailNormalizer.normalize(usuario.getEmail()));
         usuarioValidator.validarEmailUnico(usuario.getEmail());
 
         UsuarioEntity entity = usuarioEntityMapper.toEntity(usuario);
+        // Este servicio conserva el registro público; nunca aprovisiona roles privilegiados.
+        entity.setRoles(new HashSet<>(Set.of(Rol.COMPRADOR)));
+        entity.setEstadoCuenta(EstadoCuenta.ACTIVA);
         entity.setFechaRegistro(clock.instant());
         if (entity.getPreferenciasEstilo() == null) {
             entity.setPreferenciasEstilo(new HashSet<>());
@@ -130,6 +140,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
                     return new RecursoNoEncontradoException(
                             "No existe la búsqueda guardada con ID: " + busquedaId + " para el usuario: " + usuarioId);
                 });
+        detector.objetivoEliminado(TipoObjetivoAlerta.BUSQUEDA_GUARDADA, busquedaId);
         busquedaGuardadaRepository.delete(entity);
         log.info("Búsqueda guardada ID: {} eliminada exitosamente", busquedaId);
     }

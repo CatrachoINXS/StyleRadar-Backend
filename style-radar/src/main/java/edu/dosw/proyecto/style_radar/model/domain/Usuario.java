@@ -23,4 +23,8 @@ public class Usuario {
     private Set<Estilo> preferenciasEstilo = new HashSet<>();
     @Builder.Default
     private Set<Talla> tallasHabituales = new HashSet<>();
+    @Builder.Default
+    private Set<Rol> roles = new HashSet<>(Set.of(Rol.COMPRADOR));
+    @Builder.Default
+    private EstadoCuenta estadoCuenta = EstadoCuenta.ACTIVA;
 }

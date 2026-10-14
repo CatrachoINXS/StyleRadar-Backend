@@ -1,6 +1,7 @@
 package edu.dosw.proyecto.style_radar.service;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.Playlist;
@@ -18,6 +19,8 @@ public interface IPlaylistService {
     Playlist obtenerPorId(Long id, Long usuarioConsultaId);
 
     List<Playlist> obtenerPublicas();
+
+    Page<Playlist> obtenerPopulares(int page, int size);
 
     List<Playlist> obtenerPorUsuario(Long usuarioId);
 

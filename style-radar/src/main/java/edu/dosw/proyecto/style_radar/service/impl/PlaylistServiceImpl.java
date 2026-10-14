@@ -4,6 +4,12 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Isolation;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,7 +72,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(entity);
         log.info("Playlist creada exitosamente con ID: {}", guardada.getId());
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -75,7 +81,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         log.info("Consultando playlist ID: {} por usuario ID: {}", id, usuarioConsultaId);
         PlaylistEntity entity = playlistValidator.validarYObtener(id);
         playlistValidator.validarAccesoLectura(entity, usuarioConsultaId);
-        return playlistEntityMapper.toDomain(entity);
+        return respuestaVisible(playlistEntityMapper.toDomain(entity));
     }
 
     @Override
@@ -88,7 +94,32 @@ public class PlaylistServiceImpl implements IPlaylistService {
                 .map(playlistEntityMapper::toDomain)
                 .toList();
         log.info("Playlists públicas obtenidas: {}", publicas.size());
-        return publicas;
+        return prendasVisibles(publicas);
+    }
+
+    @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public Page<Playlist> obtenerPopulares(int page, int size) {
+        playlistValidator.validarPaginacion(page, size);
+        var pageable = PageRequest.of(page, size);
+        Page<Playlist> resultado;
+        if (pageable.getOffset() > Integer.MAX_VALUE) {
+            resultado = new PageImpl<>(List.of(), pageable,
+                    playlistRepository.countByVisibilidad(VisibilidadPlaylist.PUBLICA));
+        } else {
+            var ids = playlistRepository.findIdsPopulares(pageable);
+            if (ids.isEmpty()) {
+                resultado = new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+            } else {
+                var detalles = playlistRepository.findDetallesPopulares(ids.getContent());
+                playlistRepository.cargarLikesPorIds(ids.getContent());
+                var porId = detalles.stream().collect(Collectors.toMap(PlaylistEntity::getId, Function.identity()));
+                var ordenadas = ids.getContent().stream().map(porId::get).map(playlistEntityMapper::toDomain).toList();
+                resultado = new PageImpl<>(prendasVisibles(ordenadas), pageable, ids.getTotalElements());
+            }
+        }
+        log.info("operacion=obtener-populares page={} size={} totalElements={}", page, size, resultado.getTotalElements());
+        return resultado;
     }
 
     @Override
@@ -102,7 +133,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
                 .map(playlistEntityMapper::toDomain)
                 .toList();
         log.info("Playlists obtenidas para usuario ID {}: {}", usuarioId, playlists.size());
-        return playlists;
+        return prendasVisibles(playlists);
     }
 
     @Override
@@ -127,7 +158,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(entity);
         log.info("Playlist ID: {} editada exitosamente", playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -150,7 +181,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
         playlist.getPrendas().add(prenda);
         PlaylistEntity guardada = playlistRepository.save(playlist);
         log.info("Prenda ID: {} agregada a playlist ID: {}", prendaId, playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -167,7 +198,7 @@ public class PlaylistServiceImpl implements IPlaylistService {
 
         PlaylistEntity guardada = playlistRepository.save(playlist);
         log.info("Prenda ID: {} retirada de playlist ID: {}", prendaId, playlistId);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
     }
 
     @Override
@@ -176,7 +207,9 @@ public class PlaylistServiceImpl implements IPlaylistService {
         log.info("Alternando like para playlist ID: {} por usuario ID: {}", playlistId, usuarioId);
         usuarioValidator.validarExiste(usuarioId);
 
-        PlaylistEntity playlist = playlistValidator.validarYObtener(playlistId);
+        PlaylistEntity playlist = playlistRepository.findForUpdate(playlistId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe una playlist con ID: " + playlistId));
+        playlistValidator.validarAccesoLectura(playlist, usuarioId);
         if (playlist.getLikesUsuarios() == null) {
             playlist.setLikesUsuarios(new HashSet<>());
         }
@@ -190,7 +223,24 @@ public class PlaylistServiceImpl implements IPlaylistService {
         }
 
         PlaylistEntity guardada = playlistRepository.save(playlist);
-        return playlistEntityMapper.toDomain(guardada);
+        return respuestaVisible(playlistEntityMapper.toDomain(guardada));
+    }
+
+    /** Filtra solo la proyección; conserva asociaciones para retirar prendas o editar playlists. */
+    private Playlist respuestaVisible(Playlist playlist) {
+        return prendasVisibles(List.of(playlist)).getFirst();
+    }
+
+    private List<Playlist> prendasVisibles(List<Playlist> playlists) {
+        var ids = playlists.stream().filter(p -> p.getPrendas() != null)
+                .flatMap(p -> p.getPrendas().stream()).map(edu.dosw.proyecto.style_radar.model.domain.Prenda::getId)
+                .distinct().toList();
+        if (!ids.isEmpty()) {
+            var ocultas = new HashSet<>(prendaRepository.findIdsOcultas(ids));
+            playlists.stream().filter(p -> p.getPrendas() != null).forEach(p ->
+                    p.setPrendas(p.getPrendas().stream().filter(prenda -> !ocultas.contains(prenda.getId())).toList()));
+        }
+        return playlists;
     }
 
     @Override

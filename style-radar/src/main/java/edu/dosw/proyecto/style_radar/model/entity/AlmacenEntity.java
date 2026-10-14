@@ -2,6 +2,17 @@ package edu.dosw.proyecto.style_radar.model.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
+import edu.dosw.proyecto.style_radar.model.domain.CategoriaAlmacen;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.UniqueConstraint;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -20,6 +31,19 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AlmacenEntity {
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_verificacion")
+    private edu.dosw.proyecto.style_radar.model.domain.EstadoVerificacionAlmacen estadoVerificacion;
+
+    @Column(name = "fecha_decision_verificacion")
+    private java.time.Instant fechaDecisionVerificacion;
+
+    @Column(name = "administrador_decision_id")
+    private Long administradorDecisionId;
+
+    @Column(name = "motivo_verificacion", length = 1000)
+    private String motivoVerificacion;
 
     @Id
     private String nit;
@@ -43,6 +67,37 @@ public class AlmacenEntity {
 
     @OneToMany(mappedBy = "almacen", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemCatalogoEntity> itemsCatalogo = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "almacen_categorias", joinColumns = @JoinColumn(name = "almacen_nit"),
+            uniqueConstraints = @UniqueConstraint(name = "uk_almacen_categoria",
+                    columnNames = { "almacen_nit", "categoria" }))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "categoria", nullable = false)
+    private Set<CategoriaAlmacen> categorias = new HashSet<>();
+
+    /** Constructor histórico: no inventa estado ni fecha de alta. */
+    public AlmacenEntity(String nit, String nombreComercial, String descripcion, String telefono,
+            String correoContacto, Double latitud, Double longitud, Double reputacion,
+            List<ItemCatalogoEntity> itemsCatalogo, Set<CategoriaAlmacen> categorias) {
+        this.nit = nit;
+        this.nombreComercial = nombreComercial;
+        this.descripcion = descripcion;
+        this.telefono = telefono;
+        this.correoContacto = correoContacto;
+        this.latitud = latitud;
+        this.longitud = longitud;
+        this.reputacion = reputacion;
+        this.itemsCatalogo = itemsCatalogo;
+        this.categorias = categorias;
+    }
+
+    public AlmacenEntity(String nit, String nombreComercial, String descripcion, String telefono,
+            String correoContacto, Double latitud, Double longitud, Double reputacion,
+            List<ItemCatalogoEntity> itemsCatalogo) {
+        this(nit, nombreComercial, descripcion, telefono, correoContacto,
+                latitud, longitud, reputacion, itemsCatalogo, new HashSet<>());
+    }
 
     public AlmacenEntity(
             String nit,

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -22,6 +24,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,6 +38,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@org.hibernate.annotations.DynamicUpdate
 public class UsuarioEntity {
 
     @Id
@@ -53,6 +57,20 @@ public class UsuarioEntity {
     private Instant fechaRegistro;
 
     @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = { "usuario_id", "rol" }))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rol", nullable = false)
+    @Builder.Default
+    private Set<Rol> roles = new HashSet<>(Set.of(Rol.COMPRADOR));
+
+    // Nullable durante la transición: ddl-auto=update no completa las filas antiguas.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_cuenta")
+    @Builder.Default
+    private EstadoCuenta estadoCuenta = EstadoCuenta.ACTIVA;
+
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "usuario_preferencias_estilo", joinColumns = @JoinColumn(name = "usuario_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "estilo")
@@ -69,4 +87,17 @@ public class UsuarioEntity {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<BusquedaGuardadaEntity> busquedasGuardadas = new ArrayList<>();
+
+    private Instant fechaCambioEstado;
+    private Long administradorCambioEstadoId;
+    @Column(length = 1000)
+    private String motivoCambioEstado;
+
+    // Conserva el constructor previo; la trazabilidad de cuentas históricas es nullable.
+    public UsuarioEntity(Long id, String nombre, String email, String telefono, Instant fechaRegistro,
+            Set<Rol> roles, EstadoCuenta estadoCuenta, Set<Estilo> preferenciasEstilo,
+            Set<Talla> tallasHabituales, List<BusquedaGuardadaEntity> busquedasGuardadas) {
+        this(id, nombre, email, telefono, fechaRegistro, roles, estadoCuenta, preferenciasEstilo,
+                tallasHabituales, busquedasGuardadas, null, null, null);
+    }
 }

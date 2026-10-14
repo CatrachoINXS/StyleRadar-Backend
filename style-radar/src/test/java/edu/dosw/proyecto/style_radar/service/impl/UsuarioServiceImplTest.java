@@ -58,6 +58,8 @@ class UsuarioServiceImplTest {
 
     private UsuarioServiceImpl usuarioService;
 
+    @Mock private edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad detector;
+
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(AHORA, ZoneOffset.UTC);
@@ -67,7 +69,7 @@ class UsuarioServiceImplTest {
                 usuarioEntityMapper,
                 busquedaGuardadaEntityMapper,
                 usuarioValidator,
-                clock);
+                clock, detector);
     }
 
     @Test

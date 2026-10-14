@@ -50,7 +50,7 @@ class PrendaServiceImplTest {
                 "StyleRadar",
                 "Negro",
                 Estilo.CASUAL);
-        when(prendaRepository.findAll()).thenReturn(List.of(entity));
+        when(prendaRepository.findPublicas()).thenReturn(List.of(entity));
         when(prendaEntityMapper.toDomain(entity)).thenReturn(domain);
 
         // Act
@@ -58,7 +58,7 @@ class PrendaServiceImplTest {
 
         // Assert
         assertThat(result).containsExactly(domain);
-        verify(prendaRepository).findAll();
+        verify(prendaRepository).findPublicas();
         verify(prendaEntityMapper).toDomain(entity);
     }
 }

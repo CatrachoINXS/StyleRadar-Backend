@@ -1,6 +1,14 @@
 package edu.dosw.proyecto.style_radar.controller.docs;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
+import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springdoc.core.annotations.ParameterObject;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +36,7 @@ public interface PlaylistApi {
     @Operation(summary = "Crear playlist", description = "Crea una nueva playlist con visibilidad pública o privada.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Playlist creada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -43,9 +52,26 @@ public interface PlaylistApi {
     @GetMapping("/api/v1/playlists")
     ResponseEntity<List<PlaylistResponseDTO>> obtenerPublicas();
 
-    @Operation(summary = "Consultar playlist por ID", description = "Obtiene los detalles y prendas de una playlist.")
+    @Operation(summary = "Consultar playlists populares (RF72)", description = "Solo playlists PUBLICA. "
+            + "Orden: cantidad de likes únicos DESC, fechaCreacion DESC, ID ASC. Incluye cero likes y playlists "
+            + "sin prendas visibles. PageResponseDTO contiene content, page, size, totalElements, totalPages, first y last. "
+            + "Requiere autenticación Bearer JWT.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de playlists públicas populares, posiblemente vacía"),
+            @ApiResponse(responseCode = "400", description = "page >= 0; size entre 1 y 100; parámetros numéricos"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente, inválido, expirado o cuenta no activa"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping("/api/v1/playlists/populares")
+    ResponseEntity<PageResponseDTO<PlaylistResponseDTO>> obtenerPopulares(
+            @Valid @ModelAttribute @ParameterObject PlaylistPopularesRequestDTO request);
+
+    @Operation(summary = "Consultar playlist por ID", description = "Obtiene los detalles y prendas de una playlist. "
+            + "La identidad de consulta procede del JWT; usuarioConsultaId es opcional y, si se envía, debe coincidir con ella.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Playlist consultada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioConsultaId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Playlist no encontrada"),
             @ApiResponse(responseCode = "422", description = "Acceso no autorizado a playlist privada"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -55,9 +81,10 @@ public interface PlaylistApi {
             @PathVariable Long id,
             @RequestParam(required = false) Long usuarioConsultaId);
 
-    @Operation(summary = "Consultar playlists de un usuario", description = "Lista todas las playlists creadas por un usuario específico.")
+    @Operation(summary = "Consultar playlists de un usuario", description = "Lista las playlists propias, incluidas las privadas. usuarioId debe corresponder al principal JWT.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Playlists del usuario consultadas"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
@@ -67,6 +94,7 @@ public interface PlaylistApi {
     @Operation(summary = "Editar playlist", description = "Actualiza nombre, descripción, visibilidad o estilo de la playlist.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Playlist actualizada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
             @ApiResponse(responseCode = "404", description = "Usuario o playlist no encontrada"),
             @ApiResponse(responseCode = "422", description = "La playlist no pertenece al usuario"),
@@ -81,6 +109,7 @@ public interface PlaylistApi {
     @Operation(summary = "Agregar prenda a playlist", description = "Añade una prenda existente a una playlist del usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Prenda agregada a la playlist"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario, playlist o prenda no encontrada"),
             @ApiResponse(responseCode = "422", description = "La prenda ya está en la playlist o permiso denegado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -94,6 +123,7 @@ public interface PlaylistApi {
     @Operation(summary = "Retirar prenda de playlist", description = "Elimina una prenda de la playlist del usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Prenda retirada de la playlist"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o playlist no encontrada"),
             @ApiResponse(responseCode = "422", description = "La prenda no pertenece a la playlist o permiso denegado"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -107,17 +137,21 @@ public interface PlaylistApi {
     @Operation(summary = "Interactuar con playlist (Dar o quitar Like)", description = "Permite a un usuario dar o quitar like a una playlist.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Interacción registrada exitosamente"),
+            @ApiResponse(responseCode = "422", description = "Sin permiso de lectura sobre la playlist privada"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o playlist no encontrada"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     @PostMapping("/api/v1/playlists/{id}/like")
     ResponseEntity<PlaylistResponseDTO> alternarLike(
             @PathVariable Long id,
-            @Valid @RequestBody InteractuarPlaylistRequestDTO request);
+            @Valid @RequestBody InteractuarPlaylistRequestDTO request,
+            @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal);
 
     @Operation(summary = "Eliminar playlist", description = "Elimina una playlist del usuario.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Playlist eliminada exitosamente"),
+            @ApiResponse(responseCode = "403", description = "usuarioId no corresponde al principal JWT"),
             @ApiResponse(responseCode = "404", description = "Usuario o playlist no encontrada"),
             @ApiResponse(responseCode = "422", description = "La playlist no pertenece al usuario"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")

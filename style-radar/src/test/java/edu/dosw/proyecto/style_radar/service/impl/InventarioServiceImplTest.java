@@ -53,6 +53,8 @@ class InventarioServiceImplTest {
 
     private InventarioServiceImpl inventarioService;
 
+    @Mock private edu.dosw.proyecto.style_radar.service.DetectorDisponibilidad detector;
+
     @BeforeEach
     void setUp() {
         inventarioService = new InventarioServiceImpl(
@@ -60,7 +62,7 @@ class InventarioServiceImplTest {
                 itemCatalogoRepository,
                 itemCatalogoEntityMapper,
                 new InventarioValidator(),
-                new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)));
+                new EstadoItemCalculator(Clock.fixed(AHORA, ZoneOffset.UTC)), detector);
     }
 
     @Test

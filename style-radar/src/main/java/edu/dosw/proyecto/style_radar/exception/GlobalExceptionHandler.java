@@ -18,10 +18,65 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 import edu.dosw.proyecto.style_radar.model.dto.response.ErrorResponseDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.access.AccessDeniedException;
+import edu.dosw.proyecto.style_radar.security.SecurityErrorHandler;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(SolicitudPlaylistInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudPlaylist(
+            SolicitudPlaylistInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(SuscripcionActivaDuplicadaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSuscripcionDuplicada(
+            SuscripcionActivaDuplicadaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(SolicitudSuscripcionInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudSuscripcion(
+            SolicitudSuscripcionInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(SolicitudAlertaInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudAlertaInvalida(
+            SolicitudAlertaInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.dao.ConcurrencyFailureException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConcurrency(
+            org.springframework.dao.ConcurrencyFailureException exception, HttpServletRequest request) {
+        log.warn("Conflicto concurrente en {}", request.getRequestURI());
+        return buildResponse(HttpStatus.CONFLICT, "Conflicto concurrente; reintente la operacion",
+                request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAuthentication(
+            AuthenticationException exception, HttpServletRequest request) {
+        if (exception instanceof InternalAuthenticationServiceException) {
+            log.error("Error interno durante autenticación en {}", request.getRequestURI());
+            return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Ocurrió un error interno. Intente nuevamente más tarde.", request.getRequestURI(), Map.of());
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).header("WWW-Authenticate", "Bearer")
+                .body(buildResponse(HttpStatus.UNAUTHORIZED, SecurityErrorHandler.UNAUTHORIZED_MESSAGE,
+                        request.getRequestURI(), Map.of()).getBody());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(
+            AccessDeniedException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Acceso denegado", request.getRequestURI(), Map.of());
+    }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ErrorResponseDTO> handleRecursoNoEncontrado(
@@ -49,6 +104,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidation(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
+        log.warn("Solicitud rechazada por validación en {}", request.getRequestURI());
         Map<String, String> validationErrors = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
                 validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
@@ -63,6 +119,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ErrorResponseDTO> handleBindingValidation(
             BindException exception, HttpServletRequest request) {
+        log.warn("Parámetros rechazados en {}", request.getRequestURI());
         Map<String, String> validationErrors = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
                 validationErrors.putIfAbsent(error.getField(), error.getDefaultMessage()));
@@ -81,6 +138,7 @@ public class GlobalExceptionHandler {
     })
     public ResponseEntity<ErrorResponseDTO> handleInvalidHttpRequest(
             Exception exception, HttpServletRequest request) {
+        log.warn("Solicitud HTTP inválida en {}", request.getRequestURI());
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 "La solicitud contiene parámetros inválidos",
