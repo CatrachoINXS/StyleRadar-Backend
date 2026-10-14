@@ -52,6 +52,7 @@ class PlaylistControllerTest {
                 .standaloneSetup(new PlaylistController(playlistService, playlistMapper))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
+                .setCustomArgumentResolvers(new org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
@@ -91,6 +92,23 @@ class PlaylistControllerTest {
         mockMvc.perform(get("/api/v1/playlists"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10L));
+    }
+
+    @Test
+    void popularesErrorTecnicoShouldReturn500SinDetallesInternos() throws Exception {
+        when(playlistService.obtenerPopulares(0, 20)).thenThrow(
+                new org.springframework.dao.DataAccessResourceFailureException("detalle interno fixture"));
+        mockMvc.perform(get("/api/v1/playlists/populares"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("Ocurrió un error interno. Intente nuevamente más tarde."));
+    }
+
+    @Test
+    void alternarLikeSinPrincipalShouldReturn403SinInvocarServicio() throws Exception {
+        mockMvc.perform(post("/api/v1/playlists/10/like")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"usuarioId\":2}"))
+                .andExpect(status().isForbidden());
+        org.mockito.Mockito.verifyNoInteractions(playlistService);
     }
 
     @Test
@@ -177,6 +195,11 @@ class PlaylistControllerTest {
 
     @Test
     void alternarLikeShouldReturnOk() throws Exception {
+        var usuario = edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity.builder().id(2L).build();
+        var principal = new edu.dosw.proyecto.style_radar.security.UsuarioPrincipal(usuario, "fixture");
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(
+                        principal, null, principal.getAuthorities()));
         String requestBody = """
                 {
                   "usuarioId": 2
@@ -193,6 +216,11 @@ class PlaylistControllerTest {
                         .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.likes").value(1));
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void limpiarPrincipal() {
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test

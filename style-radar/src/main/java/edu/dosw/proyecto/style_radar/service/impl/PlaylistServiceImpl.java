@@ -4,6 +4,12 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Isolation;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,6 +98,31 @@ public class PlaylistServiceImpl implements IPlaylistService {
     }
 
     @Override
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
+    public Page<Playlist> obtenerPopulares(int page, int size) {
+        playlistValidator.validarPaginacion(page, size);
+        var pageable = PageRequest.of(page, size);
+        Page<Playlist> resultado;
+        if (pageable.getOffset() > Integer.MAX_VALUE) {
+            resultado = new PageImpl<>(List.of(), pageable,
+                    playlistRepository.countByVisibilidad(VisibilidadPlaylist.PUBLICA));
+        } else {
+            var ids = playlistRepository.findIdsPopulares(pageable);
+            if (ids.isEmpty()) {
+                resultado = new PageImpl<>(List.of(), pageable, ids.getTotalElements());
+            } else {
+                var detalles = playlistRepository.findDetallesPopulares(ids.getContent());
+                playlistRepository.cargarLikesPorIds(ids.getContent());
+                var porId = detalles.stream().collect(Collectors.toMap(PlaylistEntity::getId, Function.identity()));
+                var ordenadas = ids.getContent().stream().map(porId::get).map(playlistEntityMapper::toDomain).toList();
+                resultado = new PageImpl<>(prendasVisibles(ordenadas), pageable, ids.getTotalElements());
+            }
+        }
+        log.info("operacion=obtener-populares page={} size={} totalElements={}", page, size, resultado.getTotalElements());
+        return resultado;
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Playlist> obtenerPorUsuario(Long usuarioId) {
         log.info("Consultando playlists del usuario ID: {}", usuarioId);
@@ -176,7 +207,8 @@ public class PlaylistServiceImpl implements IPlaylistService {
         log.info("Alternando like para playlist ID: {} por usuario ID: {}", playlistId, usuarioId);
         usuarioValidator.validarExiste(usuarioId);
 
-        PlaylistEntity playlist = playlistValidator.validarYObtener(playlistId);
+        PlaylistEntity playlist = playlistRepository.findForUpdate(playlistId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe una playlist con ID: " + playlistId));
         if (playlist.getLikesUsuarios() == null) {
             playlist.setLikesUsuarios(new HashSet<>());
         }

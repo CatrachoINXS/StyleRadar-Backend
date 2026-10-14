@@ -1,6 +1,12 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.AccessDeniedException;
+import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
+import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +51,14 @@ public class PlaylistController implements PlaylistApi {
                 .map(playlistMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(playlists);
+    }
+
+    @Override
+    public ResponseEntity<PageResponseDTO<PlaylistResponseDTO>> obtenerPopulares(
+            @Valid @ModelAttribute PlaylistPopularesRequestDTO request) {
+        var page = playlistService.obtenerPopulares(request.getPage(), request.getSize()).map(playlistMapper::toResponse);
+        return ResponseEntity.ok(new PageResponseDTO<>(page.getContent(), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast()));
     }
 
     @Override
@@ -99,8 +113,12 @@ public class PlaylistController implements PlaylistApi {
     @Override
     public ResponseEntity<PlaylistResponseDTO> alternarLike(
             @PathVariable Long id,
-            @Valid @RequestBody InteractuarPlaylistRequestDTO request) {
-        Playlist actualizada = playlistService.alternarLike(request.getUsuarioId(), id);
+            @Valid @RequestBody InteractuarPlaylistRequestDTO request,
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        if (principal == null || !principal.getUsuarioId().equals(request.getUsuarioId())) {
+            throw new AccessDeniedException("Acceso denegado");
+        }
+        Playlist actualizada = playlistService.alternarLike(principal.getUsuarioId(), id);
         return ResponseEntity.ok(playlistMapper.toResponse(actualizada));
     }
 
