@@ -166,7 +166,7 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 
 ### Pruebas y calidad
 
-La suite cuenta actualmente con 260 pruebas y una cobertura de líneas del 92,2 %. Utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
+La suite cuenta actualmente con 1370 pruebas y una cobertura de líneas del 96,1 %. Utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
 
 ## Diagramas académicos
 
@@ -185,65 +185,71 @@ Como sistemas externos están *Mapbox* para que los usuarios compradores puedan 
 
 
 ## Diagrama de Despliegue
-El siguiente diagrama muestra cómo se construye y se publica el backend de StyleRadar, desde el repositorio hasta los ambientes de QA y producción en Azure. Se conserva el mismo código de colores de los demás diagramas.
+El siguiente diagrama muestra los nodos donde se ejecuta StyleRadar, los artefactos que se despliegan en cada uno y los caminos de comunicación entre ellos. Se conserva el mismo código de colores de los demás diagramas.
 
 ![](style-radar/docs/uml/DiagramaDespliegueStyleRadar.drawio.png)
 
 ### Descripción del despliegue
-Los cambios del equipo se integran en el repositorio de GitHub. Cada integración en las ramas `develop` o `main` activa el pipeline de QA, y cada tag de versión activa el pipeline de producción. Ambos pipelines ejecutan las pruebas, construyen la imagen del backend y la publican en Docker Hub.
+- **Equipo del desarrollador:** desde aquí se suben los cambios al repositorio de GitHub.
+- **GitHub:** contiene el repositorio y el entorno de ejecución de GitHub Actions, donde se ejecutan los pipelines `ci-qa.yml` y `ci-prod.yml`. Ambos compilan y prueban el proyecto, generan el artefacto `styleradar.jar` y construyen la imagen Docker.
+- **Docker Hub:** almacena la imagen `juanamunoz/styleradar` con sus tags de QA y de versión.
+- **Microsoft Azure:** cada ambiente (QA y producción) tiene su propio App Service, que ejecuta el contenedor Docker con el artefacto `app.jar` y las variables de entorno definidas en sus App Settings, y su propia base de datos PostgreSQL. La comunicación entre la aplicación y la base de datos se realiza por JDBC con conexión cifrada.
+- **Equipo del usuario:** accede a la API desde el navegador por HTTPS.
 
-En Azure, cada ambiente tiene su propio grupo de recursos con un App Service, donde se ejecuta el contenedor de la aplicación, y una base de datos PostgreSQL independiente. De esta forma, las pruebas realizadas en QA no afectan la información de producción. El despliegue en producción requiere además una aprobación manual en GitHub.
-
-Los usuarios acceden a la API por HTTPS a través de la URL pública del App Service.
+El despliegue en producción requiere además una aprobación manual en GitHub.
 
 ## Diagrama de Componentes General
-El siguiente diagrama de componentes muestra la arquitectura general del sistema.
+El siguiente diagrama muestra la arquitectura general del sistema completo: los actores, los componentes principales y los sistemas externos con los que se integra.
 
 ![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
 
-El ***Front-End*** representa la interfaz con la que interactúan los usuarios y consume la API REST del ***Back-End*** por HTTPS en la ruta `/api/v1`. El Back-End, construido con Spring Boot, contiene la lógica de negocio y publica su documentación con Swagger/OpenAPI. La ***Base de Datos*** PostgreSQL almacena la información de la plataforma y el Back-End accede a ella por medio de JDBC.
+Los actores (usuario comprador, almacén, fundación aliada y administrador) usan el ***Front-End***, una aplicación web que consume la API REST del ***Back-End*** en la ruta `/api/v1`. El Back-End, construido con Spring Boot, contiene la lógica de negocio y la seguridad con JWT y roles, y almacena la información en la ***Base de Datos*** PostgreSQL por medio de JDBC. Además, el sistema contempla la integración con tres sistemas externos: Mapbox para mapas y ubicación, PSE para los pagos y la API del probador virtual basada en IA.
 
 ## Diagrama de Componentes Especifico
-Este diagrama muestra la arquitectura interna del Back-End de StyleRadar según los módulos implementados actualmente.
+Este diagrama muestra la arquitectura interna del Back-End de StyleRadar según los módulos implementados actualmente, con sus componentes, las interfaces que exponen y la forma en que se conectan entre capas.
 
 ![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
 
 ### Módulos
 Cada módulo se encarga de una parte específica de la plataforma:
-- **Usuarios:** registro y consulta de usuarios, preferencias de estilo, tallas habituales y búsquedas guardadas.
-- **Catálogo de almacén:** publicación, edición y retiro de prendas, inventario por talla e imágenes del catálogo de cada almacén.
-- **Búsqueda de prendas:** búsqueda global con filtros, orden por distancia y reputación, y consulta de prendas similares.
+- **Autenticación:** inicio de sesión y manejo de credenciales.
+- **Usuarios:** registro, perfil, preferencias, búsquedas guardadas y gestión del estado de las cuentas.
+- **Almacenes:** información de los almacenes, verificación, administradores asociados y búsqueda por distancia.
+- **Catálogo:** publicación de prendas, inventario por talla, imágenes y moderación del catálogo.
+- **Búsqueda y personalización:** búsqueda con filtros, prendas similares y recomendaciones personalizadas.
 - **Segunda mano:** publicación, búsqueda, edición y venta de prendas usadas entre usuarios.
 - **Playlists:** creación de playlists de estilo, gestión de sus prendas e interacción de otros usuarios.
+- **Alertas:** alertas de disponibilidad y notificaciones para los usuarios.
+- **Suscripciones:** planes y suscripciones de los almacenes.
 
-Además, existen componentes transversales para el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
+Además, existen componentes transversales para la seguridad (`SecurityConfig`, `JwtAuthFilter`, `JwtUtil`), el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
 
 ### Estructura de los módulos
-En cada módulo los componentes interactúan de la siguiente manera: la solicitud llega al `Controller`, que usa un `Mapper` para convertir los datos recibidos en objetos del dominio. Luego, el `Service` aplica la lógica de negocio apoyándose en los `Validator` y calculadores, que verifican las reglas del módulo. Para guardar o consultar información, el `EntityMapper` convierte los objetos del dominio en entidades, y el `Repository` se comunica con la base de datos.
+En cada módulo, el `Controller` recibe la solicitud y usa un `Mapper` para convertir los datos recibidos en objetos del dominio. El Controller depende de la interfaz del servicio (por ejemplo `IUsuarioService`), que es implementada por el `Service`. El Service aplica la lógica de negocio apoyándose en los `Validator` y calculadores, usa el `EntityMapper` para convertir los objetos del dominio en entidades y se comunica con el `Repository`, que accede a la base de datos.
 
 ## Diagrama de Clases
-En el siguiente diagrama de clases se observan las clases del dominio implementadas en el backend, con sus atributos, métodos y relaciones.
+En el siguiente diagrama de clases se observan las entidades del dominio implementadas en el backend, con sus atributos, métodos, relaciones y enumeraciones.
 
 ![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
 
 ### Estructura general del diagrama de clases
-En color azul se encuentra lo relacionado con los usuarios y los almacenes. La clase `Usuario` guarda las preferencias de estilo y las tallas habituales, y se relaciona con sus búsquedas guardadas (`BusquedaGuardada`). La clase `Almacen` contiene la información de contacto, la ubicación y la reputación de cada tienda.
+En color azul se encuentra lo relacionado con los usuarios y los almacenes. La clase `Usuario` guarda sus roles, el estado de la cuenta, las preferencias de estilo y las tallas habituales, y se relaciona con sus búsquedas guardadas. La clase `Almacen` contiene la información de contacto, la ubicación, la reputación y las categorías de cada tienda.
 
-En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la prenda; `ItemCatalogo` representa su publicación en el catálogo de un almacén, con su inventario por talla (`InventarioTalla`) y sus imágenes (`ImagenCatalogo`). También se encuentran las publicaciones de segunda mano (`PublicacionSegundaMano`), los criterios de búsqueda y las enumeraciones de tipo, estilo, talla y estados.
+En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la prenda; `ItemCatalogo` representa su publicación en el catálogo de un almacén, con su inventario por talla (`InventarioTalla`) y sus imágenes (`ImagenCatalogo`). También se encuentran las publicaciones de segunda mano (`PublicacionSegundaMano`).
 
-En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta.
+En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta. En color morado están las alertas que crea un usuario y las notificaciones que estas generan, y en color naranja las suscripciones de los almacenes y sus planes.
 
 ## Diagrama Entidad-Relación
-El siguiente diagrama muestra las tablas de la base de datos de StyleRadar, sus columnas y las relaciones entre ellas. Se conserva el mismo código de colores del diagrama de clases.
+El siguiente diagrama muestra las 23 tablas de la base de datos de StyleRadar, sus columnas, sus llaves y las relaciones entre ellas. Se conserva el mismo código de colores del diagrama de clases.
 
 ![](style-radar/docs/uml/DiagramaERStyleRadar.drawio.png)
 
 ### Estructura de la base de datos
-En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se relaciona con sus preferencias de estilo, sus tallas habituales y sus búsquedas guardadas. La tabla `almacenes` se identifica por el NIT y guarda la información de contacto, la ubicación y la reputación de cada tienda.
+En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se relaciona con sus roles, sus credenciales, sus preferencias de estilo, sus tallas habituales y sus búsquedas guardadas. La tabla `almacenes` se identifica por el NIT y se relaciona con sus categorías y con los usuarios que la administran.
 
-En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario disponible por talla en `inventario_tallas` y las fotografías en `imagenes_catalogo`. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
+En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario por talla, las imágenes y el control de disponibilidad. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
 
-En color verde se encuentran las playlists de estilo. La tabla `playlist_prendas` relaciona cada playlist con las prendas que contiene y `playlist_likes` registra los usuarios que le han dado me gusta.
+En color verde se encuentran las playlists de estilo, con las prendas que contienen y los usuarios que les dan me gusta. En color morado están las alertas y las notificaciones de cada usuario, y en color naranja los planes y las suscripciones de los almacenes.
 
 ### Justificación de la persistencia
 Se eligió PostgreSQL, una base de datos relacional, porque la información de StyleRadar está muy conectada entre sí: un almacén tiene muchas prendas publicadas, cada prenda tiene inventario por talla e imágenes, y los usuarios crean playlists y publicaciones que hacen referencia a esas mismas prendas. Un modelo relacional permite representar estas relaciones de forma directa y consultar la información combinada, por ejemplo al buscar prendas con filtros por talla, precio o almacén.
@@ -254,6 +260,8 @@ Además, la base de datos ayuda a mantener la información consistente por medio
 - Una misma prenda del catálogo no puede tener dos registros de inventario para la misma talla.
 - Las unidades disponibles nunca pueden ser negativas.
 - Las publicaciones, los inventarios y las imágenes siempre deben estar asociados a un registro existente.
+- Un almacén solo puede tener una suscripción activa a la vez.
+- Un usuario no puede tener dos alertas activas sobre el mismo objetivo.
 
 El acceso a los datos se realiza con Spring Data JPA, lo que permite trabajar con las tablas a partir de las clases del proyecto y mantener separada la lógica de negocio del manejo de la base de datos.
 
