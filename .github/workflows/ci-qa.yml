@@ -1,0 +1,111 @@
+name: CI QA
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: styleradar
+
+jobs:
+  test:
+    name: Tests y cobertura
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: style-radar
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Ejecutar pruebas y verificar cobertura
+        run: mvn -B clean verify
+
+      - name: Publicar reporte de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: style-radar/target/site/jacoco/
+
+  build-push:
+    name: Imagen QA en Docker Hub
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: style-radar
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:qa-${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:qa-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-qa:
+    name: Despliegue en Azure QA
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment:
+      name: qa
+      url: ${{ steps.deploy.outputs.webapp-url }}/swagger-ui/index.html
+    steps:
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configurar variables de entorno del App Service
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            RG=$(az webapp list --query "[?name=='${{ secrets.AZURE_WEBAPP_NAME_QA }}'].resourceGroup | [0]" -o tsv)
+            az webapp config appsettings set \
+              --name "${{ secrets.AZURE_WEBAPP_NAME_QA }}" \
+              --resource-group "$RG" \
+              --output none \
+              --settings \
+                WEBSITES_PORT=8080 \
+                DB_URL="${{ secrets.DB_URL_QA }}" \
+                DB_USERNAME="${{ secrets.DB_USERNAME_QA }}" \
+                DB_PASSWORD="${{ secrets.DB_PASSWORD_QA }}" \
+                JWT_SECRET_BASE64="${{ secrets.JWT_SECRET_QA }}"
+
+      - uses: azure/webapps-deploy@v3
+        id: deploy
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_QA }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:qa-${{ github.sha }}
+
+      - name: Smoke test
+        run: |
+          URL="https://${{ secrets.AZURE_WEBAPP_NAME_QA }}.azurewebsites.net/v3/api-docs"
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+            echo "Intento $i: $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "La API no respondió correctamente en $URL"
+          exit 1
