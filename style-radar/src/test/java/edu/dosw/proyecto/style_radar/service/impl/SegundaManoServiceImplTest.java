@@ -252,4 +252,33 @@ class SegundaManoServiceImplTest {
         assertThat(entity.getEstado()).isEqualTo(EstadoPublicacion.RETIRADA);
         verify(publicacionRepository).save(entity);
     }
+
+    @Test
+    void marcarParaDonacionShouldMoveToEnDonacion() {
+        // Arrange
+        PublicacionSegundaManoEntity entity = PublicacionSegundaManoEntity.builder().id(10L).estado(EstadoPublicacion.DISPONIBLE).build();
+        when(segundaManoValidator.validarYObtenerDeUsuario(10L, 1L)).thenReturn(entity);
+        when(publicacionRepository.save(entity)).thenReturn(entity);
+        when(publicacionEntityMapper.toDomain(entity)).thenAnswer(inv -> PublicacionSegundaMano.builder().id(10L).estado(entity.getEstado()).build());
+
+        // Act
+        PublicacionSegundaMano result = service.marcarParaDonacion(1L, 10L);
+
+        // Assert
+        assertThat(result.getEstado()).isEqualTo(EstadoPublicacion.EN_DONACION);
+    }
+
+    @Test
+    void marcarParaDonacionShouldFailWhenNotDisponible() {
+        // Arrange
+        PublicacionSegundaManoEntity entity = PublicacionSegundaManoEntity.builder().id(10L).estado(EstadoPublicacion.VENDIDA).build();
+        when(segundaManoValidator.validarYObtenerDeUsuario(10L, 1L)).thenReturn(entity);
+        org.mockito.Mockito.doThrow(new edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException("no disponible"))
+                .when(segundaManoValidator).validarTransicionADonacion(entity);
+
+        // Act + Assert
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.marcarParaDonacion(1L, 10L))
+                .isInstanceOf(edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException.class);
+        org.mockito.Mockito.verify(publicacionRepository, org.mockito.Mockito.never()).save(entity);
+    }
 }

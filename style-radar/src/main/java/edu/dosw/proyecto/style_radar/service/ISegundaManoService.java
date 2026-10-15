@@ -38,4 +38,6 @@ public interface ISegundaManoService {
     PublicacionSegundaMano marcarComoVendida(Long usuarioId, Long publicacionId);
 
     void retirar(Long usuarioId, Long publicacionId);
+
+    PublicacionSegundaMano marcarParaDonacion(Long usuarioId, Long publicacionId);
 }

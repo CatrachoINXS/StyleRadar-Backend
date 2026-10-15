@@ -15,6 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import org.hibernate.annotations.BatchSize;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -78,4 +79,12 @@ public class PlaylistEntity {
     @Column(name = "usuario_id", nullable = false)
     @Builder.Default
     private Set<Long> likesUsuarios = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    // Un solo lote por página de playlists: evita N+1 al mapear listados.
+    @BatchSize(size = 100)
+    @CollectionTable(name = "playlist_guardados", joinColumns = @JoinColumn(name = "playlist_id"))
+    @Column(name = "usuario_id")
+    @Builder.Default
+    private Set<Long> guardadosUsuarios = new HashSet<>();
 }

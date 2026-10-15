@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PlaylistValidator {
 
+    // RNF-12: interfaz manejable y sin cargas masivas.
+    public static final int MAX_PRENDAS = 15;
+
     private final PlaylistRepository playlistRepository;
     private final PrendaRepository prendaRepository;
 
@@ -43,6 +46,12 @@ public class PlaylistValidator {
             if (usuarioConsultaId == null || !playlist.getUsuario().getId().equals(usuarioConsultaId)) {
                 throw new ReglaDeNegocioException("No tiene permisos para consultar esta playlist privada");
             }
+        }
+    }
+
+    public void validarCapacidad(PlaylistEntity playlist) {
+        if (playlist.getPrendas().size() >= MAX_PRENDAS) {
+            throw new ReglaDeNegocioException("Una playlist admite como máximo " + MAX_PRENDAS + " prendas");
         }
     }
 

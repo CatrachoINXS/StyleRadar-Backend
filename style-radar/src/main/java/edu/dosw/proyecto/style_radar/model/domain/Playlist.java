@@ -28,8 +28,15 @@ public class Playlist {
     @Builder.Default
     private Set<Long> likesUsuarios = new HashSet<>();
 
+    @Builder.Default
+    private Set<Long> guardadosUsuarios = new HashSet<>();
+
     public int getLikesCount() {
         return likesUsuarios != null ? likesUsuarios.size() : 0;
+    }
+
+    public int getGuardadosCount() {
+        return guardadosUsuarios != null ? guardadosUsuarios.size() : 0;
     }
 
     public int getTotalPrendas() {

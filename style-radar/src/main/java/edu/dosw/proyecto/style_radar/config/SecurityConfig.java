@@ -1,5 +1,8 @@
 package edu.dosw.proyecto.style_radar.config;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,16 +10,22 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import edu.dosw.proyecto.style_radar.security.JwtAuthFilter;
 import edu.dosw.proyecto.style_radar.security.SecurityErrorHandler;
 import edu.dosw.proyecto.style_radar.security.UsuarioUserDetailsService;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
     @Bean
     AuthenticationManager authenticationManager(UsuarioUserDetailsService users, PasswordEncoder encoder) {
@@ -31,6 +40,7 @@ public class SecurityConfig {
         return http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // API REST con Bearer, sin cookies de sesión.
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
@@ -63,6 +73,8 @@ public class SecurityConfig {
                             .hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/admin/catalogo/{itemId}/moderacion/solicitar-revision")
                             .hasRole("ADMIN_STYLERADAR")
+                        // Defensa en profundidad: cada endpoint admin también declara @PreAuthorize.
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN_STYLERADAR")
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/registro",
                                 "/api/v1/usuarios").permitAll()
                         .requestMatchers(HttpMethod.GET, "/swagger-ui.html", "/swagger-ui/**",
@@ -76,6 +88,20 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource(
+            @Value("${styleradar.cors.allowed-origins:http://localhost:3000}") List<String> origins) {
+        var cors = new CorsConfiguration();
+        cors.setAllowedOrigins(origins);
+        cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cors.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cors.setExposedHeaders(List.of("WWW-Authenticate"));
+        cors.setMaxAge(3600L);
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cors);
+        return source;
     }
 
     @Bean

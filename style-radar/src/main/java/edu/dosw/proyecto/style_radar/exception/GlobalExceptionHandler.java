@@ -84,6 +84,27 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI(), Map.of());
     }
 
+    @ExceptionHandler(ConflictoException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConflicto(
+            ConflictoException exception, HttpServletRequest request) {
+        log.warn("Conflicto de negocio en {}: {}", request.getRequestURI(), exception.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponseDTO> handleArchivoDemasiadoGrande(
+            org.springframework.web.multipart.MaxUploadSizeExceededException exception, HttpServletRequest request) {
+        log.warn("Archivo rechazado por tamaño en {}", request.getRequestURI());
+        return buildResponse(HttpStatus.CONTENT_TOO_LARGE, "El archivo supera el tamaño máximo permitido",
+                request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRutaInexistente(
+            org.springframework.web.servlet.resource.NoResourceFoundException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "La ruta solicitada no existe", request.getRequestURI(), Map.of());
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolation(
             DataIntegrityViolationException exception, HttpServletRequest request) {

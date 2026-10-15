@@ -99,7 +99,7 @@ public class DetectorDisponibilidad {
 
     private boolean coincide(AlertaEntity alerta, ItemCatalogoEntity item, BusquedaGuardadaEntity busqueda) {
         if (busqueda == null || !busqueda.getUsuario().getId().equals(alerta.getUsuario().getId())
-                || !item.getFechaPublicacion().isAfter(alerta.getFechaCreacion())) return false;
+                || item.getFechaPublicacion().isBefore(alerta.getFechaCreacion())) return false;
         var criterios = CriteriosBusquedaGuardada.criterios(busqueda);
         return CriteriosBusquedaGuardada.significativa(criterios)
                 && items.exists(ItemCatalogoSpecifications.coincidenciaExacta(criterios)

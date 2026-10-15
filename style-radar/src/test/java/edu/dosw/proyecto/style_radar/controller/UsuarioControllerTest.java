@@ -1,5 +1,8 @@
 package edu.dosw.proyecto.style_radar.controller;
 
+import org.junit.jupiter.api.AfterEach;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.support.PrincipalFixtures;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -15,8 +18,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
-import edu.dosw.proyecto.style_radar.support.PrincipalControllerFixture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,21 +62,21 @@ class UsuarioControllerTest {
 
     private MockMvc mockMvc;
 
+    @AfterEach
+    void limpiarSeguridad() {
+        PrincipalFixtures.limpiar();
+    }
+
     @BeforeEach
     void setUp() {
-        PrincipalControllerFixture.autenticar(1L);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new UsuarioController(usuarioService, usuarioMapper, busquedaGuardadaMapper, new IdentidadAutenticada()))
+                .standaloneSetup(new UsuarioController(usuarioService, usuarioMapper, busquedaGuardadaMapper))
+                .setCustomArgumentResolvers(PrincipalFixtures.autenticar(1L, Rol.COMPRADOR))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
                 .build();
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    void limpiarPrincipal() {
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -153,7 +154,7 @@ class UsuarioControllerTest {
         when(usuarioService.actualizarPreferenciasEstilo(eq(1L), any())).thenReturn(domain);
         when(usuarioMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(put(BASE_PATH + "/1/preferencias-estilo")
+        mockMvc.perform(put(BASE_PATH + "/me/preferencias-estilo")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -173,7 +174,7 @@ class UsuarioControllerTest {
         when(usuarioService.actualizarTallasHabituales(eq(1L), any())).thenReturn(domain);
         when(usuarioMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(put(BASE_PATH + "/1/tallas-habituales")
+        mockMvc.perform(put(BASE_PATH + "/me/tallas-habituales")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -200,7 +201,7 @@ class UsuarioControllerTest {
         when(usuarioService.guardarBusqueda(eq(1L), any())).thenReturn(guardada);
         when(busquedaGuardadaMapper.toResponse(guardada)).thenReturn(response);
 
-        mockMvc.perform(post(BASE_PATH + "/1/busquedas-guardadas")
+        mockMvc.perform(post(BASE_PATH + "/me/busquedas-guardadas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isCreated())
@@ -216,7 +217,7 @@ class UsuarioControllerTest {
         when(usuarioService.obtenerBusquedasGuardadas(1L)).thenReturn(List.of(domain));
         when(busquedaGuardadaMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(get(BASE_PATH + "/1/busquedas-guardadas"))
+        mockMvc.perform(get(BASE_PATH + "/me/busquedas-guardadas"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(5L));
     }
@@ -225,7 +226,7 @@ class UsuarioControllerTest {
     void eliminarBusquedaGuardadaShouldReturnNoContent() throws Exception {
         doNothing().when(usuarioService).eliminarBusquedaGuardada(1L, 5L);
 
-        mockMvc.perform(delete(BASE_PATH + "/1/busquedas-guardadas/5"))
+        mockMvc.perform(delete(BASE_PATH + "/me/busquedas-guardadas/5"))
                 .andExpect(status().isNoContent());
 
         verify(usuarioService).eliminarBusquedaGuardada(1L, 5L);

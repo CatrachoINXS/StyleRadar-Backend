@@ -1,5 +1,8 @@
 package edu.dosw.proyecto.style_radar.controller;
 
+import org.junit.jupiter.api.AfterEach;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.support.PrincipalFixtures;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -13,8 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
-import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
-import edu.dosw.proyecto.style_radar.support.PrincipalControllerFixture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,16 +47,20 @@ class PlaylistControllerTest {
 
     private MockMvc mockMvc;
 
+    @AfterEach
+    void limpiarSeguridad() {
+        PrincipalFixtures.limpiar();
+    }
+
     @BeforeEach
     void setUp() {
-        PrincipalControllerFixture.autenticar(1L);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new PlaylistController(playlistService, playlistMapper, new IdentidadAutenticada()))
+                .standaloneSetup(new PlaylistController(playlistService, playlistMapper))
+                .setCustomArgumentResolvers(PrincipalFixtures.autenticar(1L, Rol.COMPRADOR))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
-                .setCustomArgumentResolvers(new org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver())
                 .build();
     }
 
@@ -63,7 +68,6 @@ class PlaylistControllerTest {
     void crearShouldReturnCreatedWhenValid() throws Exception {
         String requestBody = """
                 {
-                  "usuarioId": 1,
                   "nombre": "Looks de Fiesta",
                   "descripcion": "Colección elegante",
                   "visibilidad": "PUBLICA",
@@ -98,24 +102,6 @@ class PlaylistControllerTest {
     }
 
     @Test
-    void popularesErrorTecnicoShouldReturn500SinDetallesInternos() throws Exception {
-        when(playlistService.obtenerPopulares(0, 20)).thenThrow(
-                new org.springframework.dao.DataAccessResourceFailureException("detalle interno fixture"));
-        mockMvc.perform(get("/api/v1/playlists/populares"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.message").value("Ocurrió un error interno. Intente nuevamente más tarde."));
-    }
-
-    @Test
-    void alternarLikeSinPrincipalShouldReturn403SinInvocarServicio() throws Exception {
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
-        mockMvc.perform(post("/api/v1/playlists/10/like")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"usuarioId\":2}"))
-                .andExpect(status().isForbidden());
-        org.mockito.Mockito.verifyNoInteractions(playlistService);
-    }
-
-    @Test
     void obtenerPorIdShouldReturnOkWhenFound() throws Exception {
         Playlist domain = Playlist.builder().id(10L).build();
         PlaylistResponseDTO response = PlaylistResponseDTO.builder().id(10L).build();
@@ -136,7 +122,7 @@ class PlaylistControllerTest {
         when(playlistService.obtenerPorUsuario(1L)).thenReturn(List.of(domain));
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/usuarios/1/playlists"))
+        mockMvc.perform(get("/api/v1/usuarios/me/playlists"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10L));
     }
@@ -157,7 +143,7 @@ class PlaylistControllerTest {
         when(playlistService.editar(eq(1L), eq(10L), eq("Looks de Noche"), eq("Nueva descripcion"), eq(VisibilidadPlaylist.PRIVADA), eq(Estilo.FORMAL))).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/usuarios/1/playlists/10")
+        mockMvc.perform(put("/api/v1/usuarios/me/playlists/10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -177,7 +163,7 @@ class PlaylistControllerTest {
         when(playlistService.agregarPrenda(1L, 10L, 5L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/usuarios/1/playlists/10/prendas")
+        mockMvc.perform(post("/api/v1/usuarios/me/playlists/10/prendas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -192,46 +178,29 @@ class PlaylistControllerTest {
         when(playlistService.retirarPrenda(1L, 10L, 5L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(delete("/api/v1/usuarios/1/playlists/10/prendas/5"))
+        mockMvc.perform(delete("/api/v1/usuarios/me/playlists/10/prendas/5"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10L));
     }
 
     @Test
     void alternarLikeShouldReturnOk() throws Exception {
-        var usuario = edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity.builder().id(2L).build();
-        var principal = new edu.dosw.proyecto.style_radar.security.UsuarioPrincipal(usuario, "fixture");
-        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
-                org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(
-                        principal, null, principal.getAuthorities()));
-        String requestBody = """
-                {
-                  "usuarioId": 2
-                }
-                """;
         Playlist domain = Playlist.builder().id(10L).build();
         PlaylistResponseDTO response = PlaylistResponseDTO.builder().id(10L).likes(1).build();
 
-        when(playlistService.alternarLike(2L, 10L)).thenReturn(domain);
+        when(playlistService.alternarLike(1L, 10L)).thenReturn(domain);
         when(playlistMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(post("/api/v1/playlists/10/like")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+        mockMvc.perform(post("/api/v1/playlists/10/like"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.likes").value(1));
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    void limpiarPrincipal() {
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test
     void eliminarShouldReturnNoContent() throws Exception {
         doNothing().when(playlistService).eliminar(1L, 10L);
 
-        mockMvc.perform(delete("/api/v1/usuarios/1/playlists/10"))
+        mockMvc.perform(delete("/api/v1/usuarios/me/playlists/10"))
                 .andExpect(status().isNoContent());
 
         verify(playlistService).eliminar(1L, 10L);

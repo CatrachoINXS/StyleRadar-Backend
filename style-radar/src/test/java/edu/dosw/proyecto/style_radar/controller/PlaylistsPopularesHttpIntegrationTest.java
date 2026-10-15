@@ -97,13 +97,14 @@ class PlaylistsPopularesHttpIntegrationTest extends PlaylistsPopularesFixtures {
         mvc.perform(get(RUTA).header("Authorization", "Bearer " + t)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty()).andExpect(jsonPath("$.totalElements").value(0));
     }
-    @Test void falsificarIdentidadEs403SinModificarLikes() throws Exception {
+    /** El like se registra siempre a nombre del JWT: un usuarioId en el body no suplanta a nadie. */
+    @Test void falsificarIdentidadNoRegistraLikeAjeno() throws Exception {
         var otra = usuario("otra@example.co"); var p = playlist(VisibilidadPlaylist.PUBLICA, 0, 0); String t = token();
         mvc.perform(post("/api/v1/playlists/" + p.getId() + "/like").header("Authorization", "Bearer " + t)
                 .contentType(MediaType.APPLICATION_JSON).content("{\"usuarioId\":" + otra.getId() + "}"))
-                .andExpect(status().isForbidden());
-        releer(); assertThat(repository.findById(p.getId()).orElseThrow().getLikesUsuarios()).isEmpty();
-        assertThat(servicio.obtenerPopulares(0, 20).getContent().getFirst().getLikesCount()).isZero();
+                .andExpect(status().isOk());
+        releer(); assertThat(repository.findById(p.getId()).orElseThrow().getLikesUsuarios())
+                .containsExactly(usuario.getId()).doesNotContain(otra.getId());
     }
     @Test void identidadPropiaAlternaSinDuplicadosYActualizaRanking() throws Exception {
         var a = playlist(VisibilidadPlaylist.PUBLICA, 0, 0); var b = playlist(VisibilidadPlaylist.PUBLICA, 0, 10); String t = token();

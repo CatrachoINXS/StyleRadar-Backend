@@ -88,6 +88,7 @@ Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` c
 | `JPA_DDL_AUTO` | Estrategia de Hibernate para el esquema. | `update` |
 | `JWT_SECRET_BASE64` | Clave para firmar los tokens de acceso, codificada en Base64 y de al menos 256 bits. Se puede generar con `openssl rand -base64 32`. | `change-me-base64-key` |
 | `JWT_DURATION` | Tiempo de validez de los tokens de acceso. | `PT60M` |
+| `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
 
@@ -191,9 +192,20 @@ El sistema maneja cuatro roles: `COMPRADOR`, `ADMIN_ALMACEN`, `REPRESENTANTE_FUN
 | `/api/v1/admin/almacenes/verificacion`, `/api/v1/admin/almacenes/{nit}/verificacion`, `/api/v1/admin/almacenes/{nit}/verificacion/solicitar-revision` | GET, PATCH, POST | `ADMIN_STYLERADAR` |
 | `/api/v1/admin/almacenes/{nit}/administradores/{usuarioId}` | PUT | `ADMIN_STYLERADAR` |
 | `/api/v1/admin/catalogo/moderacion`, `/api/v1/admin/catalogo/{itemId}/moderacion`, `/api/v1/admin/catalogo/{itemId}/moderacion/solicitar-revision` | GET, PATCH, POST | `ADMIN_STYLERADAR` |
-| Resto de endpoints (perfil, búsquedas guardadas, playlists, segunda mano, alertas, feed y gestión del catálogo) | Todos | Cualquier usuario autenticado con JWT. Los servicios validan además que el usuario sea el dueño del recurso o administrador del almacén correspondiente |
+| `/api/v1/admin/fundaciones/**` (registrar, editar, desactivar) | POST, PUT, PATCH, GET | `ADMIN_STYLERADAR` |
+| `/api/v1/usuarios/me`, `/me/preferencias-estilo`, `/me/tallas-habituales`, `/me/busquedas-guardadas/**` | GET, PUT, POST, DELETE | `COMPRADOR` |
+| `/api/v1/usuarios/{id}` | GET | `ADMIN_STYLERADAR` |
+| `POST /api/v1/segunda-mano`, `/api/v1/usuarios/me/segunda-mano/**` (editar, vender, donar, retirar) | POST, PUT, PATCH, DELETE | `COMPRADOR` (propietario) |
+| `POST /api/v1/playlists`, `/api/v1/usuarios/me/playlists/**`, `/api/v1/playlists/{id}/like`, `/guardar`, `/api/v1/usuarios/me/playlists-guardadas` | GET, POST, PUT, DELETE | `COMPRADOR` |
+| `GET /api/v1/segunda-mano`, `GET /api/v1/segunda-mano/{id}`, `GET /api/v1/playlists`, `/api/v1/playlists/{id}`, `/api/v1/playlists/populares` | GET | Cualquier usuario autenticado |
+| `/api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/**`, `/api/v1/usuarios/me/conversaciones` | GET, POST | `COMPRADOR` (solo participantes del chat) |
+| `/api/v1/usuarios/me/probador/**` | GET, POST, DELETE | `COMPRADOR` |
+| `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | GET, POST | `COMPRADOR` |
+| `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | GET, PATCH | `REPRESENTANTE_FUNDACION` |
+| `PATCH /api/v1/donaciones/{id}/recogida` | PATCH | `COMPRADOR` (donante) o `REPRESENTANTE_FUNDACION` (solo participantes) |
+| Resto de endpoints (alertas, notificaciones, feed y gestión del catálogo) | Todos | Cualquier usuario autenticado con JWT. Los servicios validan además que el usuario sea el dueño del recurso o administrador del almacén correspondiente |
 
-Las peticiones sin token reciben `401` y las que no tienen el rol requerido reciben `403`.
+Las peticiones sin token reciben `401` y las que no tienen el rol requerido reciben `403`. Cada endpoint de usuarios, segunda mano, playlists, fundaciones, donaciones, probador y chat declara `@PreAuthorize` en su interfaz `controller/docs/*Api`; en las rutas `/me` el usuario sale siempre del JWT, nunca de la URL. CORS solo admite los orígenes de `CORS_ALLOWED_ORIGINS`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
 
 ## Patrones de diseño
 
@@ -353,6 +365,27 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 - Búsqueda global con texto libre, filtros combinados y paginación.
 - Orden por distancia y reputación del almacén.
 - Fallback de prendas similares cuando una búsqueda textual no tiene coincidencias directas.
+
+### Alcance Sprint 3 — Juan Diego Valderrama (líder técnico)
+
+| RF | Funcionalidad | Endpoint |
+|---|---|---|
+| RF-23 | Cargar fotografía frontal (JPEG/PNG, ≤ 5 MB, ≥ 300x400, vertical) | `POST /api/v1/usuarios/me/probador/foto` |
+| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la composición aproximada y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-27 | Eliminar la fotografía del probador | `DELETE /api/v1/usuarios/me/probador/foto` |
+| RF-40 | Iniciar chat con el vendedor (sin tiempo real; WebSockets en el Corte 3) | `POST /api/v1/segunda-mano/{id}/conversaciones` |
+| RF-41 | Coordinar la entrega por mensajes privados | `GET/POST /api/v1/conversaciones/{id}/mensajes` |
+| RF-42 | Marcar prenda de segunda mano para donación | `PATCH /api/v1/usuarios/me/segunda-mano/{id}/donacion` |
+| RF-43 | Consultar fundaciones activas cercanas, filtrables por tipo de prenda | `GET /api/v1/fundaciones` |
+| RF-44, RF-45 | Seleccionar fundación y enviar la solicitud | `POST /api/v1/usuarios/me/donaciones` |
+| RF-46 | Consultar solicitudes de la fundación | `GET /api/v1/fundaciones/mi-fundacion/solicitudes` |
+| RF-47 | Aceptar o rechazar (motivo obligatorio al rechazar) | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/decision` |
+| RF-48 | Coordinar punto y franja de recogida | `PATCH /api/v1/donaciones/{id}/recogida` |
+| RF-49 | Confirmar recepción; la prenda queda DONADA | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/recepcion` |
+| RF-63, RF-64, RF-65 | Registrar, editar y desactivar fundaciones aliadas | `/api/v1/admin/fundaciones` |
+| RF-71, RNF-12 | Guardar playlist en el perfil; máximo 15 prendas por playlist | `POST /api/v1/playlists/{id}/guardar` |
+
+Ciclo de una donación: `PENDIENTE → ACEPTADA | RECHAZADA → COORDINADA → RECIBIDA`. Una prenda solo tiene una solicitud en curso; si se rechaza, puede ofrecerse a otra fundación.
 
 ## Trazabilidad funcional del Sprint 2
 

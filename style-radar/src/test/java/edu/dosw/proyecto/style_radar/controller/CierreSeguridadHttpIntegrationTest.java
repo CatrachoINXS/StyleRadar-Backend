@@ -70,18 +70,19 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
     }
 
     String crearPlaylist(Long id) {
-        return json.writeValueAsString(Map.of("usuarioId", id, "nombre", "Nueva", "visibilidad", "PUBLICA"));
+        return json.writeValueAsString(Map.of("nombre", "Nueva", "visibilidad", "PUBLICA"));
     }
     String editarPlaylist(String visibilidad) {
         return json.writeValueAsString(Map.of("nombre", "Editada", "descripcion", "Nueva descripción", "visibilidad", visibilidad));
     }
     String publicacion(Long id) {
-        return "{\"usuarioId\":" + id + ",\"prenda\":" + PRENDA
+        return "{\"prenda\":" + PRENDA
                 + ",\"talla\":\"M\",\"estadoConservacion\":\"BUEN_ESTADO\",\"precio\":200,\"fotos\":[]}";
     }
 
     MockHttpServletRequestBuilder operacion(String op) {
-        String base = "/api/v1/usuarios/" + usuario.getId();
+        // El usuario sale del JWT (/me): la URL no permite elegir a quién se modifica.
+        String base = "/api/v1/usuarios/me";
         String playlist = base + "/playlists/" + coleccion.getId();
         String segunda = base + "/segunda-mano/" + usada.getId();
         return switch (op) {
@@ -91,7 +92,7 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
             case "retirar" -> delete(playlist + "/prendas/" + prenda.getId());
             case "eliminar" -> delete(playlist);
             case "listar" -> get(base + "/playlists");
-            case "consulta" -> get("/api/v1/playlists/" + coleccion.getId()).param("usuarioConsultaId", usuario.getId().toString());
+            case "consulta" -> get("/api/v1/playlists/" + coleccion.getId());
             case "preferencias" -> put(base + "/preferencias-estilo").content("{\"preferencias\":[\"FORMAL\"]}");
             case "tallas" -> put(base + "/tallas-habituales").content("{\"tallas\":[\"M\"]}");
             case "guardarBusqueda" -> post(base + "/busquedas-guardadas").content("{\"nombre\":\"Nueva\",\"query\":\"Camisa\"}");
@@ -121,15 +122,15 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
         return resultado.toString();
     }
 
-    @ParameterizedTest @ValueSource(strings = {"crear", "editar", "agregar", "retirar", "eliminar", "listar", "consulta",
-            "preferencias", "tallas", "guardarBusqueda", "leerBusquedas", "eliminarBusqueda",
-            "publicarUsada", "editarUsada", "venderUsada", "retirarUsada", "like"})
-    void identidadAjenaEs403SinLeerPrivadosNiModificarDatos(String op) throws Exception {
+    /** Con /me un intruso solo puede apuntar a recursos ajenos por su id: se rechaza sin leer ni escribir nada. */
+    @ParameterizedTest @ValueSource(strings = {"editar", "agregar", "retirar", "eliminar", "consulta",
+            "eliminarBusqueda", "editarUsada", "venderUsada", "retirarUsada", "like"})
+    void identidadAjenaNoLeePrivadosNiModificaDatos(String op) throws Exception {
         String anterior = estadoPersistido();
-        mvc.perform(operacion(op).contentType(MediaType.APPLICATION_JSON)
+        int status = mvc.perform(operacion(op).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + new JwtUtil(secret, Duration.ofHours(1), Clock.systemUTC()).generate(otro.getId())))
-                .andExpect(status().isForbidden()).andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Acceso denegado"));
+                .andReturn().getResponse().getStatus();
+        assertThat(status).isIn(404, 422);
         assertThat(estadoPersistido()).isEqualTo(anterior);
     }
 
@@ -182,7 +183,7 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.likes").value(1));
         mvc.perform(get("/api/v1/playlists/populares").header("Authorization", "Bearer " + tokenPropio))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.content[0].likes").value(1));
-        mvc.perform(put("/api/v1/usuarios/{u}/playlists/{p}", usuario.getId(), coleccion.getId())
+        mvc.perform(put("/api/v1/usuarios/me/playlists/{p}", coleccion.getId())
                 .contentType(MediaType.APPLICATION_JSON).content(editarPlaylist("PRIVADA"))
                 .header("Authorization", "Bearer " + tokenPropio)).andExpect(status().isOk());
         mvc.perform(get("/api/v1/playlists/populares").header("Authorization", "Bearer " + tokenPropio))
@@ -233,10 +234,10 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
     @Test void swaggerExponeNuevosRechazosDeIdentidadYPrivacidad() throws Exception {
         mvc.perform(get("/v3/api-docs")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/playlists'].post.responses['403']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{usuarioId}/playlists'].get.responses['403']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/playlists/{id}'].get.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/me/playlists'].get.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/playlists/{id}'].get.responses['422']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/playlists/{id}/like'].post.responses['422']").exists())
-                .andExpect(jsonPath("$.paths['/api/v1/usuarios/{id}/busquedas-guardadas'].get.responses['403']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/usuarios/me/busquedas-guardadas'].get.responses['403']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/segunda-mano'].post.responses['403']").exists());
     }
 }

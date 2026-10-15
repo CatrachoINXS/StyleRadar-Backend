@@ -1,19 +1,13 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import java.util.List;
-import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.access.AccessDeniedException;
-import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
-import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
-import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.dosw.proyecto.style_radar.controller.docs.PlaylistApi;
@@ -22,8 +16,10 @@ import edu.dosw.proyecto.style_radar.model.domain.Playlist;
 import edu.dosw.proyecto.style_radar.model.dto.request.AgregarPrendaPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.CrearPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.EditarPlaylistRequestDTO;
-import edu.dosw.proyecto.style_radar.model.dto.request.InteractuarPlaylistRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.PlaylistResponseDTO;
+import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
 import edu.dosw.proyecto.style_radar.service.IPlaylistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +30,13 @@ public class PlaylistController implements PlaylistApi {
 
     private final IPlaylistService playlistService;
     private final PlaylistMapper playlistMapper;
-    private final IdentidadAutenticada identidad;
 
     @Override
-    public ResponseEntity<PlaylistResponseDTO> crear(@Valid @RequestBody CrearPlaylistRequestDTO request) {
-        identidad.exigirUsuario(request.getUsuarioId());
+    public ResponseEntity<PlaylistResponseDTO> crear(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @Valid @RequestBody CrearPlaylistRequestDTO request) {
         Playlist playlist = playlistService.crear(
-                request.getUsuarioId(),
+                principal.getUsuarioId(),
                 request.getNombre(),
                 request.getDescripcion(),
                 request.getVisibilidad(),
@@ -50,10 +46,7 @@ public class PlaylistController implements PlaylistApi {
 
     @Override
     public ResponseEntity<List<PlaylistResponseDTO>> obtenerPublicas() {
-        List<PlaylistResponseDTO> playlists = playlistService.obtenerPublicas().stream()
-                .map(playlistMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(playlists);
+        return ResponseEntity.ok(toResponse(playlistService.obtenerPublicas()));
     }
 
     @Override
@@ -66,30 +59,29 @@ public class PlaylistController implements PlaylistApi {
 
     @Override
     public ResponseEntity<PlaylistResponseDTO> obtenerPorId(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long usuarioConsultaId) {
-        if (usuarioConsultaId != null) identidad.exigirUsuario(usuarioConsultaId);
-        Playlist playlist = playlistService.obtenerPorId(id, identidad.usuarioId());
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id) {
+        Playlist playlist = playlistService.obtenerPorId(id, principal.getUsuarioId());
         return ResponseEntity.ok(playlistMapper.toResponse(playlist));
     }
 
     @Override
-    public ResponseEntity<List<PlaylistResponseDTO>> obtenerPorUsuario(@PathVariable Long usuarioId) {
-        identidad.exigirUsuario(usuarioId);
-        List<PlaylistResponseDTO> playlists = playlistService.obtenerPorUsuario(usuarioId).stream()
-                .map(playlistMapper::toResponse)
-                .toList();
-        return ResponseEntity.ok(playlists);
+    public ResponseEntity<List<PlaylistResponseDTO>> obtenerMisPlaylists(@AuthenticationPrincipal UsuarioPrincipal principal) {
+        return ResponseEntity.ok(toResponse(playlistService.obtenerPorUsuario(principal.getUsuarioId())));
+    }
+
+    @Override
+    public ResponseEntity<List<PlaylistResponseDTO>> obtenerGuardadas(@AuthenticationPrincipal UsuarioPrincipal principal) {
+        return ResponseEntity.ok(toResponse(playlistService.obtenerGuardadas(principal.getUsuarioId())));
     }
 
     @Override
     public ResponseEntity<PlaylistResponseDTO> editar(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @Valid @RequestBody EditarPlaylistRequestDTO request) {
-        identidad.exigirUsuario(usuarioId);
         Playlist editada = playlistService.editar(
-                usuarioId,
+                principal.getUsuarioId(),
                 id,
                 request.getNombre(),
                 request.getDescripcion(),
@@ -100,42 +92,45 @@ public class PlaylistController implements PlaylistApi {
 
     @Override
     public ResponseEntity<PlaylistResponseDTO> agregarPrenda(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @Valid @RequestBody AgregarPrendaPlaylistRequestDTO request) {
-        identidad.exigirUsuario(usuarioId);
-        Playlist actualizada = playlistService.agregarPrenda(usuarioId, id, request.getPrendaId());
+        Playlist actualizada = playlistService.agregarPrenda(principal.getUsuarioId(), id, request.getPrendaId());
         return ResponseEntity.ok(playlistMapper.toResponse(actualizada));
     }
 
     @Override
     public ResponseEntity<PlaylistResponseDTO> retirarPrenda(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @PathVariable Long prendaId) {
-        identidad.exigirUsuario(usuarioId);
-        Playlist actualizada = playlistService.retirarPrenda(usuarioId, id, prendaId);
+        Playlist actualizada = playlistService.retirarPrenda(principal.getUsuarioId(), id, prendaId);
         return ResponseEntity.ok(playlistMapper.toResponse(actualizada));
     }
 
     @Override
     public ResponseEntity<PlaylistResponseDTO> alternarLike(
-            @PathVariable Long id,
-            @Valid @RequestBody InteractuarPlaylistRequestDTO request,
-            @AuthenticationPrincipal UsuarioPrincipal principal) {
-        if (principal == null || !principal.getUsuarioId().equals(request.getUsuarioId())) {
-            throw new AccessDeniedException("Acceso denegado");
-        }
-        Playlist actualizada = playlistService.alternarLike(principal.getUsuarioId(), id);
-        return ResponseEntity.ok(playlistMapper.toResponse(actualizada));
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(playlistMapper.toResponse(playlistService.alternarLike(principal.getUsuarioId(), id)));
+    }
+
+    @Override
+    public ResponseEntity<PlaylistResponseDTO> alternarGuardado(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(playlistMapper.toResponse(playlistService.alternarGuardado(principal.getUsuarioId(), id)));
     }
 
     @Override
     public ResponseEntity<Void> eliminar(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id) {
-        identidad.exigirUsuario(usuarioId);
-        playlistService.eliminar(usuarioId, id);
+        playlistService.eliminar(principal.getUsuarioId(), id);
         return ResponseEntity.noContent().build();
+    }
+
+    private List<PlaylistResponseDTO> toResponse(List<Playlist> playlists) {
+        return playlists.stream().map(playlistMapper::toResponse).toList();
     }
 }

@@ -1,11 +1,11 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import java.util.List;
-import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +22,7 @@ import edu.dosw.proyecto.style_radar.model.dto.request.CrearPublicacionSegundaMa
 import edu.dosw.proyecto.style_radar.model.dto.request.EditarPublicacionSegundaManoRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.PublicacionSegundaManoResponseDTO;
+import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
 import edu.dosw.proyecto.style_radar.service.ISegundaManoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,15 +34,14 @@ public class SegundaManoController implements SegundaManoApi {
     private final ISegundaManoService segundaManoService;
     private final PublicacionSegundaManoMapper publicacionMapper;
     private final PrendaMapper prendaMapper;
-    private final IdentidadAutenticada identidad;
 
     @Override
     public ResponseEntity<PublicacionSegundaManoResponseDTO> publicar(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody CrearPublicacionSegundaManoRequestDTO request) {
-        identidad.exigirUsuario(request.getUsuarioId());
         Prenda prenda = prendaMapper.toDomain(request.getPrenda());
         PublicacionSegundaMano publicacion = segundaManoService.publicar(
-                request.getUsuarioId(),
+                principal.getUsuarioId(),
                 prenda,
                 request.getTalla(),
                 request.getEstadoConservacion(),
@@ -65,8 +65,10 @@ public class SegundaManoController implements SegundaManoApi {
     }
 
     @Override
-    public ResponseEntity<List<PublicacionSegundaManoResponseDTO>> obtenerPorUsuario(@PathVariable Long usuarioId) {
-        List<PublicacionSegundaManoResponseDTO> publicaciones = segundaManoService.obtenerPorUsuario(usuarioId).stream()
+    public ResponseEntity<List<PublicacionSegundaManoResponseDTO>> obtenerMisPublicaciones(
+            @AuthenticationPrincipal UsuarioPrincipal principal) {
+        List<PublicacionSegundaManoResponseDTO> publicaciones = segundaManoService
+                .obtenerPorUsuario(principal.getUsuarioId()).stream()
                 .map(publicacionMapper::toResponse)
                 .toList();
         return ResponseEntity.ok(publicaciones);
@@ -74,13 +76,12 @@ public class SegundaManoController implements SegundaManoApi {
 
     @Override
     public ResponseEntity<PublicacionSegundaManoResponseDTO> editar(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id,
             @Valid @RequestBody EditarPublicacionSegundaManoRequestDTO request) {
-        identidad.exigirUsuario(usuarioId);
         Prenda prenda = prendaMapper.toDomain(request.getPrenda());
         PublicacionSegundaMano editada = segundaManoService.editar(
-                usuarioId,
+                principal.getUsuarioId(),
                 id,
                 prenda,
                 request.getTalla(),
@@ -92,19 +93,25 @@ public class SegundaManoController implements SegundaManoApi {
 
     @Override
     public ResponseEntity<PublicacionSegundaManoResponseDTO> marcarComoVendida(
-            @PathVariable Long usuarioId,
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id) {
-        identidad.exigirUsuario(usuarioId);
-        PublicacionSegundaMano vendida = segundaManoService.marcarComoVendida(usuarioId, id);
+        PublicacionSegundaMano vendida = segundaManoService.marcarComoVendida(principal.getUsuarioId(), id);
         return ResponseEntity.ok(publicacionMapper.toResponse(vendida));
     }
 
     @Override
-    public ResponseEntity<Void> retirar(
-            @PathVariable Long usuarioId,
+    public ResponseEntity<PublicacionSegundaManoResponseDTO> marcarParaDonacion(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id) {
-        identidad.exigirUsuario(usuarioId);
-        segundaManoService.retirar(usuarioId, id);
+        PublicacionSegundaMano enDonacion = segundaManoService.marcarParaDonacion(principal.getUsuarioId(), id);
+        return ResponseEntity.ok(publicacionMapper.toResponse(enDonacion));
+    }
+
+    @Override
+    public ResponseEntity<Void> retirar(
+            @AuthenticationPrincipal UsuarioPrincipal principal,
+            @PathVariable Long id) {
+        segundaManoService.retirar(principal.getUsuarioId(), id);
         return ResponseEntity.noContent().build();
     }
 }

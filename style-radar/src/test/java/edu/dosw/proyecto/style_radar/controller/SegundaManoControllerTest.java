@@ -1,5 +1,8 @@
 package edu.dosw.proyecto.style_radar.controller;
 
+import org.junit.jupiter.api.AfterEach;
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.support.PrincipalFixtures;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -14,8 +17,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
-import edu.dosw.proyecto.style_radar.security.IdentidadAutenticada;
-import edu.dosw.proyecto.style_radar.support.PrincipalControllerFixture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,28 +65,27 @@ class SegundaManoControllerTest {
 
     private MockMvc mockMvc;
 
+    @AfterEach
+    void limpiarSeguridad() {
+        PrincipalFixtures.limpiar();
+    }
+
     @BeforeEach
     void setUp() {
-        PrincipalControllerFixture.autenticar(1L);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new SegundaManoController(segundaManoService, publicacionMapper, prendaMapper, new IdentidadAutenticada()))
+                .standaloneSetup(new SegundaManoController(segundaManoService, publicacionMapper, prendaMapper))
+                .setCustomArgumentResolvers(PrincipalFixtures.autenticar(1L, Rol.COMPRADOR))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
                 .build();
-    }
-
-    @org.junit.jupiter.api.AfterEach
-    void limpiarPrincipal() {
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test
     void publicarShouldReturnCreatedWhenValid() throws Exception {
         String requestBody = """
                 {
-                  "usuarioId": 1,
                   "prenda": {
                     "nombre": "Chaqueta Cuero",
                     "descripcion": "Vintage",
@@ -153,7 +153,7 @@ class SegundaManoControllerTest {
         when(segundaManoService.obtenerPorUsuario(1L)).thenReturn(List.of(domain));
         when(publicacionMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/usuarios/1/segunda-mano"))
+        mockMvc.perform(get("/api/v1/usuarios/me/segunda-mano"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(10L));
     }
@@ -185,7 +185,7 @@ class SegundaManoControllerTest {
         when(segundaManoService.editar(eq(1L), eq(10L), eq(prenda), eq(Talla.L), eq(EstadoConservacion.COMO_NUEVO), eq(90000.0), any())).thenReturn(domain);
         when(publicacionMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(put("/api/v1/usuarios/1/segunda-mano/10")
+        mockMvc.perform(put("/api/v1/usuarios/me/segunda-mano/10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
@@ -200,7 +200,7 @@ class SegundaManoControllerTest {
         when(segundaManoService.marcarComoVendida(1L, 10L)).thenReturn(domain);
         when(publicacionMapper.toResponse(domain)).thenReturn(response);
 
-        mockMvc.perform(patch("/api/v1/usuarios/1/segunda-mano/10/vender"))
+        mockMvc.perform(patch("/api/v1/usuarios/me/segunda-mano/10/vender"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("VENDIDA"));
     }
@@ -209,7 +209,7 @@ class SegundaManoControllerTest {
     void retirarShouldReturnNoContent() throws Exception {
         doNothing().when(segundaManoService).retirar(1L, 10L);
 
-        mockMvc.perform(delete("/api/v1/usuarios/1/segunda-mano/10"))
+        mockMvc.perform(delete("/api/v1/usuarios/me/segunda-mano/10"))
                 .andExpect(status().isNoContent());
 
         verify(segundaManoService).retirar(1L, 10L);

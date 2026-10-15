@@ -219,7 +219,7 @@ class AlertasHttpIntegrationTest extends AlertasFixtures {
         if (conAlerta) service.crear(usuario.getId(), b.getId(), null);
         String t = token();
         // Act & Assert
-        mvc.perform(delete("/api/v1/usuarios/" + usuario.getId() + "/busquedas-guardadas/" + b.getId())
+        mvc.perform(delete("/api/v1/usuarios/me/busquedas-guardadas/" + b.getId())
                 .header("Authorization", "Bearer " + t)).andExpect(status().isNoContent());
         assertThat(busquedas.existsById(b.getId())).isFalse();
     }

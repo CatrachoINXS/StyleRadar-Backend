@@ -16,9 +16,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CrearPlaylistRequestDTO {
 
-    @NotNull(message = "El ID del usuario es obligatorio")
-    private Long usuarioId;
-
     @NotBlank(message = "El nombre de la playlist es obligatorio")
     @Size(min = 1, max = 100, message = "El nombre debe tener entre 1 y 100 caracteres")
     private String nombre;

@@ -133,7 +133,8 @@ class PlaylistsPopularesJpaIntegrationTest extends PlaylistsPopularesFixtures {
         });
         assertThat(page.getContent()).extracting(Playlist::getLikesCount).containsExactlyElementsOf(
                 java.util.stream.IntStream.range(0, 20).map(n -> 124 - n).boxed().toList());
-        assertThat(stats.getPrepareStatementCount()).isEqualTo(5);
+        // 5 consultas de RF72 + 1 lote de guardados (RF-71); constante, no crece con el número de playlists.
+        assertThat(stats.getPrepareStatementCount()).isEqualTo(6);
     }
 
     @Test void restriccionPersistenteRechazaMismoParDuplicado() {

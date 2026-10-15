@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class InteractuarPlaylistRequestDTO {
+public class PruebaVirtualRequestDTO {
 
-    @NotNull(message = "El ID del usuario que interactúa es obligatorio")
-    private Long usuarioId;
+    @NotNull(message = "El ID de la prenda del catálogo es obligatorio")
+    private Long itemCatalogoId;
 }

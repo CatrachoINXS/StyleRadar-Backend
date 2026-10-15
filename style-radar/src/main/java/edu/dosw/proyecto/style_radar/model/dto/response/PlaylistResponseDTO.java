@@ -24,5 +24,6 @@ public class PlaylistResponseDTO {
     private Instant fechaCreacion;
     private List<PrendaResponseDTO> prendas;
     private int likes;
+    private int guardados;
     private int totalPrendas;
 }

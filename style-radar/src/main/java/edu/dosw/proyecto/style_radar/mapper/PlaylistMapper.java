@@ -10,6 +10,7 @@ import edu.dosw.proyecto.style_radar.model.dto.response.PlaylistResponseDTO;
 public interface PlaylistMapper {
 
     @Mapping(target = "likes", expression = "java(playlist.getLikesCount())")
+    @Mapping(target = "guardados", expression = "java(playlist.getGuardadosCount())")
     @Mapping(target = "totalPrendas", expression = "java(playlist.getTotalPrendas())")
     PlaylistResponseDTO toResponse(Playlist playlist);
 
