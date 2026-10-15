@@ -24,6 +24,9 @@ public class DetectorDisponibilidad {
     private final BusquedaGuardadaRepository busquedas;
     private final ItemCatalogoRepository items;
     private final Clock clock;
+    private final AlmacenRepository almacenes;
+    private final BloqueoCuentaService cuentas;
+    private final UsuarioRepository usuarios;
 
     public void registrarPublicacion(ItemCatalogoEntity item) {
         disponibilidad.save(nuevoEstado(item, false));
@@ -33,6 +36,11 @@ public class DetectorDisponibilidad {
         // Un aumento puede habilitar por primera vez la talla de una búsqueda aunque ya haya stock en otra.
         if (stockActual <= 0 || stockActual <= stockAnterior
                 || !VisibilidadModeracion.visible(item.getEstadoModeracion())) return;
+        // Item -> almacén -> alertas. RF62 bloquea solo almacén, sin invertir este orden.
+        // La consulta de visibilidad bajo bloqueo evita usar un estado del contexto JPA obsoleto.
+        items.flush();
+        String nit = item.getAlmacen().getNit();
+        if (almacenes.findForUpdate(nit).isEmpty() || !almacenes.existsPublicoByNit(nit)) return;
         boolean reposicionTotal = stockAnterior == 0;
         long ciclo = 0;
         if (reposicionTotal) {
@@ -48,11 +56,18 @@ public class DetectorDisponibilidad {
         if (reposicionTotal) ids.addAll(alertas.findIdsActivasDelObjetivo(TipoObjetivoAlerta.ITEM_CATALOGO, item.getId()));
         var candidatas = ids.stream().map(id -> alertas.findForUpdate(id).orElseThrow())
                 .filter(AlertaEntity::isActiva).toList();
+        // Item -> almacén -> alertas -> usuarios ASC. RF66 toma solo usuarios, sin invertir el orden.
+        // Consultar estado escalar bajo lock evita refresh con cascadas a búsquedas del contexto.
+        var destinatarios = cuentas.bloquear(candidatas.stream().map(a -> a.getUsuario().getId()).toList());
         var busquedasPorId = busquedas.findAllById(candidatas.stream()
                 .filter(a -> a.getTipoObjetivo() == TipoObjetivoAlerta.BUSQUEDA_GUARDADA)
                 .map(AlertaEntity::getIdentificadorObjetivo).distinct().toList()).stream()
                 .collect(Collectors.toMap(BusquedaGuardadaEntity::getId, Function.identity()));
         for (var alerta : candidatas) {
+            var usuario = destinatarios.get(alerta.getUsuario().getId());
+            if (usuario == null) continue;
+            var estadoCuenta = usuarios.findEstadoActual(usuario.getId());
+            if (estadoCuenta != null && estadoCuenta != EstadoCuenta.ACTIVA) continue;
             if (alerta.getTipoObjetivo() == TipoObjetivoAlerta.ITEM_CATALOGO) {
                 registrar(alerta, item.getId(), TipoEventoNotificacion.DISPONIBILIDAD_RESTABLECIDA, ciclo);
             } else if (coincide(alerta, item, busquedasPorId.get(alerta.getIdentificadorObjetivo()))) {
@@ -84,7 +99,7 @@ public class DetectorDisponibilidad {
 
     private boolean coincide(AlertaEntity alerta, ItemCatalogoEntity item, BusquedaGuardadaEntity busqueda) {
         if (busqueda == null || !busqueda.getUsuario().getId().equals(alerta.getUsuario().getId())
-                || !item.getFechaPublicacion().isAfter(alerta.getFechaCreacion())) return false;
+                || item.getFechaPublicacion().isBefore(alerta.getFechaCreacion())) return false;
         var criterios = CriteriosBusquedaGuardada.criterios(busqueda);
         return CriteriosBusquedaGuardada.significativa(criterios)
                 && items.exists(ItemCatalogoSpecifications.coincidenciaExacta(criterios)

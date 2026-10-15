@@ -24,7 +24,7 @@ public interface AlertaRepository extends JpaRepository<AlertaEntity, Long> {
     @Query("select a.id from AlertaEntity a, BusquedaGuardadaEntity b where a.activa = true "
             + "and a.tipoObjetivo = edu.dosw.proyecto.style_radar.model.domain.TipoObjetivoAlerta.BUSQUEDA_GUARDADA "
             + "and a.identificadorObjetivo = b.id and a.usuario.id = b.usuario.id "
-            + "and a.fechaCreacion < :publicacion "
+            + "and a.fechaCreacion <= :publicacion "
             + "and not exists (select n.id from NotificacionEntity n where n.alerta = a "
             + "and n.itemCatalogoId = :itemId "
             + "and n.tipoEvento = edu.dosw.proyecto.style_radar.model.domain.TipoEventoNotificacion.NUEVA_COINCIDENCIA) "
