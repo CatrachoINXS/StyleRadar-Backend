@@ -1,6 +1,9 @@
 package edu.dosw.proyecto.style_radar.service.impl;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.doReturn;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,9 +17,11 @@ import edu.dosw.proyecto.style_radar.model.domain.*;
 import edu.dosw.proyecto.style_radar.model.entity.*;
 import edu.dosw.proyecto.style_radar.support.AlertasFixtures;
 import org.hibernate.Hibernate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 @SpringBootTest @ActiveProfiles("test") @Transactional
 class AlertasPersistenceIntegrationTest extends AlertasFixtures {
+    @MockitoSpyBean Clock clock;
     @Test
     void creaBusquedaPropiaSinNotificarYPersiste() {
         // Arrange / Act
@@ -154,7 +159,12 @@ class AlertasPersistenceIntegrationTest extends AlertasFixtures {
     @Test
     void todosLosFiltrosAndCompatiblesYNormalizados() {
         // Arrange
+        // Fechas explícitas: el contrato exige publicación estrictamente posterior a la alerta.
+        // Dos lecturas cercanas del reloj del sistema no garantizan instantes diferentes.
+        Instant inicio = Instant.parse("2026-10-09T17:00:00Z");
+        doReturn(inicio).when(clock).instant();
         alertaBusqueda(b -> { for (String f : List.of("query", "tipo", "color", "marca", "estilo", "talla", "precioMin", "precioMax")) criterio(b, f); });
+        doReturn(inicio.plusSeconds(1)).when(clock).instant();
         Long id = publicar();
         // Act
         stock(id, 5);

@@ -1,75 +1,80 @@
-# StyleRadar
+# StyleRadar Backend
 
-StyleRadar es una plataforma web que conecta compradores con almacenes de moda locales. Los almacenes publican su inventario —fotografías, tallas y disponibilidad— y los usuarios pueden buscar prendas y consultar tiendas cercanas. El producto general también contempla experiencias como el probador virtual, la venta de ropa usada y las donaciones.
+StyleRadar es una plataforma web que conecta a compradores con almacenes de moda locales en Bogotá. Los almacenes publican su inventario con fotografías, tallas y disponibilidad, y los usuarios pueden buscar prendas, encontrar tiendas cercanas, crear playlists de estilo y vender ropa de segunda mano. Este repositorio contiene la API REST del sistema, construida con Spring Boot y PostgreSQL.
 
-StyleRadar no es un marketplace: es el puente entre la intención de compra digital y la tienda física.
+**Despliegues**
 
-## Backend Sprint 2: catálogo y búsqueda
+- QA: https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html
+- PROD: https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html
 
-### Requisitos
+## Índice
 
-- Java 21.
-- Maven.
-- PostgreSQL.
-- Docker Desktop para la ejecución en contenedores.
+- [Ejecución de pruebas](#ejecución-de-pruebas)
+- [Cómo levantar el proyecto localmente](#cómo-levantar-el-proyecto-localmente)
+- [Variables de entorno](#variables-de-entorno)
+- [Diagrama de contexto](#diagrama-de-contexto)
+- [Diagrama de clases](#diagrama-de-clases)
+- [Diagrama de componentes específico](#diagrama-de-componentes-específico)
+- [Diagrama de componentes general](#diagrama-de-componentes-general)
+- [Diagrama de base de datos](#diagrama-de-base-de-datos)
+- [Diagrama de despliegue](#diagrama-de-despliegue)
+- [Swagger/OpenAPI](#swaggeropenapi)
+- [Roles y permisos](#roles-y-permisos)
+- [Patrones de diseño](#patrones-de-diseño)
+- [Decisión de persistencia](#decisión-de-persistencia)
+- [CI/CD](#cicd)
+- [Arquitectura implementada](#arquitectura-implementada)
+- [Alcance implementado por este backend](#alcance-implementado-por-este-backend)
+- [Trazabilidad funcional del Sprint 2](#trazabilidad-funcional-del-sprint-2)
+- [Integrantes](#integrantes)
 
-### Configuración local
+## Ejecución de pruebas
 
-La aplicación obtiene la conexión a PostgreSQL exclusivamente de estas variables de entorno:
-
-- `DB_URL`: URL JDBC, por ejemplo `jdbc:postgresql://localhost:5432/styleradar`.
-- `DB_USERNAME`: usuario de la base de datos.
-- `DB_PASSWORD`: contraseña de la base de datos.
-
-No se deben versionar credenciales reales. Desde la carpeta `style-radar/` se pueden ejecutar:
+Las pruebas unitarias y de integración usan JUnit 5, Mockito y H2, por lo que no requieren una base de datos externa. Desde la carpeta `style-radar/`:
 
 ```shell
-mvn clean test
-mvn clean verify
-mvn spring-boot:run
+mvn test
+mvn verify
 ```
 
-`mvn clean verify` ejecuta las pruebas y la regla de cobertura JaCoCo configurada en el proyecto.
+`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1370 pruebas sin fallos y 96,1 % de cobertura de líneas**.
 
-### Ejecución con Docker
+![](style-radar/docs/images/evidencias/pruebas-mvn-verify.jpg)
 
-La carpeta `style-radar/` contiene un `Dockerfile` multietapa y un `docker-compose.yml` que levantan la API junto con PostgreSQL en una red compartida y con un volumen persistente para los datos.
+![](style-radar/docs/images/evidencias/cobertura-jacoco.jpg)
 
-1. Instalar Docker Desktop.
-2. Crear el archivo `.env` a partir de la plantilla y ajustar los valores:
+## Cómo levantar el proyecto localmente
+
+Prerrequisitos: Java 21, Maven y Docker Desktop.
 
 ```shell
-cd style-radar
+git clone https://github.com/CatrachoINXS/StyleRadar-Backend.git
+cd StyleRadar-Backend/style-radar
 cp .env.example .env
-```
-
-3. Construir y levantar los contenedores:
-
-```shell
 docker compose up --build -d
 ```
 
-4. Verificar la API en `http://localhost:8080/swagger-ui/index.html`.
+El archivo `docker-compose.yml` levanta la API y PostgreSQL en una red compartida, con un volumen persistente para los datos. La API queda disponible en `http://localhost:8080/swagger-ui/index.html`.
 
-Comandos adicionales:
+Contenedores en ejecución:
 
-```shell
-docker compose logs -f api
-docker compose down
-docker compose down -v
-```
+![](style-radar/docs/images/evidencias/docker-compose-ps.png)
 
-`docker compose down -v` elimina también el volumen de la base de datos.
+Swagger desde el contenedor:
 
-La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](https://hub.docker.com/r/juanamunoz/styleradar). Se puede descargar con:
+![](style-radar/docs/images/evidencias/swagger-local.png)
 
-```shell
-docker pull juanamunoz/styleradar:latest
-```
+Registro de inicio de la API con conexión a la base de datos:
 
-Cada versión publicada tiene su propio tag, por ejemplo `juanamunoz/styleradar:0.3.0`.
+![](style-radar/docs/images/evidencias/docker-logs-api.png)
 
-### Variables de entorno
+La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](https://hub.docker.com/r/juanamunoz/styleradar).
+
+![](style-radar/docs/images/evidencias/docker-hub.png)
+
+## Variables de entorno
+
+Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` con los valores reales no se versiona.
 
 | Variable | Descripción | Ejemplo |
 |---|---|---|
@@ -81,15 +86,90 @@ Cada versión publicada tiene su propio tag, por ejemplo `juanamunoz/styleradar:
 | `API_PORT` | Puerto expuesto de la API en la máquina local. | `8080` |
 | `SERVER_PORT` | Puerto interno de la aplicación. | `8080` |
 | `JPA_DDL_AUTO` | Estrategia de Hibernate para el esquema. | `update` |
+| `JWT_SECRET_BASE64` | Clave para firmar los tokens de acceso, codificada en Base64 y de al menos 256 bits. Se puede generar con `openssl rand -base64 32`. | `change-me-base64-key` |
+| `JWT_DURATION` | Tiempo de validez de los tokens de acceso. | `PT60M` |
+| `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
-| `JWT_SECRET_BASE64` | Clave HS256 en Base64, mínimo 256 bits. Obligatoria: sin ella la API no arranca. | `openssl rand -base64 32` |
-| `JWT_DURATION` | Vigencia del token (ISO-8601). | `PT60M` |
-| `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
 
-El archivo `.env` no se versiona; solo `.env.example` con valores de ejemplo.
+## Diagrama de Contexto
+En el siguiente diagrama de contexto se presenta la arquitectura general y los actores que interactúan con StyleRadar.
 
-### Swagger/OpenAPI
+![](style-radar/docs/uml/diagrama-contexto-style-radar.jpeg)
+
+### Actores
+Como actores tenemos a los *usuarios compradores, a los almacenes de moda, a las fundaciones aliadas y al administrador*.
+
+Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal y como se menciona en el diagrama.
+
+### Sistemas externos
+Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
+
+## Diagrama de clases
+
+![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
+
+#### Estructura general del diagrama de clases
+En color azul se encuentra lo relacionado con los usuarios y los almacenes. La clase `Usuario` guarda sus roles, el estado de la cuenta, las preferencias de estilo y las tallas habituales, y se relaciona con sus búsquedas guardadas. La clase `Almacen` contiene la información de contacto, la ubicación, la reputación y las categorías de cada tienda.
+
+En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la prenda; `ItemCatalogo` representa su publicación en el catálogo de un almacén, con su inventario por talla (`InventarioTalla`) y sus imágenes (`ImagenCatalogo`). También se encuentran las publicaciones de segunda mano (`PublicacionSegundaMano`).
+
+En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta. En color morado están las alertas que crea un usuario y las notificaciones que estas generan, y en color naranja las suscripciones de los almacenes y sus planes.
+
+## Diagrama de componentes específico
+
+![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
+
+#### Módulos
+Cada módulo se encarga de una parte específica de la plataforma:
+- **Autenticación:** inicio de sesión y manejo de credenciales.
+- **Usuarios:** registro, perfil, preferencias, búsquedas guardadas y gestión del estado de las cuentas.
+- **Almacenes:** información de los almacenes, verificación, administradores asociados y búsqueda por distancia.
+- **Catálogo:** publicación de prendas, inventario por talla, imágenes y moderación del catálogo.
+- **Búsqueda y personalización:** búsqueda con filtros, prendas similares y recomendaciones personalizadas.
+- **Segunda mano:** publicación, búsqueda, edición y venta de prendas usadas entre usuarios.
+- **Playlists:** creación de playlists de estilo, gestión de sus prendas e interacción de otros usuarios.
+- **Alertas:** alertas de disponibilidad y notificaciones para los usuarios.
+- **Suscripciones:** planes y suscripciones de los almacenes.
+
+Además, existen componentes transversales para la seguridad (`SecurityConfig`, `JwtAuthFilter`, `JwtUtil`), el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
+
+#### Estructura de los módulos
+En cada módulo, el `Controller` recibe la solicitud y usa un `Mapper` para convertir los datos recibidos en objetos del dominio. El Controller depende de la interfaz del servicio (por ejemplo `IUsuarioService`), que es implementada por el `Service`. El Service aplica la lógica de negocio apoyándose en los `Validator` y calculadores, usa el `EntityMapper` para convertir los objetos del dominio en entidades y se comunica con el `Repository`, que accede a la base de datos.
+
+## Diagrama de componentes general
+
+![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
+
+Los actores (usuario comprador, almacén, fundación aliada y administrador) usan el ***Front-End***, una aplicación web que consume la API REST del ***Back-End*** en la ruta `/api/v1`. El Back-End, construido con Spring Boot, contiene la lógica de negocio y la seguridad con JWT y roles, y almacena la información en la ***Base de Datos*** PostgreSQL por medio de JDBC. Además, el sistema contempla la integración con tres sistemas externos: Mapbox para mapas y ubicación, PSE para los pagos y la API del probador virtual basada en IA.
+
+## Diagrama de base de datos
+
+![](style-radar/docs/uml/DiagramaERStyleRadar.drawio.png)
+
+#### Estructura de la base de datos
+En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se relaciona con sus roles, sus credenciales, sus preferencias de estilo, sus tallas habituales y sus búsquedas guardadas. La tabla `almacenes` se identifica por el NIT y se relaciona con sus categorías y con los usuarios que la administran.
+
+En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario por talla, las imágenes y el control de disponibilidad. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
+
+En color verde se encuentran las playlists de estilo, con las prendas que contienen y los usuarios que les dan me gusta. En color morado están las alertas y las notificaciones de cada usuario, y en color naranja los planes y las suscripciones de los almacenes.
+
+La justificación de la base de datos elegida se encuentra en la sección [Decisión de persistencia](#decisión-de-persistencia).
+
+## Diagrama de despliegue
+
+![](style-radar/docs/uml/DiagramaDespliegueStyleRadar.drawio.png)
+
+#### Descripción del despliegue
+- **Equipo del desarrollador:** desde aquí se suben los cambios al repositorio de GitHub.
+- **GitHub:** contiene el repositorio y el entorno de ejecución de GitHub Actions, donde se ejecutan los pipelines `ci-qa.yml` y `ci-prod.yml`. Ambos compilan y prueban el proyecto, generan el artefacto `styleradar.jar` y construyen la imagen Docker.
+- **Docker Hub:** almacena la imagen `juanamunoz/styleradar` con sus tags de QA y de versión.
+- **Microsoft Azure:** cada ambiente (QA y producción) tiene su propio App Service, que ejecuta el contenedor Docker con el artefacto `app.jar` y las variables de entorno definidas en sus App Settings, y su propia base de datos PostgreSQL. La comunicación entre la aplicación y la base de datos se realiza por JDBC con conexión cifrada.
+- **Equipo del usuario:** accede a la API desde el navegador por HTTPS.
+
+El despliegue en producción requiere además una aprobación manual en GitHub.
+
+## Swagger/OpenAPI
 
 Con la aplicación en ejecución, la interfaz y el documento OpenAPI están disponibles en:
 
@@ -98,32 +178,171 @@ Con la aplicación en ejecución, la interfaz y el documento OpenAPI están disp
 
 Las interfaces del paquete `controller/docs` describen únicamente los endpoints implementados de prendas, catálogo, inventario, imágenes y búsqueda.
 
-### Seguridad: roles y permisos
+## Roles y permisos
 
-Autenticación stateless con JWT (HS256) y contraseñas con BCrypt. `POST /api/v1/auth/login` devuelve el token; se envía como `Authorization: Bearer <token>` (botón **Authorize** en Swagger). Cada endpoint protegido declara `@PreAuthorize` en su interfaz `controller/docs/*Api` y `/api/v1/admin/**` además exige `ADMIN_STYLERADAR` en `SecurityConfig`. El usuario de las rutas `/me` sale siempre del token, nunca de la URL.
+El sistema maneja cuatro roles: `COMPRADOR`, `ADMIN_ALMACEN`, `REPRESENTANTE_FUNDACION` y `ADMIN_STYLERADAR`. Los permisos se definen en `SecurityConfig`:
 
-Respuestas: sin token o token inválido → **401**; rol incorrecto → **403**; recurso ajeno → **404** o **422** sin revelar datos. CORS solo admite `CORS_ALLOWED_ORIGINS`.
+| Endpoints | Métodos | Acceso |
+|---|---|---|
+| `/api/v1/auth/login`, `/api/v1/auth/registro`, `/api/v1/usuarios` | POST | Público |
+| `/api/v1/prendas`, `/api/v1/catalogo/buscar`, `/api/v1/almacenes`, `/api/v1/almacenes/{nit}/catalogo`, `/api/v1/almacenes/{nit}/catalogo/resumen`, `/api/v1/almacenes/{nit}/catalogo/novedades`, `/api/v1/almacenes/{nit}/distancia`, `/api/v1/planes-suscripcion` | GET | Público |
+| `/swagger-ui/**`, `/v3/api-docs/**` | GET | Público |
+| `/api/v1/almacenes/{nit}/suscripciones`, `/api/v1/almacenes/{nit}/suscripciones/vigente`, `/api/v1/almacenes/{nit}/suscripciones/{id}/renovacion` | GET, POST, PATCH | `ADMIN_ALMACEN` |
+| `/api/v1/admin/usuarios`, `/api/v1/admin/usuarios/{id}`, `/api/v1/admin/usuarios/{id}/estado` | GET, PATCH | `ADMIN_STYLERADAR` |
+| `/api/v1/admin/almacenes/verificacion`, `/api/v1/admin/almacenes/{nit}/verificacion`, `/api/v1/admin/almacenes/{nit}/verificacion/solicitar-revision` | GET, PATCH, POST | `ADMIN_STYLERADAR` |
+| `/api/v1/admin/almacenes/{nit}/administradores/{usuarioId}` | PUT | `ADMIN_STYLERADAR` |
+| `/api/v1/admin/catalogo/moderacion`, `/api/v1/admin/catalogo/{itemId}/moderacion`, `/api/v1/admin/catalogo/{itemId}/moderacion/solicitar-revision` | GET, PATCH, POST | `ADMIN_STYLERADAR` |
+| `/api/v1/admin/fundaciones/**` (registrar, editar, desactivar) | POST, PUT, PATCH, GET | `ADMIN_STYLERADAR` |
+| `/api/v1/usuarios/me`, `/me/preferencias-estilo`, `/me/tallas-habituales`, `/me/busquedas-guardadas/**` | GET, PUT, POST, DELETE | `COMPRADOR` |
+| `/api/v1/usuarios/{id}` | GET | `ADMIN_STYLERADAR` |
+| `POST /api/v1/segunda-mano`, `/api/v1/usuarios/me/segunda-mano/**` (editar, vender, donar, retirar) | POST, PUT, PATCH, DELETE | `COMPRADOR` (propietario) |
+| `POST /api/v1/playlists`, `/api/v1/usuarios/me/playlists/**`, `/api/v1/playlists/{id}/like`, `/guardar`, `/api/v1/usuarios/me/playlists-guardadas` | GET, POST, PUT, DELETE | `COMPRADOR` |
+| `GET /api/v1/segunda-mano`, `GET /api/v1/segunda-mano/{id}`, `GET /api/v1/playlists`, `/api/v1/playlists/{id}`, `/api/v1/playlists/populares` | GET | Cualquier usuario autenticado |
+| `/api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/**`, `/api/v1/usuarios/me/conversaciones` | GET, POST | `COMPRADOR` (solo participantes del chat) |
+| `/api/v1/usuarios/me/probador/**` | GET, POST, DELETE | `COMPRADOR` |
+| `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | GET, POST | `COMPRADOR` |
+| `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | GET, PATCH | `REPRESENTANTE_FUNDACION` |
+| `PATCH /api/v1/donaciones/{id}/recogida` | PATCH | `COMPRADOR` (donante) o `REPRESENTANTE_FUNDACION` (solo participantes) |
+| Resto de endpoints (alertas, notificaciones, feed y gestión del catálogo) | Todos | Cualquier usuario autenticado con JWT. Los servicios validan además que el usuario sea el dueño del recurso o administrador del almacén correspondiente |
 
-| Endpoint | Público | COMPRADOR | ADMIN_ALMACEN | REPRESENTANTE_FUNDACION | ADMIN_STYLERADAR |
-|---|:-:|:-:|:-:|:-:|:-:|
-| `POST /api/v1/auth/login`, `POST /api/v1/auth/registro`, `POST /api/v1/usuarios` | ✅ | | | | |
-| `GET` catálogo público, búsqueda, almacenes, Swagger | ✅ | | | | |
-| `/api/v1/usuarios/me` (perfil, preferencias, tallas, búsquedas guardadas) | | ✅ | | | |
-| `GET /api/v1/usuarios/{id}` | | | | | ✅ |
-| `/api/v1/usuarios/me/alertas`, `/notificaciones`, `/feed`, `/recomendaciones` | | ✅ | | | |
-| `GET /api/v1/segunda-mano`, `GET /api/v1/segunda-mano/{id}`, `GET /api/v1/playlists`, `GET /api/v1/playlists/{id}` | | ✅ | ✅ | ✅ | ✅ |
-| `POST /api/v1/segunda-mano`, `/api/v1/usuarios/me/segunda-mano/**` (editar, vender, donar, retirar) | | ✅ | | | |
-| `POST /api/v1/playlists`, `/api/v1/usuarios/me/playlists/**`, `POST /api/v1/playlists/{id}/like`, `/guardar` | | ✅ | | | |
-| `/api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/**`, `/api/v1/usuarios/me/conversaciones` | | ✅ | | | |
-| `/api/v1/usuarios/me/probador/**` | | ✅ | | | |
-| `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | | ✅ | | | |
-| `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | | | | ✅ | |
-| `PATCH /api/v1/donaciones/{id}/recogida` (solo participantes) | | ✅ | | ✅ | |
-| `/api/v1/admin/fundaciones/**`, `/api/v1/admin/catalogo/**` | | | | | ✅ |
+Las peticiones sin token reciben `401` y las que no tienen el rol requerido reciben `403`. Cada endpoint de usuarios, segunda mano, playlists, fundaciones, donaciones, probador y chat declara `@PreAuthorize` en su interfaz `controller/docs/*Api`; en las rutas `/me` el usuario sale siempre del JWT, nunca de la URL. CORS solo admite los orígenes de `CORS_ALLOWED_ORIGINS`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
 
-Las cuentas sin roles registrados se tratan como `COMPRADOR`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
+## Patrones de diseño
 
-### Arquitectura implementada
+| Patrón | Problema que resuelve | Clase concreta | Diagrama |
+|---|---|---|---|
+| Repository | Separa el acceso a la base de datos de la lógica de negocio. | `ItemCatalogoRepository`, `UsuarioRepository` | Componentes específico |
+| Specification | Permite combinar filtros de búsqueda opcionales (tipo, color, talla, precio, marca, estilo) sin escribir una consulta para cada combinación. | `ItemCatalogoSpecifications`, `PublicacionSegundaManoSpecifications` | Componentes específico (Búsqueda y Segunda mano) |
+| Data Mapper | Convierte los datos entre DTO, objetos del dominio y entidades sin mezclar esa lógica en los servicios. | `CatalogoItemMapper`, `ItemCatalogoEntityMapper` | Componentes específico |
+| Chain of Responsibility | Procesa la autenticación de cada petición mediante una cadena de filtros de seguridad. | `JwtAuthFilter` dentro de la cadena configurada en `SecurityConfig` | Componentes específico (Seguridad) |
+| Inyección de dependencias | Los controladores dependen de interfaces y no de implementaciones concretas, lo que facilita las pruebas y el cambio de implementación. | `ICatalogoService` implementada por `CatalogoServiceImpl` | Componentes específico (interfaces entre Controller y Service) |
+| Builder | Facilita la creación de objetos con muchos atributos opcionales. | `UsuarioEntity`, `PlaylistEntity` | Base de datos |
+
+### Diseño propuesto
+
+Las siguientes ilustraciones conservan las propuestas de diseño del producto. Su presencia no implica que exista una implementación en el alcance actual del backend.
+
+#### Strategy — diseño propuesto, no implementado
+
+La propuesta plantea algoritmos intercambiables para sugerencias del feed. El módulo actual no implementa un feed, una interfaz Strategy ni estrategias concretas.
+
+![](style-radar/docs/images/patron_strategy_ilustracion.png)
+
+#### Observer — diseño propuesto, no implementado
+
+La propuesta contempla notificaciones a compradores cuando se publica una prenda. En el código actual no existen el sujeto, los observadores ni las clases `PublicaciónPrenda` y `UsuarioComprador` descritas originalmente.
+
+![](style-radar/docs/images/patron_observer_ilustracion.png)
+
+![](style-radar/docs/images/DC_Observer.png)
+
+#### Adapter — diseño propuesto, no implementado
+
+La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de esas integraciones pertenece al módulo actual y no existen implementaciones como `ProbadorVirtual` o `AdaptadorGemini`.
+
+![](style-radar/docs/images/patron_adapter1_ilustracion.png)
+
+![](style-radar/docs/images/patron_adapter2_ilustracion.png)
+
+![](style-radar/docs/images/DC_Adapter2.png)
+
+#### Composite — composición del framework, no patrón propio implementado
+
+La búsqueda combina filtros con `Specification<ItemCatalogoEntity>` de Spring Data JPA en `ItemCatalogoSpecifications`. Esa composición permite unir predicados con AND y OR, pero el proyecto no define una jerarquía Composite propia como `FiltroTalla`, `FiltroColor` o `FiltroCompuestoAnd`. La ilustración se conserva como diseño conceptual.
+
+El patrón composite nos resuelve el problema de la combinacion de filtros en las búsquedas inteligentes. Con este patrón podemos crear filtros simples como `FiltroTalla` o `FiltroColor`, y filtros complejos como `FiltroCompuestoAnd` (que combina dos filtros) y tratarlos de la misma forma. De esta forma, evaluar si una prenda cumple con un filtro de búsqueda complejo, se vuelve más sencillo. 
+
+![](style-radar/docs/images/patron_composite_ilustracion.png)
+
+#### Iterator — diseño propuesto, no implementado
+
+El código utiliza colecciones, streams y mecanismos de iteración provistos por Java y Spring Data. No existe un iterador personalizado del dominio; la ilustración representa una posibilidad de diseño, no el estado del código.
+
+![](style-radar/docs/images/patron_iterator_ilustracion.png)
+
+## Decisión de persistencia
+
+Se eligió PostgreSQL, una base de datos relacional, porque la información de StyleRadar está muy conectada entre sí: un almacén tiene muchas prendas publicadas, cada prenda tiene inventario por talla e imágenes, y los usuarios crean playlists y publicaciones que hacen referencia a esas mismas prendas. Un modelo relacional permite representar estas relaciones de forma directa y consultar la información combinada, por ejemplo al buscar prendas con filtros por talla, precio o almacén.
+
+Además, la base de datos ayuda a mantener la información consistente por medio de reglas propias:
+
+- El correo de cada usuario es único.
+- Una misma prenda del catálogo no puede tener dos registros de inventario para la misma talla.
+- Las unidades disponibles nunca pueden ser negativas.
+- Las publicaciones, los inventarios y las imágenes siempre deben estar asociados a un registro existente.
+- Un almacén solo puede tener una suscripción activa a la vez.
+- Un usuario no puede tener dos alertas activas sobre el mismo objetivo.
+
+El acceso a los datos se realiza con Spring Data JPA, lo que permite trabajar con las tablas a partir de las clases del proyecto y mantener separada la lógica de negocio del manejo de la base de datos.
+
+## CI/CD
+
+El repositorio cuenta con dos pipelines en GitHub Actions.
+
+**QA** (`.github/workflows/ci-qa.yml`). Cada vez que se integran cambios en las ramas `develop` o `main` se ejecutan los siguientes pasos:
+
+1. **Pruebas y cobertura:** se ejecutan todas las pruebas y se verifica que la cobertura sea de al menos 85 %.
+2. **Imagen QA:** se construye la imagen del backend y se publica en Docker Hub con los tags `qa-latest` y `qa-<commit>`.
+3. **Despliegue en QA:** la nueva imagen se despliega en el App Service de QA en Azure y se comprueba que la documentación de la API responda correctamente.
+
+Las pruebas también se ejecutan en cada pull request hacia `main` o `develop`, sin publicar ni desplegar.
+
+**PROD** (`.github/workflows/ci-prod.yml`). Se ejecuta al publicar un tag de versión con el formato `v*.*.*`, por ejemplo `v1.0.0`:
+
+1. **Pruebas y cobertura:** se repite la validación de las pruebas y de la cobertura mínima.
+2. **Imagen de la versión:** se publica la imagen en Docker Hub con el número de versión y con el tag `latest`.
+3. **Aprobación manual:** el despliegue queda en espera hasta que un revisor autorizado lo apruebe en el ambiente `production` de GitHub.
+4. **Despliegue en PROD:** la imagen aprobada se despliega en el App Service de producción y se comprueba que la API responda correctamente.
+
+El historial de ejecuciones está disponible en la pestaña [Actions](https://github.com/CatrachoINXS/StyleRadar-Backend/actions) del repositorio.
+
+Secrets utilizados por el pipeline (los valores no se publican):
+
+| Secret | Ámbito | Uso |
+|---|---|---|
+| `DOCKERHUB_USERNAME` | Repositorio | Usuario de Docker Hub. |
+| `DOCKERHUB_TOKEN` | Repositorio | Token de acceso a Docker Hub. |
+| `AZURE_CREDENTIALS` | Repositorio | Credenciales para desplegar en Azure. |
+| `AZURE_WEBAPP_NAME_QA` | Ambiente `qa` | Nombre del App Service de QA. |
+| `DB_URL_QA` | Ambiente `qa` | URL de la base de datos de QA. |
+| `DB_USERNAME_QA` | Ambiente `qa` | Usuario de la base de datos de QA. |
+| `DB_PASSWORD_QA` | Ambiente `qa` | Contraseña de la base de datos de QA. |
+| `JWT_SECRET_QA` | Ambiente `qa` | Clave de los tokens de acceso en QA. |
+
+En producción, la conexión a la base de datos y la clave de los tokens se configuran directamente como variables de entorno del App Service, por lo que el pipeline de PROD solo utiliza los secrets del repositorio.
+
+### Ambientes
+
+- **QA:** recibe automáticamente cada cambio integrado en `develop` o `main`. Se usa para validar el funcionamiento antes de publicar una versión. Tiene su propio App Service y su propia base de datos.
+- **PROD:** recibe únicamente las versiones publicadas con un tag `v*.*.*` y aprobadas manualmente. Tiene su propio App Service y su propia base de datos, separados de QA.
+
+### Evidencias
+
+Pipeline de QA en verde:
+
+![](style-radar/docs/images/evidencias/pipeline-qa.jpg)
+
+Pipeline de PROD en verde:
+
+![](style-radar/docs/images/evidencias/pipeline-prod.jpg)
+
+Despliegue a producción aprobado manualmente:
+
+![](style-radar/docs/images/evidencias/aprobacion-prod.jpg)
+
+App Service de QA y PROD en Azure con el contenedor en ejecución:
+
+![](style-radar/docs/images/evidencias/azure-app-service-qa.png)
+
+![](style-radar/docs/images/evidencias/azure-app-service-prod.png)
+
+Swagger en Azure:
+
+![](style-radar/docs/images/evidencias/swagger-qa.jpg)
+
+![](style-radar/docs/images/evidencias/swagger-prod.jpg)
+
+## Arquitectura implementada
 
 El módulo mantiene una separación por responsabilidades:
 
@@ -137,7 +356,7 @@ El módulo mantiene una separación por responsabilidades:
 
 El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> Persistence Mapper -> Repository -> Entity -> PostgreSQL`; los casos simples omiten capas que no aportan transformación o reglas.
 
-### Alcance implementado por este backend
+## Alcance implementado por este backend
 
 - Publicación, consulta, edición y retiro de ítems del catálogo de un almacén.
 - Inventario por talla y cálculo derivado del stock disponible.
@@ -167,135 +386,6 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 | RF-71, RNF-12 | Guardar playlist en el perfil; máximo 15 prendas por playlist | `POST /api/v1/playlists/{id}/guardar` |
 
 Ciclo de una donación: `PENDIENTE → ACEPTADA | RECHAZADA → COORDINADA → RECIBIDA`. Una prenda solo tiene una solicitud en curso; si se rechaza, puede ofrecerse a otra fundación.
-
-### Pruebas y calidad
-
-La suite utiliza JUnit, Mockito y H2 para pruebas unitarias, web y de persistencia. JaCoCo mide cobertura de líneas y ramas durante `mvn clean verify`; el build exige una cobertura de líneas global mínima del 85 %. El perfil `test` permite validar el contexto Spring sin depender de una instancia PostgreSQL externa.
-
-## Diagramas académicos
-
-## Diagrama de Contexto
-En el siguiente diagrama de contexto se presenta la arquitectura general y los actores que interactúan con StyleRadar.
-
-![](style-radar/docs/uml/diagrama-contexto-style-radar.jpeg)
-
-### Actores
-Como actores tenemos a los *usuarios compradores, a los almacenes de moda, a las fundaciones aliadas y al administrador*.
-
-Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal y como se menciona en el diagrama.
-
-### Sistemas externos
-Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
-
-
-## Diagrama de Componentes General
-El siguiente diagrama de componentes muestra la arquitectura general del sistema, dividida en tres partes principales.
-
-![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
-
-La primer parte es el ***Front-End*** que representa la interfaz de usuario con la que interactuan todos los actores. La segunda parte es el ***Back-End***, encargado de toda la lógica de negocio y de proveer la interfaz para que sea utilizada por el front. La tercera parte es la ***Base de Datos***, componente encargado de persistir la información de la plataforma y de proveer la interfaz para el back.
-
-## Diagrama de Componentes Especifico
-Este diagrama de componentes específico muestra la arquitectura interna del Back-End de StyleRadar. En él tienen cinco módulos explicados a continuacion.
-
-![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
-
-### Módulos
-Cada módulo se encarga de una parte específica de la plataforma. 
-- **Usuarios:** Gestiona y valida la información de los usuarios. 
-- **Catálogo:** Para administrar el inventario y prendas que suben los almacenes a la plataforma.
-- **Donaciones:** Maneja todo lo relacionado con las donaciones de prendas para las fundaciones aliadas.
-- **Probador virtual:** Maneja la lógica con la herramienta IA para que los usuarios compradores puedan probarse las prendas virtualmente.
-- **Suscripciones:** Se encarga de los planes de los usuarios compradores y los almacenes administrando los pagos.
-  
-### Estructura de los módulos
-En cáda módulo los componentes interactuan de la siguiente manera: Un actor envía una solicitud y esta llega al `Controller`. Este transfiere los datos a un `MapperIn` para transformarlos en objetos `DTO` y enviarlos al `Validator`, el cual comprueba que se cumplan todas las reglas de negocio. 
-
-Después de la verificacion se pasa la informacion al `Service`, quien contiene toda la lógica de negocio e interactua con los objetos de dominio. Despues de ello, se pasa al `MapperOut` para transformar la informacion y pasarla al `Repository`, el cual se encarga de la comunicación con la base de datos.
-
-Al final, todos los repositorios de cada módulo llegan a la base de datos, para almacenar y recuperar la informacion cuando se requiera.
-
-## Diagrama de Clases
-El diagrama existente es un artefacto académico que debe actualizarse manualmente para reflejar el código vigente del Sprint 2.
-
-En el siguiente diagrama de clases se pueden observar los objetos del dominio, se muestran las entidades principales, sus atributos y las interacciones que conectan el sistema.
-
-![](style-radar/docs/uml/DiagramaClasesStyleRadar.drawio.png)
-
-### Estructura general del diagrama de clases
-En el diagrama se observa en color azul todo lo relacionado con la gestión de usuarios, perfiles y catálogos de almacén. Se encuentra la clase abstracta `Usuario`, de la cual heredan los diferentes tipos de actores: el `UsuarioComprador`, el `Almacen`, el `Administrador` y la `FundacionAliada`. Además, incluye clases auxiliares como `Direccion`, `Mensaje` y una enumeración con los estados del usuario.
-
-En color amarillo se agrupa lo referente a las prendas, con la clase `Prenda` y sus enumeraciones tipo de prenda, estilo y estado. También se agrupa aquí lo relacionado con las publicaciones, mediante `PublicacionPrenda` y `PublicacionSegundaMano`.
-
-En color verde se observa una de las ideas diferenciadoras del proyecto: las Playlists de estilo, las cuales pueden contener múltiples publicaciones de prendas.
-
-En color morado se aprecia otro de los aspectos clave y diferenciadores de StyleRadar: el probador virtual, herramienta con la cual los usuarios compradores podrán probarse las prendas del catálogo.
-
-## Diagrama Entidad-Relación
-El siguiente diagrama muestra las tablas de la base de datos de StyleRadar, sus columnas y las relaciones entre ellas. Se conserva el mismo código de colores del diagrama de clases.
-
-![](style-radar/docs/uml/DiagramaERStyleRadar.drawio.png)
-
-### Estructura de la base de datos
-En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se relaciona con sus preferencias de estilo, sus tallas habituales y sus búsquedas guardadas. La tabla `almacenes` se identifica por el NIT y guarda la información de contacto, la ubicación y la reputación de cada tienda.
-
-En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario disponible por talla en `inventario_tallas` y las fotografías en `imagenes_catalogo`. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
-
-En color verde se encuentran las playlists de estilo. La tabla `playlist_prendas` relaciona cada playlist con las prendas que contiene y `playlist_likes` registra los usuarios que le han dado me gusta.
-
-### Justificación de la persistencia
-Se eligió PostgreSQL, una base de datos relacional, porque la información de StyleRadar está muy conectada entre sí: un almacén tiene muchas prendas publicadas, cada prenda tiene inventario por talla e imágenes, y los usuarios crean playlists y publicaciones que hacen referencia a esas mismas prendas. Un modelo relacional permite representar estas relaciones de forma directa y consultar la información combinada, por ejemplo al buscar prendas con filtros por talla, precio o almacén.
-
-Además, la base de datos ayuda a mantener la información consistente por medio de reglas propias:
-
-- El correo de cada usuario es único.
-- Una misma prenda del catálogo no puede tener dos registros de inventario para la misma talla.
-- Las unidades disponibles nunca pueden ser negativas.
-- Las publicaciones, los inventarios y las imágenes siempre deben estar asociados a un registro existente.
-
-El acceso a los datos se realiza con Spring Data JPA, lo que permite trabajar con las tablas a partir de las clases del proyecto y mantener separada la lógica de negocio del manejo de la base de datos.
-
-## Justificación Patrones de Diseño
-
-Las siguientes ilustraciones conservan las propuestas de diseño del producto. Su presencia no implica que exista una implementación en el alcance actual del backend.
-
-### Strategy — diseño propuesto, no implementado
-
-La propuesta plantea algoritmos intercambiables para sugerencias del feed. El módulo actual no implementa un feed, una interfaz Strategy ni estrategias concretas.
-
-![](style-radar/docs/images/patron_strategy_ilustracion.png)
-
-### Observer — diseño propuesto, no implementado
-
-La propuesta contempla notificaciones a compradores cuando se publica una prenda. En el código actual no existen el sujeto, los observadores ni las clases `PublicaciónPrenda` y `UsuarioComprador` descritas originalmente.
-
-![](style-radar/docs/images/patron_observer_ilustracion.png)
-
-![](style-radar/docs/images/DC_Observer.png)
-
-### Adapter — diseño propuesto, no implementado
-
-La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de esas integraciones pertenece al módulo actual y no existen implementaciones como `ProbadorVirtual` o `AdaptadorGemini`.
-
-![](style-radar/docs/images/patron_adapter1_ilustracion.png)
-
-![](style-radar/docs/images/patron_adapter2_ilustracion.png)
-
-![](style-radar/docs/images/DC_Adapter2.png)
-
-### Composite — composición del framework, no patrón propio implementado
-
-La búsqueda combina filtros con `Specification<ItemCatalogoEntity>` de Spring Data JPA en `ItemCatalogoSpecifications`. Esa composición permite unir predicados con AND y OR, pero el proyecto no define una jerarquía Composite propia como `FiltroTalla`, `FiltroColor` o `FiltroCompuestoAnd`. La ilustración se conserva como diseño conceptual.
-
-El patrón composite nos resuelve el problema de la combinacion de filtros en las búsquedas inteligentes. Con este patrón podemos crear filtros simples como `FiltroTalla` o `FiltroColor`, y filtros complejos como `FiltroCompuestoAnd` (que combina dos filtros) y tratarlos de la misma forma. De esta forma, evaluar si una prenda cumple con un filtro de búsqueda complejo, se vuelve más sencillo. 
-
-![](style-radar/docs/images/patron_composite_ilustracion.png)
-
-### Iterator — diseño propuesto, no implementado
-
-El código utiliza colecciones, streams y mecanismos de iteración provistos por Java y Spring Data. No existe un iterador personalizado del dominio; la ilustración representa una posibilidad de diseño, no el estado del código.
-
-![](style-radar/docs/images/patron_iterator_ilustracion.png)
 
 ## Trazabilidad funcional del Sprint 2
 
@@ -344,3 +434,14 @@ PATCH  /api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}
 POST   /api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes
 
 GET    /api/v1/catalogo/buscar
+```
+
+## Integrantes
+
+| Integrante | Rol | Aporte |
+|---|---|---|
+| Juan Nicolás Álvarez Muñoz | Backend | Dockerización, imagen en Docker Hub, pipelines de CI/CD para QA y PROD, ambientes en Azure, diagramas (clases, componentes, base de datos y despliegue) y documentación de despliegue. |
+| Daniel Valero Quiroga | Backend | Catálogo, inventario y búsqueda; autenticación con JWT; almacenes y geolocalización; personalización; alertas; moderación; verificación de almacenes; estados de cuenta; suscripciones y playlists populares. |
+| Juan Diego Valderrama Gaviria | Backend | Usuarios, preferencias y búsquedas guardadas; segunda mano; playlists; configuración de PostgreSQL y JPA; manejo global de errores y configuración de Swagger. |
+| Cristian Camilo Ortiz Sánchez | Diseño y documentación | Creación del repositorio, diagrama de clases inicial y diagramas de componentes iniciales. |
+| Paula Alejandra Diazrama | Diseño | Diseño del producto y apoyo en la documentación del proyecto. |

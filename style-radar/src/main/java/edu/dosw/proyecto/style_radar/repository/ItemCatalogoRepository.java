@@ -25,7 +25,8 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
     @Query("""
             select i.id from ItemCatalogoEntity i
             where i.almacen.nit = :nit
-            and """ + VisibilidadModeracion.JPQL + """
+            and """ + VisibilidadModeracion.JPQL + " and "
+            + edu.dosw.proyecto.style_radar.service.VisibilidadAlmacen.JPQL_ITEM + """
 
             and exists (select v.id from InventarioTallaEntity v
                         where v.itemCatalogo = i and v.unidades > 0)
@@ -48,6 +49,7 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
 
     @EntityGraph(attributePaths = { "almacen", "prenda", "inventario" })
     @Query("select i from ItemCatalogoEntity i where i.almacen.nit = :nit and " + VisibilidadModeracion.JPQL
+            + " and " + edu.dosw.proyecto.style_radar.service.VisibilidadAlmacen.JPQL_ITEM
             + " order by i.id")
     List<ItemCatalogoEntity> findPublicosByAlmacenNit(@Param("nit") String nit);
 

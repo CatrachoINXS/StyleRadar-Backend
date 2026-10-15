@@ -44,7 +44,9 @@ public class CatalogoServiceImpl implements ICatalogoService {
     @Transactional(readOnly = true)
     public List<ItemCatalogo> obtenerCatalogo(String nit) {
         log.info("Consultando catálogo del almacén con NIT {}", nit);
-        validarAlmacenExiste(nit);
+        if (!almacenRepository.existsPublicoByNit(nit)) {
+            throw new RecursoNoEncontradoException("No existe un almacén con NIT " + nit);
+        }
 
         List<ItemCatalogo> catalogo = itemCatalogoRepository.findPublicosByAlmacenNit(nit).stream()
                 .map(itemCatalogoEntityMapper::toDomain)

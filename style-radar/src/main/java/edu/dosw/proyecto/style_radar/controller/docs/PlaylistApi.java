@@ -2,11 +2,13 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import java.util.List;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -15,12 +17,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import edu.dosw.proyecto.style_radar.model.dto.request.AgregarPrendaPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.CrearPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.EditarPlaylistRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.PlaylistResponseDTO;
 import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -50,6 +55,23 @@ public interface PlaylistApi {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/api/v1/playlists")
     ResponseEntity<List<PlaylistResponseDTO>> obtenerPublicas();
+
+    @Operation(summary = "Consultar playlists populares (RF72)", description = "Solo playlists PUBLICA. "
+            + "Orden: cantidad de likes únicos DESC, fechaCreacion DESC, ID ASC. Incluye cero likes y playlists "
+            + "sin prendas visibles. PageResponseDTO contiene content, page, size, totalElements, totalPages, first y last. "
+            + "Requiere autenticación Bearer JWT.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de playlists públicas populares, posiblemente vacía"),
+            @ApiResponse(responseCode = "400", description = "page >= 0; size entre 1 y 100; parámetros numéricos"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente, inválido, expirado o cuenta no activa"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/api/v1/playlists/populares")
+    ResponseEntity<PageResponseDTO<PlaylistResponseDTO>> obtenerPopulares(
+            @Valid @ModelAttribute @ParameterObject PlaylistPopularesRequestDTO request);
+
 
     @Operation(summary = "Consultar playlist por ID",
             description = "Cualquier usuario autenticado. Una playlist privada solo la ve su creador.")

@@ -27,6 +27,24 @@ import edu.dosw.proyecto.style_radar.security.SecurityErrorHandler;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(SolicitudPlaylistInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudPlaylist(
+            SolicitudPlaylistInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(SuscripcionActivaDuplicadaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSuscripcionDuplicada(
+            SuscripcionActivaDuplicadaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
+    @ExceptionHandler(SolicitudSuscripcionInvalidaException.class)
+    public ResponseEntity<ErrorResponseDTO> handleSolicitudSuscripcion(
+            SolicitudSuscripcionInvalidaException exception, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI(), Map.of());
+    }
+
     @ExceptionHandler(SolicitudAlertaInvalidaException.class)
     public ResponseEntity<ErrorResponseDTO> handleSolicitudAlertaInvalida(
             SolicitudAlertaInvalidaException exception, HttpServletRequest request) {

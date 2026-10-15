@@ -10,6 +10,10 @@ import edu.dosw.proyecto.style_radar.model.entity.AlmacenEntity;
 public interface AlmacenEntityMapper {
 
     @Mapping(target = "itemsCatalogo", ignore = true)
+    @Mapping(target = "estadoVerificacion", ignore = true)
+    @Mapping(target = "fechaDecisionVerificacion", ignore = true)
+    @Mapping(target = "administradorDecisionId", ignore = true)
+    @Mapping(target = "motivoVerificacion", ignore = true)
     @Mapping(target = "latitud", source = "latitud")
     @Mapping(target = "longitud", source = "longitud")
     @Mapping(target = "reputacion", source = "reputacion")

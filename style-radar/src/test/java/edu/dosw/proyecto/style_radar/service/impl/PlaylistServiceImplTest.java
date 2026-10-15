@@ -221,7 +221,7 @@ class PlaylistServiceImplTest {
         PlaylistEntity entity = PlaylistEntity.builder().id(10L).likesUsuarios(new HashSet<>()).build();
 
         doNothing().when(usuarioValidator).validarExiste(1L);
-        when(playlistValidator.validarYObtener(10L)).thenReturn(entity);
+        when(playlistRepository.findForUpdate(10L)).thenReturn(Optional.of(entity));
         when(playlistRepository.save(entity)).thenReturn(entity);
         when(playlistEntityMapper.toDomain(entity)).thenReturn(Playlist.builder().id(10L).build());
 

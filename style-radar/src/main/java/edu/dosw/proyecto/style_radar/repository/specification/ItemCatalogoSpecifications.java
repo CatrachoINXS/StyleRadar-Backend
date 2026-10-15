@@ -25,6 +25,7 @@ public final class ItemCatalogoSpecifications {
 
     public static Specification<ItemCatalogoEntity> conCriteriosSinTexto(BusquedaCatalogoCriteria criteria) {
         return edu.dosw.proyecto.style_radar.service.VisibilidadModeracion.publica().and(noAgotado())
+                .and(edu.dosw.proyecto.style_radar.service.VisibilidadAlmacen.publicaciones())
                 .and(filtrosEstructurados(criteria));
     }
 

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,8 @@ import edu.dosw.proyecto.style_radar.model.domain.Playlist;
 import edu.dosw.proyecto.style_radar.model.dto.request.AgregarPrendaPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.CrearPlaylistRequestDTO;
 import edu.dosw.proyecto.style_radar.model.dto.request.EditarPlaylistRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.request.PlaylistPopularesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.response.PageResponseDTO;
 import edu.dosw.proyecto.style_radar.model.dto.response.PlaylistResponseDTO;
 import edu.dosw.proyecto.style_radar.security.UsuarioPrincipal;
 import edu.dosw.proyecto.style_radar.service.IPlaylistService;
@@ -44,6 +47,14 @@ public class PlaylistController implements PlaylistApi {
     @Override
     public ResponseEntity<List<PlaylistResponseDTO>> obtenerPublicas() {
         return ResponseEntity.ok(toResponse(playlistService.obtenerPublicas()));
+    }
+
+    @Override
+    public ResponseEntity<PageResponseDTO<PlaylistResponseDTO>> obtenerPopulares(
+            @Valid @ModelAttribute PlaylistPopularesRequestDTO request) {
+        var page = playlistService.obtenerPopulares(request.getPage(), request.getSize()).map(playlistMapper::toResponse);
+        return ResponseEntity.ok(new PageResponseDTO<>(page.getContent(), page.getNumber(), page.getSize(),
+                page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast()));
     }
 
     @Override

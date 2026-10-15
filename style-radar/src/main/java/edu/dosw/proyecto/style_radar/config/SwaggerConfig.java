@@ -32,7 +32,8 @@ public class SwaggerConfig {
         Set<String> publicGets = Set.of("/api/v1/prendas", "/api/v1/catalogo/buscar",
                 "/api/v1/almacenes/{nit}/catalogo", "/api/v1/almacenes",
                 "/api/v1/almacenes/{nit}/catalogo/resumen",
-                "/api/v1/almacenes/{nit}/catalogo/novedades", "/api/v1/almacenes/{nit}/distancia");
+                "/api/v1/almacenes/{nit}/catalogo/novedades", "/api/v1/almacenes/{nit}/distancia",
+                "/api/v1/planes-suscripcion");
         return api -> api.getPaths().forEach((path, item) -> item.readOperationsMap().forEach((method, operation) -> {
             boolean publicRoute = method == io.swagger.v3.oas.models.PathItem.HttpMethod.POST && publicPosts.contains(path)
                     || method == io.swagger.v3.oas.models.PathItem.HttpMethod.GET && publicGets.contains(path);

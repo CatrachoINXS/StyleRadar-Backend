@@ -73,7 +73,7 @@ class AlmacenServiceImplTest {
         var e1 = new ItemCatalogoEntity(); e1.setId(1L);
         var e2 = new ItemCatalogoEntity(); e2.setId(2L);
         var i1 = item(1L); var i2 = item(2L);
-        when(almacenes.existsById("A")).thenReturn(true);
+        when(almacenes.existsPublicoByNit("A")).thenReturn(true);
         when(items.findIdsPublicosDelAlmacen("A", null, null, page))
                 .thenReturn(new PageImpl<>(List.of(1L, 2L), page, 2));
         when(items.findByIdIn(List.of(1L, 2L))).thenReturn(List.of(e2, e1));
@@ -92,7 +92,7 @@ class AlmacenServiceImplTest {
         // Arrange
         var page = PageRequest.of(2, 10);
         Instant inicio = AHORA.minus(Duration.ofDays(7));
-        when(almacenes.existsById("A")).thenReturn(true);
+        when(almacenes.existsPublicoByNit("A")).thenReturn(true);
         when(items.findIdsPublicosDelAlmacen("A", inicio, AHORA, page))
                 .thenReturn(new PageImpl<>(List.of(), page, 15));
         // Act
@@ -107,7 +107,7 @@ class AlmacenServiceImplTest {
     @Test
     void resumenDeAlmacenInexistenteNoConsultaItems() {
         // Arrange
-        when(almacenes.existsById("missing")).thenReturn(false);
+        when(almacenes.existsPublicoByNit("missing")).thenReturn(false);
         // Act
         var result = catchThrowable(() -> service.resumen("missing", 5));
         // Assert

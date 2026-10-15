@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import edu.dosw.proyecto.style_radar.exception.RecursoNoEncontradoException;
 import edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException;
+import edu.dosw.proyecto.style_radar.exception.SolicitudPlaylistInvalidaException;
 import edu.dosw.proyecto.style_radar.model.domain.VisibilidadPlaylist;
 import edu.dosw.proyecto.style_radar.model.entity.PlaylistEntity;
 import edu.dosw.proyecto.style_radar.repository.PlaylistRepository;
@@ -19,6 +20,13 @@ public class PlaylistValidator {
 
     private final PlaylistRepository playlistRepository;
     private final PrendaRepository prendaRepository;
+
+    public void validarPaginacion(int page, int size) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new SolicitudPlaylistInvalidaException(
+                    "Paginación inválida: page >= 0 y size entre 1 y 100");
+        }
+    }
 
     public PlaylistEntity validarYObtener(Long playlistId) {
         return playlistRepository.findById(playlistId)

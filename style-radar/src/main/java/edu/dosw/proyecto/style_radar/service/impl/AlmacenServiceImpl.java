@@ -66,7 +66,9 @@ public class AlmacenServiceImpl implements IAlmacenService {
 
     @Override
     public DistanciaAlmacen distancia(String nit, double latitudUsuario, double longitudUsuario) {
-        Almacen almacen = almacenMapper.toDomain(almacenes.findById(nit).orElseThrow(() -> noExiste(nit)));
+        var entity = almacenes.findById(nit).filter(a -> VisibilidadAlmacen.visible(a.getEstadoVerificacion()))
+                .orElseThrow(() -> noExiste(nit));
+        Almacen almacen = almacenMapper.toDomain(entity);
         validator.validarCoordenadas(almacen);
         return new DistanciaAlmacen(nit, distancias.calcularKm(latitudUsuario, longitudUsuario,
                 almacen.getLatitud(), almacen.getLongitud()));
@@ -88,7 +90,7 @@ public class AlmacenServiceImpl implements IAlmacenService {
     }
 
     private void validarExistencia(String nit) {
-        if (!almacenes.existsById(nit)) {
+        if (!almacenes.existsPublicoByNit(nit)) {
             throw noExiste(nit);
         }
     }
