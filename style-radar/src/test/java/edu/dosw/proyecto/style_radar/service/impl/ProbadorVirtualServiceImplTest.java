@@ -39,6 +39,7 @@ import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 import edu.dosw.proyecto.style_radar.repository.FotoProbadorRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.ComposicionProbador;
+import edu.dosw.proyecto.style_radar.service.ProbadorIA;
 import edu.dosw.proyecto.style_radar.validator.ProbadorValidator;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
 
@@ -52,12 +53,13 @@ class ProbadorVirtualServiceImplTest {
     @Mock ProbadorValidator probadorValidator;
     @Mock UsuarioValidator usuarioValidator;
     @Spy ComposicionProbador composicion = new ComposicionProbador();
+    @Mock ProbadorIA probadorIA;
     ProbadorVirtualServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new ProbadorVirtualServiceImpl(fotoRepository, usuarioRepository, probadorValidator, usuarioValidator,
-                composicion, Clock.fixed(AHORA, ZoneOffset.UTC));
+                composicion, probadorIA, Clock.fixed(AHORA, ZoneOffset.UTC));
     }
 
     static byte[] png(int ancho, int alto) throws Exception {
@@ -128,6 +130,22 @@ class ProbadorVirtualServiceImplTest {
         BufferedImage imagen = ImageIO.read(new ByteArrayInputStream(resultado));
         assertThat(imagen.getWidth()).isEqualTo(400);
         assertThat(imagen.getHeight()).isEqualTo(600);
+    }
+
+    @Test
+    void probarUsaElResultadoDelServicioDeIACuandoResponde() throws Exception {
+        // Arrange
+        byte[] generada = png(10, 10);
+        when(probadorValidator.obtenerFoto(5L)).thenReturn(foto(png(400, 600), 400, 600));
+        when(probadorValidator.obtenerPrendaCompatible(9L)).thenReturn(item(TipoPrenda.SUPERIOR, png(100, 120)));
+        when(probadorIA.probar(any(), any(), any(), any(), any())).thenReturn(Optional.of(generada));
+
+        // Act
+        byte[] resultado = service.probar(5L, 9L);
+
+        // Assert
+        assertThat(resultado).isEqualTo(generada);
+        verify(composicion, never()).componer(any(), any(), any());
     }
 
     @Test

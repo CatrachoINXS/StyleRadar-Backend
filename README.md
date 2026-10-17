@@ -89,6 +89,11 @@ Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` c
 | `JWT_SECRET_BASE64` | Clave para firmar los tokens de acceso, codificada en Base64 y de al menos 256 bits. Se puede generar con `openssl rand -base64 32`. | `change-me-base64-key` |
 | `JWT_DURATION` | Tiempo de validez de los tokens de acceso. | `PT60M` |
 | `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
+| `STYLERADAR_DEMO_ENABLED` | Carga al iniciar los datos de demostración: 3 almacenes, 10 prendas, 3 planes, una fundación y un usuario por rol. No duplica datos al reiniciar. | `false` |
+| `STYLERADAR_DEMO_PASSWORD` | Contraseña de los usuarios de demostración. Sin valor no se crean. | `change-me` |
+| `PROBADOR_IA_API_KEY` | Clave de la API de Gemini (Google AI Studio) para el probador virtual. Sin valor se usa la composición local. | `change-me` |
+| `PROBADOR_IA_MODELO` | Modelo de Gemini para generar la prueba virtual. | `gemini-3.1-flash-lite-image` |
+| `PROBADOR_IA_URL` | URL base de la API de Gemini. | `https://generativelanguage.googleapis.com/v1beta` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
 
@@ -115,6 +120,11 @@ En color azul se encuentra lo relacionado con los usuarios y los almacenes. La c
 En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la prenda; `ItemCatalogo` representa su publicación en el catálogo de un almacén, con su inventario por talla (`InventarioTalla`) y sus imágenes (`ImagenCatalogo`). También se encuentran las publicaciones de segunda mano (`PublicacionSegundaMano`).
 
 En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta. En color morado están las alertas que crea un usuario y las notificaciones que estas generan, y en color naranja las suscripciones de los almacenes y sus planes.
+
+En color rojo se encuentran las donaciones: la `Fundacion`, administrada por un usuario representante, y la `SolicitudDonacion`, con la que un usuario dona una prenda publicada en segunda mano. En color gris están el chat entre comprador y vendedor (`Conversacion` y `Mensaje`) y la foto del probador virtual (`FotoProbador`).
+
+#### Relaciones
+Cada enumeración está conectada con las clases que la usan como tipo de uno de sus atributos, indicando su multiplicidad. Las enumeraciones de verificación de almacenes y de moderación del catálogo se relacionan con una dependencia `«use»`, ya que se usan en esos procesos pero no son atributos de `Almacen` ni de `ItemCatalogo`.
 
 ## Diagrama de componentes específico
 
@@ -236,9 +246,9 @@ La propuesta contempla notificaciones a compradores cuando se publica una prenda
 
 ![](style-radar/docs/images/DC_Observer.png)
 
-#### Adapter — diseño propuesto, no implementado
+#### Adapter — implementado en el probador virtual
 
-La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de esas integraciones pertenece al módulo actual y no existen implementaciones como `ProbadorVirtual` o `AdaptadorGemini`.
+El probador virtual depende de la interfaz `ProbadorIA`, y `GeminiProbadorIA` la adapta a la API de Gemini: envía la foto del usuario, la foto de la prenda y la instrucción de la prueba, y devuelve la imagen generada. `ProbadorVirtualServiceImpl` no conoce los detalles del proveedor; si Gemini no está configurado, falla o tarda más de 30 segundos, genera la composición local con `ComposicionProbador`. La adaptación de pasarelas de pago sigue como diseño propuesto.
 
 ![](style-radar/docs/images/patron_adapter1_ilustracion.png)
 
@@ -371,7 +381,7 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 | RF | Funcionalidad | Endpoint |
 |---|---|---|
 | RF-23 | Cargar fotografía frontal (JPEG/PNG, ≤ 5 MB, ≥ 300x400, vertical) | `POST /api/v1/usuarios/me/probador/foto` |
-| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la composición aproximada y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la prueba con Gemini (o la composición local si no está disponible) y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
 | RF-27 | Eliminar la fotografía del probador | `DELETE /api/v1/usuarios/me/probador/foto` |
 | RF-40 | Iniciar chat con el vendedor (sin tiempo real; WebSockets en el Corte 3) | `POST /api/v1/segunda-mano/{id}/conversaciones` |
 | RF-41 | Coordinar la entrega por mensajes privados | `GET/POST /api/v1/conversaciones/{id}/mensajes` |
