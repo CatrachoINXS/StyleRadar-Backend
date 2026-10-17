@@ -2,14 +2,16 @@ package edu.dosw.proyecto.style_radar.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.awt.Color;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
+
+import edu.dosw.proyecto.style_radar.model.entity.ImagenCatalogoEntity;
+import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 
 import edu.dosw.proyecto.style_radar.repository.AlmacenRepository;
 import edu.dosw.proyecto.style_radar.repository.CredencialRepository;
@@ -82,12 +84,34 @@ class DatosDemoTest {
     }
 
     @Test
-    void shouldGeneratePngImage() {
+    void shouldLoadJpegPhotosForEveryGarment() {
         // Act
-        byte[] imagen = DatosDemo.imagen(Color.RED);
+        byte[] foto = DatosDemo.foto(DatosDemo.PRENDAS.get(0).foto());
 
         // Assert
-        assertThat(imagen).isNotEmpty();
-        assertThat(imagen[1]).isEqualTo((byte) 'P');
+        assertThat(foto).startsWith((byte) 0xFF, (byte) 0xD8);
+        assertThat(DatosDemo.PRENDAS).allSatisfy(p -> assertThat(DatosDemo.foto(p.foto())).isNotEmpty());
+    }
+
+    @Test
+    @Transactional
+    void shouldUpdateOldDemoGarmentsWithPhotos() {
+        // Arrange
+        ItemCatalogoEntity item = items.findAll().stream()
+                .filter(i -> i.getPrenda().getNombre().equals("Jean ancho azul")).findFirst().orElseThrow();
+        item.getPrenda().setNombre("Jean slim azul");
+        item.getImagenes().clear();
+        item.getImagenes().add(new ImagenCatalogoEntity(null, "image/png", new byte[] {1}, item));
+        items.saveAndFlush(item);
+
+        // Act
+        datosDemo.run(new DefaultApplicationArguments());
+
+        // Assert
+        ItemCatalogoEntity actualizado = items.findById(item.getId()).orElseThrow();
+        assertThat(actualizado.getPrenda().getNombre()).isEqualTo("Jean ancho azul");
+        assertThat(actualizado.getImagenes()).singleElement()
+                .satisfies(i -> assertThat(i.getContentType()).isEqualTo("image/jpeg"));
+        assertThat(items.count()).isEqualTo(10);
     }
 }

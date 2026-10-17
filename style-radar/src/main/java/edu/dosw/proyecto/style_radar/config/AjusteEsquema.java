@@ -12,8 +12,6 @@ import edu.dosw.proyecto.style_radar.model.domain.EstadoPublicacion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-// ddl-auto=update no modifica las restricciones CHECK existentes: las bases creadas antes de las donaciones
-// rechazan los estados EN_DONACION y DONADA.
 @Slf4j
 @Component
 @RequiredArgsConstructor
