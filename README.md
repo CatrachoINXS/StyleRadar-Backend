@@ -116,6 +116,11 @@ En color amarillo se agrupa lo referente a las prendas. `Prenda` describe la pre
 
 En color verde se encuentran las Playlists de estilo, que agrupan varias prendas y registran los usuarios que les dan me gusta. En color morado están las alertas que crea un usuario y las notificaciones que estas generan, y en color naranja las suscripciones de los almacenes y sus planes.
 
+En color rojo se encuentran las donaciones: la `Fundacion`, administrada por un usuario representante, y la `SolicitudDonacion`, con la que un usuario dona una prenda publicada en segunda mano. En color gris están el chat entre comprador y vendedor (`Conversacion` y `Mensaje`) y la foto del probador virtual (`FotoProbador`).
+
+#### Relaciones
+Cada enumeración está conectada con las clases que la usan como tipo de uno de sus atributos, indicando su multiplicidad. Las enumeraciones de verificación de almacenes y de moderación del catálogo se relacionan con una dependencia `«use»`, ya que se usan en esos procesos pero no son atributos de `Almacen` ni de `ItemCatalogo`.
+
 ## Diagrama de componentes específico
 
 ![](style-radar/docs/uml/DiagramaComponentesEspecifico.png)
