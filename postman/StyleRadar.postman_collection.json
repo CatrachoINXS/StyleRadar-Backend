@@ -543,7 +543,7 @@
       ]
     },
     {
-      "name": "RF-06 · Recomendar prendas según perfil",
+      "name": "RF-06 · Recomendar prendas según perfil de estilo",
       "item": [
         {
           "name": "Recomendaciones",
@@ -593,7 +593,7 @@
       ]
     },
     {
-      "name": "RF-07 · Buscar prendas por texto libre",
+      "name": "RF-07 · Buscar prendas mediante texto libre",
       "item": [
         {
           "name": "Buscar 'jean'",
@@ -639,7 +639,7 @@
       ]
     },
     {
-      "name": "RF-08 · Filtrar por tipo",
+      "name": "RF-08 · Filtrar prendas por tipo",
       "item": [
         {
           "name": "Tipo SUPERIOR",
@@ -685,7 +685,7 @@
       ]
     },
     {
-      "name": "RF-09 · Filtrar por color",
+      "name": "RF-09 · Filtrar prendas por color",
       "item": [
         {
           "name": "Color Azul",
@@ -711,7 +711,7 @@
       ]
     },
     {
-      "name": "RF-10 · Filtrar por talla",
+      "name": "RF-10 · Filtrar prendas por talla",
       "item": [
         {
           "name": "Talla XL",
@@ -757,7 +757,7 @@
       ]
     },
     {
-      "name": "RF-11 · Filtrar por rango de precio",
+      "name": "RF-11 · Filtrar prendas por rango de precio",
       "item": [
         {
           "name": "Entre 50.000 y 130.000",
@@ -803,7 +803,7 @@
       ]
     },
     {
-      "name": "RF-12 · Filtrar por marca",
+      "name": "RF-12 · Filtrar prendas por marca",
       "item": [
         {
           "name": "Marca Sastre",
@@ -829,7 +829,7 @@
       ]
     },
     {
-      "name": "RF-13 · Filtrar por estilo",
+      "name": "RF-13 · Filtrar prendas por estilo",
       "item": [
         {
           "name": "Estilo FORMAL",
@@ -855,7 +855,7 @@
       ]
     },
     {
-      "name": "RF-14 · Ordenar por distancia",
+      "name": "RF-14 · Ordenar resultados por distancia",
       "item": [
         {
           "name": "Orden por distancia",
@@ -900,7 +900,7 @@
       ]
     },
     {
-      "name": "RF-15 · Ordenar por reputación",
+      "name": "RF-15 · Ordenar resultados por reputación del almacén",
       "item": [
         {
           "name": "Orden por reputación",
@@ -925,7 +925,7 @@
       ]
     },
     {
-      "name": "RF-16 · Prendas similares sin coincidencia exacta",
+      "name": "RF-16 · Consultar prendas similares cuando no exista coincidencia exacta",
       "item": [
         {
           "name": "Búsqueda sin coincidencia exacta",
@@ -950,7 +950,7 @@
       ]
     },
     {
-      "name": "RF-17 · Almacenes en el mapa",
+      "name": "RF-17 · Mostrar almacenes aliados en el mapa",
       "item": [
         {
           "name": "Listar almacenes",
@@ -1022,7 +1022,7 @@
       ]
     },
     {
-      "name": "RF-19 · Catálogo resumido desde el mapa",
+      "name": "RF-19 · Consultar catálogo resumido desde el mapa",
       "item": [
         {
           "name": "Resumen del almacén",
@@ -1067,7 +1067,7 @@
       ]
     },
     {
-      "name": "RF-20 · Novedades semanales",
+      "name": "RF-20 · Consultar novedades semanales de un almacén",
       "item": [
         {
           "name": "Novedades del almacén",
@@ -1112,7 +1112,7 @@
       ]
     },
     {
-      "name": "RF-21 · Distancia usuario–almacén",
+      "name": "RF-21 · Calcular distancia entre usuario y almacén",
       "item": [
         {
           "name": "Calcular distancia",
@@ -1157,7 +1157,7 @@
       ]
     },
     {
-      "name": "RF-22 · Catálogo de un almacén",
+      "name": "RF-22 · Consultar catálogo de almacén",
       "item": [
         {
           "name": "Catálogo completo",
@@ -1304,7 +1304,7 @@
       ]
     },
     {
-      "name": "RF-51 · Registrar fotografías",
+      "name": "RF-51 · Registrar fotografías de una prenda",
       "item": [
         {
           "name": "Subir foto",
@@ -1379,7 +1379,7 @@
       ]
     },
     {
-      "name": "RF-52 · Registrar tallas disponibles",
+      "name": "RF-52 · Registrar tallas disponibles de una prenda",
       "item": [
         {
           "name": "Asignar tallas",
@@ -1450,7 +1450,7 @@
       ]
     },
     {
-      "name": "RF-53 · Registrar precio",
+      "name": "RF-53 · Registrar precio de una prenda",
       "item": [
         {
           "name": "Actualizar precio",
@@ -1521,7 +1521,7 @@
       ]
     },
     {
-      "name": "RF-54 · Registrar atributos de búsqueda",
+      "name": "RF-54 · Registrar atributos de búsqueda de una prenda",
       "item": [
         {
           "name": "Buscar por los atributos registrados",
@@ -1546,7 +1546,7 @@
       ]
     },
     {
-      "name": "RF-55 · Editar prenda",
+      "name": "RF-55 · Editar prenda del catálogo",
       "item": [
         {
           "name": "Editar descripción y color",
@@ -1617,7 +1617,7 @@
       ]
     },
     {
-      "name": "RF-56 / RF-60 · Disponibilidad por talla y nueva llegada",
+      "name": "RF-56 · Actualizar disponibilidad por talla",
       "item": [
         {
           "name": "Stock M = 5",
@@ -1646,7 +1646,6 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
-                  "pm.test('Marcada como nueva llegada', () => pm.expect(pm.response.json().estado).to.eql('NUEVA_PRENDA'));",
                   "pm.test('Talla M disponible', () => pm.expect(pm.response.json().tallasDisponibles).to.include('M'));"
                 ]
               }
@@ -1689,7 +1688,32 @@
       ]
     },
     {
-      "name": "RF-59 · Últimas unidades",
+      "name": "RF-60 · Marcar prenda como nueva llegada",
+      "item": [
+        {
+          "name": "Prenda recién publicada con stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Marcada como nueva llegada', () => { const p = pm.response.json().find(i => i.itemId == pm.collectionVariables.get('itemId')); pm.expect(p.estado).to.eql('NUEVA_PRENDA'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-59 · Marcar prenda como últimas unidades",
       "item": [
         {
           "name": "Stock M = 2",
@@ -1727,7 +1751,7 @@
       ]
     },
     {
-      "name": "RF-61 · Aprobar o rechazar publicaciones",
+      "name": "RF-61 · Aprobar o rechazar publicaciones del catálogo",
       "item": [
         {
           "name": "Enviar a revisión",
@@ -1840,7 +1864,7 @@
       ]
     },
     {
-      "name": "RF-57 · Ocultar prenda agotada",
+      "name": "RF-57 · Ocultar prenda agotada de los resultados disponibles",
       "item": [
         {
           "name": "Stock M = 0",
@@ -1930,7 +1954,7 @@
       ]
     },
     {
-      "name": "RF-58 · Retirar prenda",
+      "name": "RF-58 · Retirar prenda del catálogo",
       "item": [
         {
           "name": "Retirar prenda",
@@ -2461,7 +2485,7 @@
       ]
     },
     {
-      "name": "RF-67 · Suscribir almacén",
+      "name": "RF-67 · Suscribir almacén aliado",
       "item": [
         {
           "name": "Planes disponibles",
@@ -2578,7 +2602,7 @@
       ]
     },
     {
-      "name": "RF-68 · Cancelar suscripción",
+      "name": "RF-68 · Cancelar suscripción de almacén",
       "item": [
         {
           "name": "Cancelar renovación",
