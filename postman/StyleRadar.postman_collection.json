@@ -1,0 +1,2706 @@
+{
+  "info": {
+    "_postman_id": "d462d335-f980-507e-b1b9-c4cfcce30960",
+    "name": "StyleRadar · Pruebas de funcionamiento",
+    "description": "Set de pruebas de la API de StyleRadar organizado por requerimiento funcional. Se ejecuta completo con el Collection Runner usando el ambiente de QA o de PROD.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "RF-02 · Iniciar sesión",
+      "item": [
+        {
+          "name": "Login comprador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"comprador@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Entrega el token JWT', () => { const b = pm.response.json(); pm.expect(b.accessToken).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('tokenComprador', b.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login almacen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"almacen@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Entrega el token JWT', () => { const b = pm.response.json(); pm.expect(b.accessToken).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('tokenAlmacen', b.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Entrega el token JWT', () => { const b = pm.response.json(); pm.expect(b.accessToken).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('tokenAdmin', b.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login fundacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"fundacion@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Entrega el token JWT', () => { const b = pm.response.json(); pm.expect(b.accessToken).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('tokenFundacion', b.accessToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Contraseña incorrecta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"comprador@styleradar.co\",\n  \"password\": \"incorrecta-123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.expect(pm.response.code).to.be.oneOf([401]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Datos inválidos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"x\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-01 · Registrar usuario",
+      "item": [
+        {
+          "name": "Registro exitoso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/registro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario de prueba\",\n  \"email\": \"{{emailNuevo}}\",\n  \"telefono\": \"3001112233\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.test('Devuelve el id del usuario', () => { const b = pm.response.json(); pm.expect(b.id).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('nuevoUsuarioId', b.id); }"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('emailNuevo', `prueba.${Date.now()}@styleradar.co`);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Correo duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/registro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario de prueba\",\n  \"email\": \"{{emailNuevo}}\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 422', () => pm.expect(pm.response.code).to.be.oneOf([422]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Correo inválido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/registro",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario de prueba\",\n  \"email\": \"no-es-correo\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login del usuario nuevo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailNuevo}}\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('tokenNuevo', b.accessToken); }",
+                  "pm.test('Rol COMPRADOR', () => pm.expect(pm.response.json().roles).to.include('COMPRADOR'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-03 · Configurar preferencias de estilo",
+      "item": [
+        {
+          "name": "Actualizar preferencias",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/preferencias-estilo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferencias\": [\n    \"CASUAL\",\n    \"URBANO\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Guarda las preferencias', () => pm.expect(pm.response.json().preferenciasEstilo).to.have.members(['CASUAL','URBANO']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/preferencias-estilo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferencias\": [\n    \"CASUAL\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.expect(pm.response.code).to.be.oneOf([401]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Estilo inválido",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/preferencias-estilo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"preferencias\": [\n    \"ELEGANTE\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-04 · Configurar tallas habituales",
+      "item": [
+        {
+          "name": "Actualizar tallas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/tallas-habituales",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tallas\": [\n    \"M\",\n    \"L\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Guarda las tallas', () => pm.expect(pm.response.json().tallasHabituales).to.have.members(['M','L']));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Talla inválida",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/tallas-habituales",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tallas\": [\n    \"XXXL\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-05 · Personalizar feed según preferencias",
+      "item": [
+        {
+          "name": "Feed del comprador",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/feed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/feed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.expect(pm.response.code).to.be.oneOf([401]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-06 · Recomendar prendas según perfil",
+      "item": [
+        {
+          "name": "Recomendaciones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/recomendaciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Responde un objeto', () => pm.expect(pm.response.json()).to.be.an('object'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/usuarios/me/recomendaciones"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.expect(pm.response.code).to.be.oneOf([401]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-07 · Buscar prendas por texto libre",
+      "item": [
+        {
+          "name": "Buscar 'jean'",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?q=jean"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Coincide con el texto', () => pm.expect(pm.response.json().content[0].nombre.toLowerCase()).to.include('jean'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Página inválida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?q=jean&page=-1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-08 · Filtrar por tipo",
+      "item": [
+        {
+          "name": "Tipo SUPERIOR",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?tipo=SUPERIOR"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Solo prendas superiores', () => pm.response.json().content.forEach(p => pm.expect(p.tipo).to.eql('SUPERIOR')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tipo inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?tipo=SOMBRERO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-09 · Filtrar por color",
+      "item": [
+        {
+          "name": "Color Azul",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?color=Azul"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Solo color azul', () => pm.response.json().content.forEach(p => pm.expect(p.color).to.eql('Azul')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-10 · Filtrar por talla",
+      "item": [
+        {
+          "name": "Talla XL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?talla=XL"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Tienen la talla XL', () => pm.response.json().content.forEach(p => pm.expect(p.tallasDisponibles).to.include('XL')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Talla inválida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?talla=XXXL"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-11 · Filtrar por rango de precio",
+      "item": [
+        {
+          "name": "Entre 50.000 y 130.000",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?precioMin=50000&precioMax=130000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Precios dentro del rango', () => pm.response.json().content.forEach(p => pm.expect(p.precio).to.be.within(50000,130000)));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rango invertido",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?precioMin=200000&precioMax=1000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-12 · Filtrar por marca",
+      "item": [
+        {
+          "name": "Marca Sastre",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?marca=Sastre"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Solo la marca', () => pm.response.json().content.forEach(p => pm.expect(p.marca).to.eql('Sastre')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-13 · Filtrar por estilo",
+      "item": [
+        {
+          "name": "Estilo FORMAL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?estilo=FORMAL"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Solo estilo formal', () => pm.response.json().content.forEach(p => pm.expect(p.estilo).to.eql('FORMAL')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-14 · Ordenar por distancia",
+      "item": [
+        {
+          "name": "Orden por distancia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?orden=DISTANCIA&latitudUsuario=4.6486&longitudUsuario=-74.0628"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin ubicación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?orden=DISTANCIA"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-15 · Ordenar por reputación",
+      "item": [
+        {
+          "name": "Orden por reputación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?orden=REPUTACION"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-16 · Prendas similares sin coincidencia exacta",
+      "item": [
+        {
+          "name": "Búsqueda sin coincidencia exacta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?q=camiseta%20roja&color=Rojo&tipo=SUPERIOR"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Responde una página', () => pm.expect(pm.response.json().content).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-17 · Almacenes en el mapa",
+      "item": [
+        {
+          "name": "Listar almacenes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Incluyen coordenadas', () => pm.response.json().content.forEach(a => { pm.expect(a.latitud).to.be.a('number'); pm.expect(a.longitud).to.be.a('number'); }));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-18 · Filtrar almacenes por categoría",
+      "item": [
+        {
+          "name": "Categoría FORMAL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes?categoria=FORMAL"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });",
+                  "pm.test('Tienen la categoría', () => pm.response.json().content.forEach(a => pm.expect(a.categorias).to.include('FORMAL')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Categoría inválida",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes?categoria=LUJO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-19 · Catálogo resumido desde el mapa",
+      "item": [
+        {
+          "name": "Resumen del almacén",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/resumen?limite=3"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Máximo 3 prendas', () => pm.expect(pm.response.json().length).to.be.within(1,3));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Almacén inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/000000000-0/catalogo/resumen"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-20 · Novedades semanales",
+      "item": [
+        {
+          "name": "Novedades del almacén",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/novedades"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Responde una página', () => pm.expect(pm.response.json().content).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Almacén inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/000000000-0/catalogo/novedades"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-21 · Distancia usuario–almacén",
+      "item": [
+        {
+          "name": "Calcular distancia",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/distancia?latitudUsuario=4.6486&longitudUsuario=-74.0628"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Distancia positiva en km', () => pm.expect(pm.response.json().distanciaKm).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Coordenadas inválidas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/distancia?latitudUsuario=120&longitudUsuario=-74"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-22 · Catálogo de un almacén",
+      "item": [
+        {
+          "name": "Catálogo completo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve prendas del almacén', () => pm.response.json().forEach(p => pm.expect(p.almacenNit).to.eql(pm.collectionVariables.get('nit'))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Almacén inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/almacenes/000000000-0/catalogo"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-50 · Publicar prenda en el catálogo",
+      "item": [
+        {
+          "name": "Publicar prenda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Chaqueta rompevientos {{$timestamp}}\",\n  \"descripcion\": \"Impermeable y liviana\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"Ruta\",\n  \"color\": \"Amarillo\",\n  \"estilo\": \"DEPORTIVO\",\n  \"precio\": 159900\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.test('Devuelve el id del ítem', () => { const b = pm.response.json(); pm.expect(b.itemId).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('itemId', b.itemId); }",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('nombreItem', b.nombre); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sin token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"X\",\n  \"descripcion\": \"X\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"X\",\n  \"color\": \"X\",\n  \"estilo\": \"CASUAL\",\n  \"precio\": 1000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.expect(pm.response.code).to.be.oneOf([401]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Datos incompletos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Sin precio\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-51 · Registrar fotografías",
+      "item": [
+        {
+          "name": "Subir foto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/imagenes",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "archivos/prenda.png"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.test('Devuelve el id de la imagen', () => { const b = pm.response.json(); pm.expect(b.id).to.be.ok; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ítem inexistente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/999999/imagenes",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "archivo",
+                  "type": "file",
+                  "src": "archivos/prenda.png"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-52 · Registrar tallas disponibles",
+      "item": [
+        {
+          "name": "Asignar tallas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/tallas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tallas\": [\n    \"M\",\n    \"L\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Sin unidades hasta registrar stock', () => pm.expect(pm.response.json().stock).to.eql(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Talla inválida",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/tallas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tallas\": [\n    \"XXXL\"\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-53 · Registrar precio",
+      "item": [
+        {
+          "name": "Actualizar precio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{nombreItem}}\",\n  \"descripcion\": \"Impermeable y liviana\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"Ruta\",\n  \"color\": \"Amarillo\",\n  \"estilo\": \"DEPORTIVO\",\n  \"precio\": 149900\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Precio actualizado', () => pm.expect(pm.response.json().precio).to.eql(149900));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Precio negativo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{nombreItem}}\",\n  \"descripcion\": \"X\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"Ruta\",\n  \"color\": \"Amarillo\",\n  \"estilo\": \"DEPORTIVO\",\n  \"precio\": -5\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-54 · Registrar atributos de búsqueda",
+      "item": [
+        {
+          "name": "Buscar por los atributos registrados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?marca=Ruta&color=Amarillo&estilo=DEPORTIVO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Responde una página', () => pm.expect(pm.response.json().content).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-55 · Editar prenda",
+      "item": [
+        {
+          "name": "Editar descripción y color",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"{{nombreItem}}\",\n  \"descripcion\": \"Impermeable con capucha\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"Ruta\",\n  \"color\": \"Naranja\",\n  \"estilo\": \"DEPORTIVO\",\n  \"precio\": 149900\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Datos editados', () => { const b = pm.response.json(); pm.expect(b.color).to.eql('Naranja'); pm.expect(b.descripcion).to.eql('Impermeable con capucha'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ítem inexistente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/999999",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"X\",\n  \"descripcion\": \"X\",\n  \"tipo\": \"SUPERIOR\",\n  \"marca\": \"X\",\n  \"color\": \"X\",\n  \"estilo\": \"CASUAL\",\n  \"precio\": 1000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-56 / RF-60 · Disponibilidad por talla y nueva llegada",
+      "item": [
+        {
+          "name": "Stock M = 5",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/inventario/M",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidades\": 5\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Marcada como nueva llegada', () => pm.expect(pm.response.json().estado).to.eql('NUEVA_PRENDA'));",
+                  "pm.test('Talla M disponible', () => pm.expect(pm.response.json().tallasDisponibles).to.include('M'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unidades negativas",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/inventario/M",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidades\": -1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.expect(pm.response.code).to.be.oneOf([400]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-59 · Últimas unidades",
+      "item": [
+        {
+          "name": "Stock M = 2",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/inventario/M",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidades\": 2\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Marcada como últimas unidades', () => pm.expect(pm.response.json().estado).to.eql('ULTIMAS_UNIDADES'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-61 · Aprobar o rechazar publicaciones",
+      "item": [
+        {
+          "name": "Enviar a revisión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/catalogo/{{itemId}}/moderacion/solicitar-revision"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda pendiente', () => pm.expect(pm.response.json().estadoModeracion).to.eql('PENDIENTE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pendientes de moderación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/catalogo/moderacion?estado=PENDIENTE"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aprobar publicación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/catalogo/{{itemId}}/moderacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APROBADA\",\n  \"motivo\": \"Cumple las políticas\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda aprobada', () => pm.expect(pm.response.json().estadoModeracion).to.eql('APROBADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rol incorrecto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/catalogo/moderacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.expect(pm.response.code).to.be.oneOf([403]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-57 · Ocultar prenda agotada",
+      "item": [
+        {
+          "name": "Stock M = 0",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/inventario/M",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidades\": 0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stock L = 0",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}/inventario/L",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unidades\": 0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda agotada', () => pm.expect(pm.response.json().estado).to.eql('AGOTADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "No aparece en la búsqueda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/catalogo/buscar?q={{nombreItem}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('La prenda agotada no aparece', () => pm.expect(pm.response.json().content.map(p => p.itemId)).to.not.include(Number(pm.collectionVariables.get('itemId'))));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-58 · Retirar prenda",
+      "item": [
+        {
+          "name": "Retirar prenda",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 204', () => pm.expect(pm.response.code).to.be.oneOf([204]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ya retirada",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/catalogo/{{itemId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-62 · Verificar almacén aliado",
+      "item": [
+        {
+          "name": "Enviar a revisión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/almacenes/900345678-3/verificacion/solicitar-revision"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda pendiente', () => pm.expect(pm.response.json().estadoVerificacion).to.eql('PENDIENTE'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Aprobar almacén",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/almacenes/900345678-3/verificacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APROBADO\",\n  \"motivo\": \"Documentos verificados\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda aprobado', () => pm.expect(pm.response.json().estadoVerificacion).to.eql('APROBADO'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Almacenes verificados",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/almacenes/verificacion?estado=APROBADO"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Devuelve una lista paginada con resultados', () => { const b = pm.response.json(); pm.expect(b.content).to.be.an('array').that.is.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Almacén inexistente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/almacenes/000000000-0/verificacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-63 · Registrar fundación aliada",
+      "item": [
+        {
+          "name": "Registrar fundación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fundación Prueba {{$timestamp}}\",\n  \"descripcion\": \"Ropa para niños\",\n  \"direccion\": \"Calle 1 # 2-3\",\n  \"telefono\": \"6011234567\",\n  \"email\": \"prueba@fundacion.org\",\n  \"latitud\": 4.6,\n  \"longitud\": -74.08,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\",\n    \"INFERIOR\"\n  ],\n  \"representanteId\": \"{{nuevoUsuarioId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.expect(pm.response.code).to.be.oneOf([201]));",
+                  "pm.test('Devuelve el id', () => { const b = pm.response.json(); pm.expect(b.id).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('fundacionId', b.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Representante ya asignado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Otra fundación {{$timestamp}}\",\n  \"direccion\": \"Calle 1\",\n  \"email\": \"otra@fundacion.org\",\n  \"latitud\": 4.6,\n  \"longitud\": -74.08,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\"\n  ],\n  \"representanteId\": \"{{nuevoUsuarioId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 o 422', () => pm.expect(pm.response.code).to.be.oneOf([409, 422]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rol incorrecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"X\",\n  \"direccion\": \"X\",\n  \"email\": \"x@x.org\",\n  \"latitud\": 4.6,\n  \"longitud\": -74.08,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\"\n  ],\n  \"representanteId\": 1\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.expect(pm.response.code).to.be.oneOf([403]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-64 · Editar fundación aliada",
+      "item": [
+        {
+          "name": "Editar fundación",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones/{{fundacionId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fundación Prueba editada {{$timestamp}}\",\n  \"descripcion\": \"Ropa para niños y adultos\",\n  \"direccion\": \"Calle 1 # 2-3\",\n  \"telefono\": \"6011234567\",\n  \"email\": \"prueba@fundacion.org\",\n  \"latitud\": 4.6,\n  \"longitud\": -74.08,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\",\n    \"INFERIOR\",\n    \"CALZADO\"\n  ],\n  \"representanteId\": \"{{nuevoUsuarioId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Categorías actualizadas', () => pm.expect(pm.response.json().categoriasAceptadas).to.include('CALZADO'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fundación inexistente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones/999999",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"X\",\n  \"direccion\": \"X\",\n  \"email\": \"x@x.org\",\n  \"latitud\": 4.6,\n  \"longitud\": -74.08,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\"\n  ],\n  \"representanteId\": \"{{nuevoUsuarioId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-65 · Desactivar fundación aliada",
+      "item": [
+        {
+          "name": "Desactivar fundación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones/{{fundacionId}}/desactivar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda inactiva', () => pm.expect(pm.response.json().activa).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Fundación inexistente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/fundaciones/999999/desactivar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-66 · Cambiar estado de usuario",
+      "item": [
+        {
+          "name": "Bloquear usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/usuarios/{{nuevoUsuarioId}}/estado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"BLOQUEADA\",\n  \"motivo\": \"Prueba de moderación\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda bloqueada', () => pm.expect(pm.response.json().estadoCuenta).to.eql('BLOQUEADA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Usuario bloqueado no inicia sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailNuevo}}\",\n  \"password\": \"{{demoPassword}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401 o 403', () => pm.expect(pm.response.code).to.be.oneOf([401, 403]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reactivar usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/usuarios/{{nuevoUsuarioId}}/estado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"ACTIVA\",\n  \"motivo\": \"Fin de la prueba\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Queda activa', () => pm.expect(pm.response.json().estadoCuenta).to.eql('ACTIVA'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Usuario inexistente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/admin/usuarios/999999/estado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"BLOQUEADA\",\n  \"motivo\": \"X\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-67 · Suscribir almacén",
+      "item": [
+        {
+          "name": "Planes disponibles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/planes-suscripcion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Hay planes', () => pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty);",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('planId', b[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suscribir almacén",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/suscripciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"{{planId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 o 409', () => pm.expect(pm.response.code).to.be.oneOf([201, 409]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suscripción vigente",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/suscripciones/vigente"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Hay una suscripción vigente', () => { const b = pm.response.json(); pm.expect(b.id).to.be.ok; });",
+                  "if (pm.response.code < 300) { const b = pm.response.json(); pm.collectionVariables.set('suscripcionId', b.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rol incorrecto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenComprador}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/suscripciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"{{planId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 403', () => pm.expect(pm.response.code).to.be.oneOf([403]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RF-68 · Cancelar suscripción",
+      "item": [
+        {
+          "name": "Cancelar renovación",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/suscripciones/{{suscripcionId}}/renovacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"renovacionHabilitada\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.expect(pm.response.code).to.be.oneOf([200]));",
+                  "pm.test('Renovación cancelada', () => pm.expect(pm.response.json().renovacionHabilitada).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suscripción inexistente",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAlmacen}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/almacenes/{{nit}}/suscripciones/999999/renovacion",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"renovacionHabilitada\": false\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404', () => pm.expect(pm.response.code).to.be.oneOf([404]));",
+                  "pm.test('Cuerpo de error uniforme', () => { const b = pm.response.json(); pm.expect(b.status).to.eql(pm.response.code); pm.expect(b.message).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "nit",
+      "value": "900123456-1"
+    },
+    {
+      "key": "tokenComprador",
+      "value": ""
+    },
+    {
+      "key": "tokenAlmacen",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenFundacion",
+      "value": ""
+    },
+    {
+      "key": "tokenNuevo",
+      "value": ""
+    },
+    {
+      "key": "emailNuevo",
+      "value": ""
+    },
+    {
+      "key": "nuevoUsuarioId",
+      "value": ""
+    },
+    {
+      "key": "itemId",
+      "value": ""
+    },
+    {
+      "key": "nombreItem",
+      "value": ""
+    },
+    {
+      "key": "fundacionId",
+      "value": ""
+    },
+    {
+      "key": "planId",
+      "value": ""
+    },
+    {
+      "key": "suscripcionId",
+      "value": ""
+    }
+  ]
+}
