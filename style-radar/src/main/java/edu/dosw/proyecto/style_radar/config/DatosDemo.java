@@ -52,10 +52,6 @@ import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Carga inicial de datos de demostración para QA y PROD. Se activa con STYLERADAR_DEMO_ENABLED=true
- * y es idempotente: si el primer almacén ya existe, no vuelve a crear el catálogo.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

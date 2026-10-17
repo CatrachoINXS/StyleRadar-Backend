@@ -16,7 +16,6 @@ import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.service.ProbadorIA;
 import lombok.extern.slf4j.Slf4j;
 
-/** Adaptador del servicio de prueba virtual de FASHN (modelo tryon-v1.6). */
 @Slf4j
 @Component
 public class FashnProbadorIA implements ProbadorIA {
@@ -31,7 +30,6 @@ public class FashnProbadorIA implements ProbadorIA {
     @Autowired
     public FashnProbadorIA(@Value("${styleradar.probador.ia.url:https://api.fashn.ai/v1}") String url,
             @Value("${styleradar.probador.ia.api-key:}") String apiKey) {
-        // 14 consultas cada 2 segundos: la respuesta no supera los 30 segundos antes de usar la composición local.
         this(RestClient.builder().baseUrl(url), apiKey, Duration.ofSeconds(2), 14);
     }
 

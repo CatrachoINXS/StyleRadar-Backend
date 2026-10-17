@@ -74,7 +74,6 @@ public class ProbadorVirtualServiceImpl implements IProbadorVirtualService {
         if (prenda == null) {
             throw new ReglaDeNegocioException("La fotografía de la prenda no se puede procesar");
         }
-        // Se usa el servicio externo de IA; si no está disponible se genera la composición local.
         byte[] resultado = probadorIA.probar(foto.getDatos(), foto.getContentType(), imagenPrenda.getDatos(),
                         imagenPrenda.getContentType(), item.getPrenda().getTipo())
                 .orElseGet(() -> composicion.componer(composicion.leer(foto.getDatos()), prenda,
