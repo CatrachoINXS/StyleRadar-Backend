@@ -30,8 +30,8 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
 
             and exists (select v.id from InventarioTallaEntity v
                         where v.itemCatalogo = i and v.unidades > 0)
-            and (:inicio is null or i.fechaPublicacion >= :inicio)
-            and (:fin is null or i.fechaPublicacion <= :fin)
+            and i.fechaPublicacion >= :inicio
+            and i.fechaPublicacion <= :fin
             order by i.fechaPublicacion desc, i.id asc
             """)
     Page<Long> findIdsPublicosDelAlmacen(@Param("nit") String nit,

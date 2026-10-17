@@ -74,7 +74,7 @@ class AlmacenServiceImplTest {
         var e2 = new ItemCatalogoEntity(); e2.setId(2L);
         var i1 = item(1L); var i2 = item(2L);
         when(almacenes.existsPublicoByNit("A")).thenReturn(true);
-        when(items.findIdsPublicosDelAlmacen("A", null, null, page))
+        when(items.findIdsPublicosDelAlmacen("A", AlmacenServiceImpl.SIN_INICIO, AlmacenServiceImpl.SIN_FIN, page))
                 .thenReturn(new PageImpl<>(List.of(1L, 2L), page, 2));
         when(items.findByIdIn(List.of(1L, 2L))).thenReturn(List.of(e2, e1));
         when(itemMapper.toDomain(e1)).thenReturn(i1);

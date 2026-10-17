@@ -29,6 +29,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Transactional(readOnly = true)
 public class AlmacenServiceImpl implements IAlmacenService {
+    // Límites fijos en lugar de null: PostgreSQL no infiere el tipo de un parámetro nulo en "is null".
+    static final Instant SIN_INICIO = Instant.parse("2000-01-01T00:00:00Z");
+    static final Instant SIN_FIN = Instant.parse("9999-12-31T00:00:00Z");
+
     private final AlmacenRepository almacenes;
     private final ItemCatalogoRepository items;
     private final AlmacenEntityMapper almacenMapper;
@@ -54,7 +58,7 @@ public class AlmacenServiceImpl implements IAlmacenService {
     @Override
     public List<ItemCatalogo> resumen(String nit, int limite) {
         validarExistencia(nit);
-        return catalogo(nit, null, null, 0, limite).getContent();
+        return catalogo(nit, SIN_INICIO, SIN_FIN, 0, limite).getContent();
     }
 
     @Override
