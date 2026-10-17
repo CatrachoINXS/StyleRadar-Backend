@@ -9,11 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException;
 import edu.dosw.proyecto.style_radar.model.domain.FotoProbador;
 import edu.dosw.proyecto.style_radar.model.entity.FotoProbadorEntity;
+import edu.dosw.proyecto.style_radar.model.entity.ImagenCatalogoEntity;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.repository.FotoProbadorRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.ComposicionProbador;
 import edu.dosw.proyecto.style_radar.service.IProbadorVirtualService;
+import edu.dosw.proyecto.style_radar.service.ProbadorIA;
 import edu.dosw.proyecto.style_radar.validator.ProbadorValidator;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class ProbadorVirtualServiceImpl implements IProbadorVirtualService {
     private final ProbadorValidator probadorValidator;
     private final UsuarioValidator usuarioValidator;
     private final ComposicionProbador composicion;
+    private final ProbadorIA probadorIA;
     private final Clock clock;
 
     @Override
@@ -66,11 +69,16 @@ public class ProbadorVirtualServiceImpl implements IProbadorVirtualService {
         FotoProbadorEntity foto = probadorValidator.obtenerFoto(usuarioId);
         ItemCatalogoEntity item = probadorValidator.obtenerPrendaCompatible(itemCatalogoId);
 
-        BufferedImage prenda = composicion.leer(item.getImagenes().get(0).getDatos());
+        ImagenCatalogoEntity imagenPrenda = item.getImagenes().get(0);
+        BufferedImage prenda = composicion.leer(imagenPrenda.getDatos());
         if (prenda == null) {
             throw new ReglaDeNegocioException("La fotografía de la prenda no se puede procesar");
         }
-        byte[] resultado = composicion.componer(composicion.leer(foto.getDatos()), prenda, item.getPrenda().getTipo());
+        // Se usa el servicio externo de IA; si no está disponible se genera la composición local.
+        byte[] resultado = probadorIA.probar(foto.getDatos(), foto.getContentType(), imagenPrenda.getDatos(),
+                        imagenPrenda.getContentType(), item.getPrenda().getTipo())
+                .orElseGet(() -> composicion.componer(composicion.leer(foto.getDatos()), prenda,
+                        item.getPrenda().getTipo()));
         log.info("Prueba virtual generada para usuario ID: {} e item ID: {} en {} ms",
                 usuarioId, itemCatalogoId, (System.nanoTime() - inicio) / 1_000_000);
         return resultado;

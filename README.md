@@ -89,6 +89,10 @@ Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` c
 | `JWT_SECRET_BASE64` | Clave para firmar los tokens de acceso, codificada en Base64 y de al menos 256 bits. Se puede generar con `openssl rand -base64 32`. | `change-me-base64-key` |
 | `JWT_DURATION` | Tiempo de validez de los tokens de acceso. | `PT60M` |
 | `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
+| `STYLERADAR_DEMO_ENABLED` | Carga al iniciar los datos de demostración: 3 almacenes, 10 prendas, 3 planes, una fundación y un usuario por rol. No duplica datos al reiniciar. | `false` |
+| `STYLERADAR_DEMO_PASSWORD` | Contraseña de los usuarios de demostración. Sin valor no se crean. | `change-me` |
+| `PROBADOR_IA_API_KEY` | Clave del servicio externo de prueba virtual (FASHN). Sin valor se usa la composición local. | `change-me` |
+| `PROBADOR_IA_URL` | URL base del servicio de prueba virtual. | `https://api.fashn.ai/v1` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
 
@@ -236,9 +240,9 @@ La propuesta contempla notificaciones a compradores cuando se publica una prenda
 
 ![](style-radar/docs/images/DC_Observer.png)
 
-#### Adapter — diseño propuesto, no implementado
+#### Adapter — implementado en el probador virtual
 
-La propuesta considera adaptar pasarelas de pago y proveedores de IA. Ninguna de esas integraciones pertenece al módulo actual y no existen implementaciones como `ProbadorVirtual` o `AdaptadorGemini`.
+El probador virtual depende de la interfaz `ProbadorIA`, y `FashnProbadorIA` la adapta a la API externa de prueba virtual de FASHN: envía la foto del usuario y la de la prenda, consulta el estado de la ejecución y devuelve la imagen generada. `ProbadorVirtualServiceImpl` no conoce los detalles del proveedor; si el servicio no está configurado o no responde, genera la composición local con `ComposicionProbador`. La adaptación de pasarelas de pago sigue como diseño propuesto.
 
 ![](style-radar/docs/images/patron_adapter1_ilustracion.png)
 
@@ -371,7 +375,7 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 | RF | Funcionalidad | Endpoint |
 |---|---|---|
 | RF-23 | Cargar fotografía frontal (JPEG/PNG, ≤ 5 MB, ≥ 300x400, vertical) | `POST /api/v1/usuarios/me/probador/foto` |
-| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la composición aproximada y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la prueba con el servicio de IA (o la composición local si no está disponible) y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
 | RF-27 | Eliminar la fotografía del probador | `DELETE /api/v1/usuarios/me/probador/foto` |
 | RF-40 | Iniciar chat con el vendedor (sin tiempo real; WebSockets en el Corte 3) | `POST /api/v1/segunda-mano/{id}/conversaciones` |
 | RF-41 | Coordinar la entrega por mensajes privados | `GET/POST /api/v1/conversaciones/{id}/mensajes` |
