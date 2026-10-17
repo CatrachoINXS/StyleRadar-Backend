@@ -31,7 +31,7 @@ public class GeminiProbadorIA implements ProbadorIA {
     public GeminiProbadorIA(
             @Value("${styleradar.probador.ia.url:https://generativelanguage.googleapis.com/v1beta}") String url,
             @Value("${styleradar.probador.ia.api-key:}") String apiKey,
-            @Value("${styleradar.probador.ia.modelo:gemini-3.1-flash-image}") String modelo) {
+            @Value("${styleradar.probador.ia.modelo:gemini-3.1-flash-lite-image}") String modelo) {
         this(RestClient.builder().baseUrl(url).requestFactory(fabrica()), apiKey, modelo);
     }
 

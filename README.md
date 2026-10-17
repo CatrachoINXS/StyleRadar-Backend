@@ -92,7 +92,7 @@ Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` c
 | `STYLERADAR_DEMO_ENABLED` | Carga al iniciar los datos de demostración: 3 almacenes, 10 prendas, 3 planes, una fundación y un usuario por rol. No duplica datos al reiniciar. | `false` |
 | `STYLERADAR_DEMO_PASSWORD` | Contraseña de los usuarios de demostración. Sin valor no se crean. | `change-me` |
 | `PROBADOR_IA_API_KEY` | Clave de la API de Gemini (Google AI Studio) para el probador virtual. Sin valor se usa la composición local. | `change-me` |
-| `PROBADOR_IA_MODELO` | Modelo de Gemini para generar la prueba virtual. | `gemini-3.1-flash-image` |
+| `PROBADOR_IA_MODELO` | Modelo de Gemini para generar la prueba virtual. | `gemini-3.1-flash-lite-image` |
 | `PROBADOR_IA_URL` | URL base de la API de Gemini. | `https://generativelanguage.googleapis.com/v1beta` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
