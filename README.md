@@ -58,18 +58,11 @@ La carpeta [`postman/`](postman) contiene la colección `StyleRadar.postman_coll
 
 Los ambientes no contienen secretos: la contraseña de los usuarios de demostración se escribe en la variable `demoPassword` antes de ejecutar.
 
-**Ejecución en Postman:**
+**Ejecución:**
 
 1. Importar la colección y el ambiente `StyleRadar-PROD` (o `StyleRadar-QA`).
 2. Escribir el valor de `demoPassword` en el ambiente.
 3. Abrir el **Collection Runner**, seleccionar la colección completa y ejecutar.
-
-**Ejecución por consola con Newman** (desde la raíz del repositorio):
-
-```shell
-docker run --rm -v "$PWD/postman":/etc/newman postman/newman:6-alpine run StyleRadar.postman_collection.json \
-  -e StyleRadar-PROD.postman_environment.json --env-var demoPassword=<contraseña>
-```
 
 Resultado contra PROD del 18 de octubre de 2026: **91 requests y 188 validaciones, sin fallas**.
 
@@ -189,8 +182,6 @@ Para comprobar el control de acceso se probaron contra PROD varios endpoints pro
 
 ![](style-radar/docs/evidencias/seguridad-prod.png)
 
-Además, la colección de Postman incluye casos `401` y `403` en las funcionalidades protegidas, por ejemplo CP-89 (suscripción con rol incorrecto).
-
 ## Cómo levantar el proyecto localmente
 
 Prerrequisitos: Java 21, Maven y Docker Desktop.
@@ -219,6 +210,8 @@ Registro de inicio de la API con conexión a la base de datos:
 La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](https://hub.docker.com/r/juanamunoz/styleradar).
 
 ![](style-radar/docs/evidencias/docker-hub.png)
+
+![](style-radar/docs/evidencias/docker-hub-qa.png)
 
 ## Variables de entorno
 
@@ -527,7 +520,7 @@ Todas las capturas están en [`style-radar/docs/evidencias`](style-radar/docs/ev
 | `mvn verify` con número de pruebas y cobertura | [`pruebas-mvn-verify.png`](style-radar/docs/evidencias/pruebas-mvn-verify.png), [`cobertura-jacoco.png`](style-radar/docs/evidencias/cobertura-jacoco.png) |
 | Pipelines de QA y PROD en verde | [`pipeline-qa.png`](style-radar/docs/evidencias/pipeline-qa.png), [`pipeline-prod.png`](style-radar/docs/evidencias/pipeline-prod.png), [`aprobacion-prod.jpg`](style-radar/docs/evidencias/aprobacion-prod.jpg) |
 | Swagger en la URL de PROD | [`swagger-prod.png`](style-radar/docs/evidencias/swagger-prod.png) |
-| Imagen publicada en Docker Hub | [`docker-hub.png`](style-radar/docs/evidencias/docker-hub.png) |
+| Imagen publicada en Docker Hub | [`docker-hub.png`](style-radar/docs/evidencias/docker-hub.png), [`docker-hub-qa.png`](style-radar/docs/evidencias/docker-hub-qa.png) |
 | Set de pruebas de funcionamiento contra PROD | [`postman-prod.png`](style-radar/docs/evidencias/postman-prod.png) |
 | Pruebas de seguridad (401, 403 y 200) | [`seguridad-prod.png`](style-radar/docs/evidencias/seguridad-prod.png) |
 | Docker local y App Services en Azure | [`docker-compose-ps.png`](style-radar/docs/evidencias/docker-compose-ps.png), [`docker-logs-api.png`](style-radar/docs/evidencias/docker-logs-api.png), [`azure-app-service-qa.png`](style-radar/docs/evidencias/azure-app-service-qa.png), [`azure-app-service-prod.png`](style-radar/docs/evidencias/azure-app-service-prod.png) |
