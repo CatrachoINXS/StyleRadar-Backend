@@ -211,6 +211,8 @@ La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](htt
 
 ![](style-radar/docs/evidencias/docker-hub.png)
 
+![](style-radar/docs/evidencias/docker-hub-qa.png)
+
 ## Variables de entorno
 
 Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` con los valores reales no se versiona.
@@ -518,7 +520,7 @@ Todas las capturas están en [`style-radar/docs/evidencias`](style-radar/docs/ev
 | `mvn verify` con número de pruebas y cobertura | [`pruebas-mvn-verify.png`](style-radar/docs/evidencias/pruebas-mvn-verify.png), [`cobertura-jacoco.png`](style-radar/docs/evidencias/cobertura-jacoco.png) |
 | Pipelines de QA y PROD en verde | [`pipeline-qa.png`](style-radar/docs/evidencias/pipeline-qa.png), [`pipeline-prod.png`](style-radar/docs/evidencias/pipeline-prod.png), [`aprobacion-prod.jpg`](style-radar/docs/evidencias/aprobacion-prod.jpg) |
 | Swagger en la URL de PROD | [`swagger-prod.png`](style-radar/docs/evidencias/swagger-prod.png) |
-| Imagen publicada en Docker Hub | [`docker-hub.png`](style-radar/docs/evidencias/docker-hub.png) |
+| Imagen publicada en Docker Hub | [`docker-hub.png`](style-radar/docs/evidencias/docker-hub.png), [`docker-hub-qa.png`](style-radar/docs/evidencias/docker-hub-qa.png) |
 | Set de pruebas de funcionamiento contra PROD | [`postman-prod.png`](style-radar/docs/evidencias/postman-prod.png) |
 | Pruebas de seguridad (401, 403 y 200) | [`seguridad-prod.png`](style-radar/docs/evidencias/seguridad-prod.png) |
 | Docker local y App Services en Azure | [`docker-compose-ps.png`](style-radar/docs/evidencias/docker-compose-ps.png), [`docker-logs-api.png`](style-radar/docs/evidencias/docker-logs-api.png), [`azure-app-service-qa.png`](style-radar/docs/evidencias/azure-app-service-qa.png), [`azure-app-service-prod.png`](style-radar/docs/evidencias/azure-app-service-prod.png) |
