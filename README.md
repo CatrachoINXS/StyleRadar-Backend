@@ -58,18 +58,11 @@ La carpeta [`postman/`](postman) contiene la colección `StyleRadar.postman_coll
 
 Los ambientes no contienen secretos: la contraseña de los usuarios de demostración se escribe en la variable `demoPassword` antes de ejecutar.
 
-**Ejecución en Postman:**
+**Ejecución:**
 
 1. Importar la colección y el ambiente `StyleRadar-PROD` (o `StyleRadar-QA`).
 2. Escribir el valor de `demoPassword` en el ambiente.
 3. Abrir el **Collection Runner**, seleccionar la colección completa y ejecutar.
-
-**Ejecución por consola con Newman** (desde la raíz del repositorio):
-
-```shell
-docker run --rm -v "$PWD/postman":/etc/newman postman/newman:6-alpine run StyleRadar.postman_collection.json \
-  -e StyleRadar-PROD.postman_environment.json --env-var demoPassword=<contraseña>
-```
 
 Resultado contra PROD del 18 de octubre de 2026: **91 requests y 188 validaciones, sin fallas**.
 
@@ -188,8 +181,6 @@ Para comprobar el control de acceso se probaron contra PROD varios endpoints pro
 | `GET /api/v1/almacenes/{nit}/suscripciones` | `ADMIN_ALMACEN` | ✅ 401 | ✅ 403 | ✅ 200 |
 
 ![](style-radar/docs/evidencias/seguridad-prod.png)
-
-Además, la colección de Postman incluye casos `401` y `403` en las funcionalidades protegidas, por ejemplo CP-89 (suscripción con rol incorrecto).
 
 ## Cómo levantar el proyecto localmente
 
