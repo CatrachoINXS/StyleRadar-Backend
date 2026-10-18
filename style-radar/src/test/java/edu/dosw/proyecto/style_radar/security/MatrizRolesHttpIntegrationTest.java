@@ -1,9 +1,13 @@
 package edu.dosw.proyecto.style_radar.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -15,10 +19,12 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.model.entity.AlmacenEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
 import edu.dosw.proyecto.style_radar.support.SeguridadFixtures;
 
@@ -39,7 +45,11 @@ class MatrizRolesHttpIntegrationTest extends SeguridadFixtures {
             "PATCH,/api/v1/usuarios/me/segunda-mano/1/vender",
             "POST,/api/v1/playlists", "GET,/api/v1/playlists", "GET,/api/v1/usuarios/me/playlists",
             "POST,/api/v1/playlists/1/like", "POST,/api/v1/playlists/1/guardar",
-            "GET,/api/v1/admin/fundaciones", "GET,/api/v1/usuarios/me/probador/foto"})
+            "GET,/api/v1/admin/fundaciones", "GET,/api/v1/usuarios/me/probador/foto",
+            "POST,/api/v1/almacenes/1/catalogo", "PUT,/api/v1/almacenes/1/catalogo/1",
+            "DELETE,/api/v1/almacenes/1/catalogo/1", "PUT,/api/v1/almacenes/1/catalogo/1/tallas",
+            "PATCH,/api/v1/almacenes/1/catalogo/1/inventario/M",
+            "POST,/api/v1/almacenes/1/catalogo/1/imagenes"})
     void sinToken401(String metodo, String ruta) throws Exception {
         mvc.perform(request(HttpMethod.valueOf(metodo), ruta).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized())
@@ -52,6 +62,12 @@ class MatrizRolesHttpIntegrationTest extends SeguridadFixtures {
             "GET,/api/v1/usuarios/me/busquedas-guardadas,REPRESENTANTE_FUNDACION",
             "GET,/api/v1/usuarios/1,COMPRADOR",
             "GET,/api/v1/usuarios/me/segunda-mano,ADMIN_STYLERADAR",
+            "POST,/api/v1/almacenes/1/catalogo,REPRESENTANTE_FUNDACION",
+            "PUT,/api/v1/almacenes/1/catalogo/1,COMPRADOR",
+            "DELETE,/api/v1/almacenes/1/catalogo/1,REPRESENTANTE_FUNDACION",
+            "PUT,/api/v1/almacenes/1/catalogo/1/tallas,ADMIN_STYLERADAR",
+            "PATCH,/api/v1/almacenes/1/catalogo/1/inventario/M,COMPRADOR",
+            "POST,/api/v1/almacenes/1/catalogo/1/imagenes,REPRESENTANTE_FUNDACION",
             "GET,/api/v1/usuarios/me/playlists,ADMIN_ALMACEN",
             "POST,/api/v1/playlists/1/like,REPRESENTANTE_FUNDACION",
             "GET,/api/v1/admin/fundaciones,COMPRADOR",
@@ -127,5 +143,123 @@ class MatrizRolesHttpIntegrationTest extends SeguridadFixtures {
         mvc.perform(options("/api/v1/playlists").header("Origin", "https://evil.example")
                         .header("Access-Control-Request-Method", "GET"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void catalogoPublicarSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String rutaBase = "/api/v1/almacenes/900123456/catalogo";
+        String publicar = """
+                {"nombre":"Camiseta","descripcion":"Algodón","tipo":"SUPERIOR","marca":"SR",
+                 "color":"Negro","estilo":"CASUAL","precio":89000}
+                """;
+
+        mvc.perform(post(rutaBase).header("Authorization", bearer(Rol.COMPRADOR))
+                        .contentType(MediaType.APPLICATION_JSON).content(publicar))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Acceso denegado"));
+
+        mvc.perform(post(rutaBase).header("Authorization", bearer(adminDeAlmacen(almacen)))
+                        .contentType(MediaType.APPLICATION_JSON).content(publicar))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void catalogoActualizarSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String admin = bearer(adminDeAlmacen(almacen));
+        String rutaItem = publicarItem(admin, "900123456");
+        String publicar = """
+                {"nombre":"Camiseta","descripcion":"Algodón","tipo":"SUPERIOR","marca":"SR",
+                 "color":"Negro","estilo":"CASUAL","precio":89000}
+                """;
+
+        mvc.perform(put(rutaItem).header("Authorization", bearer(Rol.REPRESENTANTE_FUNDACION))
+                        .contentType(MediaType.APPLICATION_JSON).content(publicar))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Acceso denegado"));
+
+        mvc.perform(put(rutaItem).header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content(publicar))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void catalogoRetirarSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String admin = bearer(adminDeAlmacen(almacen));
+        String rutaItem = publicarItem(admin, "900123456");
+
+        mvc.perform(delete(rutaItem).header("Authorization", bearer(Rol.REPRESENTANTE_FUNDACION)))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(delete(rutaItem).header("Authorization", admin))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void inventarioRegistrarTallasSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String admin = bearer(adminDeAlmacen(almacen));
+        String rutaItem = publicarItem(admin, "900123456");
+
+        mvc.perform(put(rutaItem + "/tallas").header("Authorization", bearer(Rol.COMPRADOR))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tallas\":[\"M\",\"L\"]}"))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(put(rutaItem + "/tallas").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tallas\":[\"M\",\"L\"]}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void inventarioActualizarDisponibilidadSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String admin = bearer(adminDeAlmacen(almacen));
+        String rutaItem = publicarItem(admin, "900123456");
+
+        mvc.perform(put(rutaItem + "/tallas").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"tallas\":[\"M\",\"L\"]}"))
+                .andExpect(status().isOk());
+
+        mvc.perform(patch(rutaItem + "/inventario/M").header("Authorization", bearer(Rol.REPRESENTANTE_FUNDACION))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"unidades\":5}"))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(patch(rutaItem + "/inventario/M").header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"unidades\":5}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void imagenesRegistrarSoloAdminAlmacen() throws Exception {
+        AlmacenEntity almacen = almacen("900123456");
+        String admin = bearer(adminDeAlmacen(almacen));
+        String rutaItem = publicarItem(admin, "900123456");
+
+        mvc.perform(multipart(rutaItem + "/imagenes").header("Authorization", bearer(Rol.COMPRADOR))
+                        .file(new MockMultipartFile("archivo", "foto.png", "image/png",
+                                new byte[] { 1, 2, 3 })))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(multipart(rutaItem + "/imagenes").header("Authorization", admin)
+                        .file(new MockMultipartFile("archivo", "foto.png", "image/png",
+                                new byte[] { 1, 2, 3 })))
+                .andExpect(status().isCreated());
+    }
+
+    private String publicarItem(String tokenAdmin, String nit) throws Exception {
+        String rutaBase = "/api/v1/almacenes/" + nit + "/catalogo";
+        String publicar = """
+                {"nombre":"Camiseta","descripcion":"Algodón","tipo":"SUPERIOR","marca":"SR",
+                 "color":"Negro","estilo":"CASUAL","precio":89000}
+                """;
+        String creado = mvc.perform(post(rutaBase).header("Authorization", tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON).content(publicar))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String itemId = creado.replaceAll(".*\"itemId\":(\\d+).*", "$1");
+        return rutaBase + "/" + itemId;
     }
 }
