@@ -10,6 +10,8 @@ StyleRadar es una plataforma web que conecta a compradores con almacenes de moda
 ## Índice
 
 - [Ejecución de pruebas](#ejecución-de-pruebas)
+- [Set de pruebas de funcionamiento](#set-de-pruebas-de-funcionamiento)
+- [Pruebas de seguridad](#pruebas-de-seguridad)
 - [Cómo levantar el proyecto localmente](#cómo-levantar-el-proyecto-localmente)
 - [Variables de entorno](#variables-de-entorno)
 - [Diagrama de contexto](#diagrama-de-contexto)
@@ -18,11 +20,14 @@ StyleRadar es una plataforma web que conecta a compradores con almacenes de moda
 - [Diagrama de componentes general](#diagrama-de-componentes-general)
 - [Diagrama de base de datos](#diagrama-de-base-de-datos)
 - [Diagrama de despliegue](#diagrama-de-despliegue)
+- [Diagramas de secuencia](#diagramas-de-secuencia)
+- [Documento de arquitectura](#documento-de-arquitectura)
 - [Swagger/OpenAPI](#swaggeropenapi)
 - [Roles y permisos](#roles-y-permisos)
 - [Patrones de diseño](#patrones-de-diseño)
 - [Decisión de persistencia](#decisión-de-persistencia)
 - [CI/CD](#cicd)
+- [Evidencias](#evidencias)
 - [Arquitectura implementada](#arquitectura-implementada)
 - [Alcance implementado por este backend](#alcance-implementado-por-este-backend)
 - [Trazabilidad funcional del Sprint 2](#trazabilidad-funcional-del-sprint-2)
@@ -37,11 +42,154 @@ mvn test
 mvn verify
 ```
 
-`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1370 pruebas sin fallos y 96,1 % de cobertura de líneas**.
+`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1469 pruebas sin fallos y 94,8 % de cobertura de líneas**.
 
-![](style-radar/docs/images/evidencias/pruebas-mvn-verify.jpg)
+![](style-radar/docs/evidencias/pruebas-mvn-verify.png)
 
-![](style-radar/docs/images/evidencias/cobertura-jacoco.jpg)
+![](style-radar/docs/evidencias/cobertura-jacoco.png)
+
+## Set de pruebas de funcionamiento
+
+La carpeta [`postman/`](postman) contiene la colección `StyleRadar.postman_collection.json` y los ambientes Local, QA y PROD. La colección recorre la API desplegada como lo haría un usuario real.
+
+- Tiene una carpeta por funcionalidad, con el mismo ID y nombre del análisis de requerimientos.
+- Cada carpeta incluye el camino feliz y los errores relevantes: 400, 401, 403, 404, 409 y 422.
+- Cada request valida el código de respuesta y los campos principales del cuerpo.
+
+Los ambientes no contienen secretos: la contraseña de los usuarios de demostración se escribe en la variable `demoPassword` antes de ejecutar.
+
+**Ejecución en Postman:**
+
+1. Importar la colección y el ambiente `StyleRadar-PROD` (o `StyleRadar-QA`).
+2. Escribir el valor de `demoPassword` en el ambiente.
+3. Abrir el **Collection Runner**, seleccionar la colección completa y ejecutar.
+
+**Ejecución por consola con Newman** (desde la raíz del repositorio):
+
+```shell
+docker run --rm -v "$PWD/postman":/etc/newman postman/newman:6-alpine run StyleRadar.postman_collection.json \
+  -e StyleRadar-PROD.postman_environment.json --env-var demoPassword=<contraseña>
+```
+
+Resultado contra PROD del 18 de octubre de 2026: **91 requests y 188 validaciones, sin fallas**.
+
+![](style-radar/docs/evidencias/postman-prod.png)
+
+<details>
+<summary><b>Tabla de casos de prueba (ejecución contra PROD)</b></summary>
+
+| ID | Funcionalidad (RF) | Escenario | Request | Esperado | Obtenido |
+|---|---|---|---|---|---|
+| CP-01 | RF-02 · Iniciar sesión | Login comprador | `POST /api/v1/auth/login` | 200 | ✅ 200 |
+| CP-02 | RF-02 · Iniciar sesión | Login almacen | `POST /api/v1/auth/login` | 200 | ✅ 200 |
+| CP-03 | RF-02 · Iniciar sesión | Login admin | `POST /api/v1/auth/login` | 200 | ✅ 200 |
+| CP-04 | RF-02 · Iniciar sesión | Login fundacion | `POST /api/v1/auth/login` | 200 | ✅ 200 |
+| CP-05 | RF-02 · Iniciar sesión | Contraseña incorrecta | `POST /api/v1/auth/login` | 401 | ✅ 401 |
+| CP-06 | RF-02 · Iniciar sesión | Datos inválidos | `POST /api/v1/auth/login` | 400 | ✅ 400 |
+| CP-07 | RF-01 · Registrar usuario | Registro exitoso | `POST /api/v1/auth/registro` | 201 | ✅ 201 |
+| CP-08 | RF-01 · Registrar usuario | Correo duplicado | `POST /api/v1/auth/registro` | 422 | ✅ 422 |
+| CP-09 | RF-01 · Registrar usuario | Correo inválido | `POST /api/v1/auth/registro` | 400 | ✅ 400 |
+| CP-10 | RF-01 · Registrar usuario | Login del usuario nuevo | `POST /api/v1/auth/login` | 200 | ✅ 200 |
+| CP-11 | RF-03 · Configurar preferencias de estilo | Actualizar preferencias | `PUT /api/v1/usuarios/me/preferencias-estilo` | 200 | ✅ 200 |
+| CP-12 | RF-03 · Configurar preferencias de estilo | Sin token | `PUT /api/v1/usuarios/me/preferencias-estilo` | 401 | ✅ 401 |
+| CP-13 | RF-03 · Configurar preferencias de estilo | Estilo inválido | `PUT /api/v1/usuarios/me/preferencias-estilo` | 400 | ✅ 400 |
+| CP-14 | RF-04 · Configurar tallas habituales | Actualizar tallas | `PUT /api/v1/usuarios/me/tallas-habituales` | 200 | ✅ 200 |
+| CP-15 | RF-04 · Configurar tallas habituales | Talla inválida | `PUT /api/v1/usuarios/me/tallas-habituales` | 400 | ✅ 400 |
+| CP-16 | RF-05 · Personalizar feed según preferencias | Feed del comprador | `GET /api/v1/usuarios/me/feed` | 200 | ✅ 200 |
+| CP-17 | RF-05 · Personalizar feed según preferencias | Sin token | `GET /api/v1/usuarios/me/feed` | 401 | ✅ 401 |
+| CP-18 | RF-06 · Recomendar prendas según perfil de estilo | Recomendaciones | `GET /api/v1/usuarios/me/recomendaciones` | 200 | ✅ 200 |
+| CP-19 | RF-06 · Recomendar prendas según perfil de estilo | Sin token | `GET /api/v1/usuarios/me/recomendaciones` | 401 | ✅ 401 |
+| CP-20 | RF-07 · Buscar prendas mediante texto libre | Buscar 'jean' | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-21 | RF-07 · Buscar prendas mediante texto libre | Página inválida | `GET /api/v1/catalogo/buscar` | 400 | ✅ 400 |
+| CP-22 | RF-08 · Filtrar prendas por tipo | Tipo SUPERIOR | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-23 | RF-08 · Filtrar prendas por tipo | Tipo inexistente | `GET /api/v1/catalogo/buscar` | 400 | ✅ 400 |
+| CP-24 | RF-09 · Filtrar prendas por color | Color Azul | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-25 | RF-10 · Filtrar prendas por talla | Talla XL | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-26 | RF-10 · Filtrar prendas por talla | Talla inválida | `GET /api/v1/catalogo/buscar` | 400 | ✅ 400 |
+| CP-27 | RF-11 · Filtrar prendas por rango de precio | Entre 50.000 y 130.000 | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-28 | RF-11 · Filtrar prendas por rango de precio | Rango invertido | `GET /api/v1/catalogo/buscar` | 400 | ✅ 400 |
+| CP-29 | RF-12 · Filtrar prendas por marca | Marca Sastre | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-30 | RF-13 · Filtrar prendas por estilo | Estilo FORMAL | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-31 | RF-14 · Ordenar resultados por distancia | Orden por distancia | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-32 | RF-14 · Ordenar resultados por distancia | Sin ubicación | `GET /api/v1/catalogo/buscar` | 400 | ✅ 400 |
+| CP-33 | RF-15 · Ordenar resultados por reputación del almacén | Orden por reputación | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-34 | RF-16 · Consultar prendas similares cuando no exista coincidencia exacta | Búsqueda sin coincidencia exacta | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-35 | RF-17 · Mostrar almacenes aliados en el mapa | Listar almacenes | `GET /api/v1/almacenes` | 200 | ✅ 200 |
+| CP-36 | RF-18 · Filtrar almacenes por categoría | Categoría FORMAL | `GET /api/v1/almacenes` | 200 | ✅ 200 |
+| CP-37 | RF-18 · Filtrar almacenes por categoría | Categoría inválida | `GET /api/v1/almacenes` | 400 | ✅ 400 |
+| CP-38 | RF-19 · Consultar catálogo resumido desde el mapa | Resumen del almacén | `GET /api/v1/almacenes/{nit}/catalogo/resumen` | 200 | ✅ 200 |
+| CP-39 | RF-19 · Consultar catálogo resumido desde el mapa | Almacén inexistente | `GET /api/v1/almacenes/{nit}/catalogo/resumen` | 404 | ✅ 404 |
+| CP-40 | RF-20 · Consultar novedades semanales de un almacén | Novedades del almacén | `GET /api/v1/almacenes/{nit}/catalogo/novedades` | 200 | ✅ 200 |
+| CP-41 | RF-20 · Consultar novedades semanales de un almacén | Almacén inexistente | `GET /api/v1/almacenes/{nit}/catalogo/novedades` | 404 | ✅ 404 |
+| CP-42 | RF-21 · Calcular distancia entre usuario y almacén | Calcular distancia | `GET /api/v1/almacenes/{nit}/distancia` | 200 | ✅ 200 |
+| CP-43 | RF-21 · Calcular distancia entre usuario y almacén | Coordenadas inválidas | `GET /api/v1/almacenes/{nit}/distancia` | 400 | ✅ 400 |
+| CP-44 | RF-22 · Consultar catálogo de almacén | Catálogo completo | `GET /api/v1/almacenes/{nit}/catalogo` | 200 | ✅ 200 |
+| CP-45 | RF-22 · Consultar catálogo de almacén | Almacén inexistente | `GET /api/v1/almacenes/{nit}/catalogo` | 404 | ✅ 404 |
+| CP-46 | RF-50 · Publicar prenda en el catálogo | Publicar prenda | `POST /api/v1/almacenes/{nit}/catalogo` | 201 | ✅ 201 |
+| CP-47 | RF-50 · Publicar prenda en el catálogo | Sin token | `POST /api/v1/almacenes/{nit}/catalogo` | 401 | ✅ 401 |
+| CP-48 | RF-50 · Publicar prenda en el catálogo | Datos incompletos | `POST /api/v1/almacenes/{nit}/catalogo` | 400 | ✅ 400 |
+| CP-49 | RF-51 · Registrar fotografías de una prenda | Subir foto | `POST /api/v1/almacenes/{nit}/catalogo/{id}/imagenes` | 201 | ✅ 201 |
+| CP-50 | RF-51 · Registrar fotografías de una prenda | Ítem inexistente | `POST /api/v1/almacenes/{nit}/catalogo/{id}/imagenes` | 404 | ✅ 404 |
+| CP-51 | RF-52 · Registrar tallas disponibles de una prenda | Asignar tallas | `PUT /api/v1/almacenes/{nit}/catalogo/{id}/tallas` | 200 | ✅ 200 |
+| CP-52 | RF-52 · Registrar tallas disponibles de una prenda | Talla inválida | `PUT /api/v1/almacenes/{nit}/catalogo/{id}/tallas` | 400 | ✅ 400 |
+| CP-53 | RF-53 · Registrar precio de una prenda | Actualizar precio | `PUT /api/v1/almacenes/{nit}/catalogo/{id}` | 200 | ✅ 200 |
+| CP-54 | RF-53 · Registrar precio de una prenda | Precio negativo | `PUT /api/v1/almacenes/{nit}/catalogo/{id}` | 400 | ✅ 400 |
+| CP-55 | RF-54 · Registrar atributos de búsqueda de una prenda | Buscar por los atributos registrados | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-56 | RF-55 · Editar prenda del catálogo | Editar descripción y color | `PUT /api/v1/almacenes/{nit}/catalogo/{id}` | 200 | ✅ 200 |
+| CP-57 | RF-55 · Editar prenda del catálogo | Ítem inexistente | `PUT /api/v1/almacenes/{nit}/catalogo/{id}` | 404 | ✅ 404 |
+| CP-58 | RF-56 · Actualizar disponibilidad por talla | Stock M = 5 | `PATCH /api/v1/almacenes/{nit}/catalogo/{id}/inventario/M` | 200 | ✅ 200 |
+| CP-59 | RF-56 · Actualizar disponibilidad por talla | Unidades negativas | `PATCH /api/v1/almacenes/{nit}/catalogo/{id}/inventario/M` | 400 | ✅ 400 |
+| CP-60 | RF-60 · Marcar prenda como nueva llegada | Prenda recién publicada con stock | `GET /api/v1/almacenes/{nit}/catalogo` | 200 | ✅ 200 |
+| CP-61 | RF-59 · Marcar prenda como últimas unidades | Stock M = 2 | `PATCH /api/v1/almacenes/{nit}/catalogo/{id}/inventario/M` | 200 | ✅ 200 |
+| CP-62 | RF-61 · Aprobar o rechazar publicaciones del catálogo | Enviar a revisión | `POST /api/v1/admin/catalogo/{id}/moderacion/solicitar-revision` | 200 | ✅ 200 |
+| CP-63 | RF-61 · Aprobar o rechazar publicaciones del catálogo | Pendientes de moderación | `GET /api/v1/admin/catalogo/moderacion` | 200 | ✅ 200 |
+| CP-64 | RF-61 · Aprobar o rechazar publicaciones del catálogo | Aprobar publicación | `PATCH /api/v1/admin/catalogo/{id}/moderacion` | 200 | ✅ 200 |
+| CP-65 | RF-61 · Aprobar o rechazar publicaciones del catálogo | Rol incorrecto | `GET /api/v1/admin/catalogo/moderacion` | 403 | ✅ 403 |
+| CP-66 | RF-57 · Ocultar prenda agotada de los resultados disponibles | Stock M = 0 | `PATCH /api/v1/almacenes/{nit}/catalogo/{id}/inventario/M` | 200 | ✅ 200 |
+| CP-67 | RF-57 · Ocultar prenda agotada de los resultados disponibles | Stock L = 0 | `PATCH /api/v1/almacenes/{nit}/catalogo/{id}/inventario/L` | 200 | ✅ 200 |
+| CP-68 | RF-57 · Ocultar prenda agotada de los resultados disponibles | No aparece en la búsqueda | `GET /api/v1/catalogo/buscar` | 200 | ✅ 200 |
+| CP-69 | RF-58 · Retirar prenda del catálogo | Retirar prenda | `DELETE /api/v1/almacenes/{nit}/catalogo/{id}` | 204 | ✅ 204 |
+| CP-70 | RF-58 · Retirar prenda del catálogo | Ya retirada | `DELETE /api/v1/almacenes/{nit}/catalogo/{id}` | 404 | ✅ 404 |
+| CP-71 | RF-62 · Verificar almacén aliado | Enviar a revisión | `POST /api/v1/admin/almacenes/{nit}/verificacion/solicitar-revision` | 200 | ✅ 200 |
+| CP-72 | RF-62 · Verificar almacén aliado | Aprobar almacén | `PATCH /api/v1/admin/almacenes/{nit}/verificacion` | 200 | ✅ 200 |
+| CP-73 | RF-62 · Verificar almacén aliado | Almacenes verificados | `GET /api/v1/admin/almacenes/verificacion` | 200 | ✅ 200 |
+| CP-74 | RF-62 · Verificar almacén aliado | Almacén inexistente | `GET /api/v1/admin/almacenes/{nit}/verificacion` | 404 | ✅ 404 |
+| CP-75 | RF-63 · Registrar fundación aliada | Registrar fundación | `POST /api/v1/admin/fundaciones` | 201 | ✅ 201 |
+| CP-76 | RF-63 · Registrar fundación aliada | Representante ya asignado | `POST /api/v1/admin/fundaciones` | 409 o 422 | ✅ 409 |
+| CP-77 | RF-63 · Registrar fundación aliada | Rol incorrecto | `POST /api/v1/admin/fundaciones` | 403 | ✅ 403 |
+| CP-78 | RF-64 · Editar fundación aliada | Editar fundación | `PUT /api/v1/admin/fundaciones/{id}` | 200 | ✅ 200 |
+| CP-79 | RF-64 · Editar fundación aliada | Fundación inexistente | `PUT /api/v1/admin/fundaciones/{id}` | 404 | ✅ 404 |
+| CP-80 | RF-65 · Desactivar fundación aliada | Desactivar fundación | `PATCH /api/v1/admin/fundaciones/{id}/desactivar` | 200 | ✅ 200 |
+| CP-81 | RF-65 · Desactivar fundación aliada | Fundación inexistente | `PATCH /api/v1/admin/fundaciones/{id}/desactivar` | 404 | ✅ 404 |
+| CP-82 | RF-66 · Cambiar estado de usuario | Bloquear usuario | `PATCH /api/v1/admin/usuarios/{id}/estado` | 200 | ✅ 200 |
+| CP-83 | RF-66 · Cambiar estado de usuario | Usuario bloqueado no inicia sesión | `POST /api/v1/auth/login` | 401 o 403 | ✅ 401 |
+| CP-84 | RF-66 · Cambiar estado de usuario | Reactivar usuario | `PATCH /api/v1/admin/usuarios/{id}/estado` | 200 | ✅ 200 |
+| CP-85 | RF-66 · Cambiar estado de usuario | Usuario inexistente | `PATCH /api/v1/admin/usuarios/{id}/estado` | 404 | ✅ 404 |
+| CP-86 | RF-67 · Suscribir almacén aliado | Planes disponibles | `GET /api/v1/planes-suscripcion` | 200 | ✅ 200 |
+| CP-87 | RF-67 · Suscribir almacén aliado | Suscribir almacén | `POST /api/v1/almacenes/{nit}/suscripciones` | 201 o 409 | ✅ 409 |
+| CP-88 | RF-67 · Suscribir almacén aliado | Suscripción vigente | `GET /api/v1/almacenes/{nit}/suscripciones/vigente` | 200 | ✅ 200 |
+| CP-89 | RF-67 · Suscribir almacén aliado | Rol incorrecto | `POST /api/v1/almacenes/{nit}/suscripciones` | 403 | ✅ 403 |
+| CP-90 | RF-68 · Cancelar suscripción de almacén | Cancelar renovación | `PATCH /api/v1/almacenes/{nit}/suscripciones/{id}/renovacion` | 200 | ✅ 200 |
+| CP-91 | RF-68 · Cancelar suscripción de almacén | Suscripción inexistente | `PATCH /api/v1/almacenes/{nit}/suscripciones/{id}/renovacion` | 404 | ✅ 404 |
+
+Evidencia de toda la tabla: [`postman-prod.png`](style-radar/docs/evidencias/postman-prod.png).
+
+</details>
+
+## Pruebas de seguridad
+
+Para comprobar el control de acceso se probaron contra PROD varios endpoints protegidos, cada uno con tres escenarios: sin token, con un rol sin permiso y con el rol correcto.
+
+| Endpoint | Rol requerido | Sin token | Rol incorrecto (COMPRADOR) | Rol correcto |
+|---|---|---|---|---|
+| `GET /api/v1/admin/usuarios` | `ADMIN_STYLERADAR` | ✅ 401 | ✅ 403 | ✅ 200 |
+| `GET /api/v1/admin/almacenes/verificacion` | `ADMIN_STYLERADAR` | ✅ 401 | ✅ 403 | ✅ 200 |
+| `GET /api/v1/admin/catalogo/moderacion` | `ADMIN_STYLERADAR` | ✅ 401 | ✅ 403 | ✅ 200 |
+| `GET /api/v1/almacenes/{nit}/suscripciones` | `ADMIN_ALMACEN` | ✅ 401 | ✅ 403 | ✅ 200 |
+
+![](style-radar/docs/evidencias/seguridad-prod.png)
+
+Además, la colección de Postman incluye casos `401` y `403` en las funcionalidades protegidas, por ejemplo CP-89 (suscripción con rol incorrecto).
 
 ## Cómo levantar el proyecto localmente
 
@@ -58,19 +206,19 @@ El archivo `docker-compose.yml` levanta la API y PostgreSQL en una red compartid
 
 Contenedores en ejecución:
 
-![](style-radar/docs/images/evidencias/docker-compose-ps.png)
+![](style-radar/docs/evidencias/docker-compose-ps.png)
 
 Swagger desde el contenedor:
 
-![](style-radar/docs/images/evidencias/swagger-local.png)
+![](style-radar/docs/evidencias/swagger-local.png)
 
 Registro de inicio de la API con conexión a la base de datos:
 
-![](style-radar/docs/images/evidencias/docker-logs-api.png)
+![](style-radar/docs/evidencias/docker-logs-api.png)
 
 La imagen del backend está publicada en Docker Hub: [juanamunoz/styleradar](https://hub.docker.com/r/juanamunoz/styleradar).
 
-![](style-radar/docs/images/evidencias/docker-hub.png)
+![](style-radar/docs/evidencias/docker-hub.png)
 
 ## Variables de entorno
 
@@ -141,6 +289,10 @@ Cada módulo se encarga de una parte específica de la plataforma:
 - **Playlists:** creación de playlists de estilo, gestión de sus prendas e interacción de otros usuarios.
 - **Alertas:** alertas de disponibilidad y notificaciones para los usuarios.
 - **Suscripciones:** planes y suscripciones de los almacenes.
+- **Donaciones:** solicitudes de donación de prendas de segunda mano, su decisión, recogida y recepción.
+- **Fundaciones:** registro, edición, desactivación y consulta de las fundaciones aliadas cercanas.
+- **Chat:** conversaciones y mensajes entre el comprador y el vendedor de una prenda de segunda mano.
+- **Probador virtual:** foto del comprador y generación de la prueba. El servicio depende de la interfaz `ProbadorIA`, implementada por el adaptador `GeminiProbadorIA`, que se comunica con Google Gemini. Si el servicio externo no responde, se usa la composición local de `ComposicionProbador`.
 
 Además, existen componentes transversales para la seguridad (`SecurityConfig`, `JwtAuthFilter`, `JwtUtil`), el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
 
@@ -151,7 +303,13 @@ En cada módulo, el `Controller` recibe la solicitud y usa un `Mapper` para conv
 
 ![](style-radar/docs/uml/DiagramaComponentesGeneral.png)
 
-Los actores (usuario comprador, almacén, fundación aliada y administrador) usan el ***Front-End***, una aplicación web que consume la API REST del ***Back-End*** en la ruta `/api/v1`. El Back-End, construido con Spring Boot, contiene la lógica de negocio y la seguridad con JWT y roles, y almacena la información en la ***Base de Datos*** PostgreSQL por medio de JDBC. Además, el sistema contempla la integración con tres sistemas externos: Mapbox para mapas y ubicación, PSE para los pagos y la API del probador virtual basada en IA.
+Los actores (usuario comprador, almacén, fundación aliada y administrador) usan el ***Front-End***, una aplicación web que consume la API REST del ***Back-End*** en la ruta `/api/v1`. El Back-End, construido con Spring Boot, agrupa trece módulos funcionales con el mismo código de colores del diagrama de base de datos. Contiene la lógica de negocio y la seguridad con JWT y roles, y almacena la información en la ***Base de Datos*** PostgreSQL por medio de JDBC.
+
+Sobre los sistemas externos:
+
+- **Mapbox:** lo usa el Front-End para mostrar el mapa.
+- **Google Gemini:** lo usa el Back-End para generar la imagen del probador virtual.
+- **PSE:** se muestra con línea punteada porque está contemplado en el diseño, pero no está integrado. Las suscripciones se registran sin cobro.
 
 ## Diagrama de base de datos
 
@@ -162,7 +320,11 @@ En color azul se encuentran los usuarios y los almacenes. La tabla `usuarios` se
 
 En color amarillo se agrupa todo lo relacionado con las prendas. Cada prenda que un almacén publica se registra en `items_catalogo`, que a su vez guarda el inventario por talla, las imágenes y el control de disponibilidad. Las publicaciones de ropa de segunda mano se registran en `publicaciones_segunda_mano`, junto con sus fotos.
 
-En color verde se encuentran las playlists de estilo, con las prendas que contienen y los usuarios que les dan me gusta. En color morado están las alertas y las notificaciones de cada usuario, y en color naranja los planes y las suscripciones de los almacenes.
+En color verde se encuentran las playlists de estilo, con las prendas que contienen y los usuarios que les dan me gusta o las guardan. En color morado están las alertas y las notificaciones de cada usuario, y en color naranja los planes y las suscripciones de los almacenes.
+
+En color rojo están las fundaciones aliadas, los tipos de prenda que reciben y las solicitudes de donación, que relacionan al donante, la fundación y la publicación de segunda mano. En color gris están las conversaciones y los mensajes del chat entre comprador y vendedor, y la foto del probador virtual de cada usuario.
+
+El diagrama se obtuvo del esquema real de PostgreSQL y tiene 30 tablas. La descripción de cada tabla está en el [documento de arquitectura](style-radar/docs/arquitectura/diagramas-despliegue-seguridad.md#tablas-utilizadas).
 
 La justificación de la base de datos elegida se encuentra en la sección [Decisión de persistencia](#decisión-de-persistencia).
 
@@ -178,6 +340,36 @@ La justificación de la base de datos elegida se encuentra en la sección [Decis
 - **Equipo del usuario:** accede a la API desde el navegador por HTTPS.
 
 El despliegue en producción requiere además una aprobación manual en GitHub.
+
+## Diagramas de secuencia
+
+Los diagramas de secuencia muestran, para cada funcionalidad principal, el recorrido de la petición por el filtro JWT, el Controller, la validación, el Service, el Repository y la base de datos. También muestran las rutas de error. La explicación de cada uno está en [`diagramas-secuencia.md`](style-radar/docs/arquitectura/diagramas-secuencia.md).
+
+**Inicio de sesión (RF-02):**
+
+![](style-radar/docs/uml/secuencia/SecuenciaInicioSesion.png)
+
+**Publicar una prenda en el catálogo (RF-50):**
+
+![](style-radar/docs/uml/secuencia/SecuenciaPublicarPrenda.png)
+
+**Búsqueda de prendas con filtros (RF-07 a RF-16):**
+
+![](style-radar/docs/uml/secuencia/SecuenciaBusquedaFiltros.png)
+
+**Suscripción de un almacén a un plan (RF-67):**
+
+![](style-radar/docs/uml/secuencia/SecuenciaSuscripcionAlmacen.png)
+
+## Documento de arquitectura
+
+El documento de arquitectura del backend está en [`style-radar/docs/arquitectura`](style-radar/docs/arquitectura):
+
+| Sección | Contenido |
+|---|---|
+| [Diagramas, despliegue y seguridad](style-radar/docs/arquitectura/diagramas-despliegue-seguridad.md) | ERD y tablas, diagrama de clases, componentes general y específico, despliegue, roles y permisos, URLs de PROD |
+| [Funcionalidades expuestas — parte A](style-radar/docs/arquitectura/funcionalidades-expuestas-parte-a.md) | Endpoints de identidad, perfil, búsqueda, geolocalización, catálogo, administración y suscripciones, con sus campos y ejemplos |
+| [Diagramas de secuencia](style-radar/docs/arquitectura/diagramas-secuencia.md) | Inicio de sesión, publicación de prenda, búsqueda con filtros y suscripción de almacén |
 
 ## Swagger/OpenAPI
 
@@ -326,31 +518,43 @@ En producción, la conexión a la base de datos y la clave de los tokens se conf
 - **QA:** recibe automáticamente cada cambio integrado en `develop` o `main`. Se usa para validar el funcionamiento antes de publicar una versión. Tiene su propio App Service y su propia base de datos.
 - **PROD:** recibe únicamente las versiones publicadas con un tag `v*.*.*` y aprobadas manualmente. Tiene su propio App Service y su propia base de datos, separados de QA.
 
-### Evidencias
+## Evidencias
+
+Todas las capturas están en [`style-radar/docs/evidencias`](style-radar/docs/evidencias):
+
+| Evidencia | Archivo |
+|---|---|
+| `mvn verify` con número de pruebas y cobertura | [`pruebas-mvn-verify.png`](style-radar/docs/evidencias/pruebas-mvn-verify.png), [`cobertura-jacoco.png`](style-radar/docs/evidencias/cobertura-jacoco.png) |
+| Pipelines de QA y PROD en verde | [`pipeline-qa.png`](style-radar/docs/evidencias/pipeline-qa.png), [`pipeline-prod.png`](style-radar/docs/evidencias/pipeline-prod.png), [`aprobacion-prod.jpg`](style-radar/docs/evidencias/aprobacion-prod.jpg) |
+| Swagger en la URL de PROD | [`swagger-prod.png`](style-radar/docs/evidencias/swagger-prod.png) |
+| Imagen publicada en Docker Hub | [`docker-hub.png`](style-radar/docs/evidencias/docker-hub.png) |
+| Set de pruebas de funcionamiento contra PROD | [`postman-prod.png`](style-radar/docs/evidencias/postman-prod.png) |
+| Pruebas de seguridad (401, 403 y 200) | [`seguridad-prod.png`](style-radar/docs/evidencias/seguridad-prod.png) |
+| Docker local y App Services en Azure | [`docker-compose-ps.png`](style-radar/docs/evidencias/docker-compose-ps.png), [`docker-logs-api.png`](style-radar/docs/evidencias/docker-logs-api.png), [`azure-app-service-qa.png`](style-radar/docs/evidencias/azure-app-service-qa.png), [`azure-app-service-prod.png`](style-radar/docs/evidencias/azure-app-service-prod.png) |
 
 Pipeline de QA en verde:
 
-![](style-radar/docs/images/evidencias/pipeline-qa.jpg)
+![](style-radar/docs/evidencias/pipeline-qa.png)
 
 Pipeline de PROD en verde:
 
-![](style-radar/docs/images/evidencias/pipeline-prod.jpg)
+![](style-radar/docs/evidencias/pipeline-prod.png)
 
 Despliegue a producción aprobado manualmente:
 
-![](style-radar/docs/images/evidencias/aprobacion-prod.jpg)
+![](style-radar/docs/evidencias/aprobacion-prod.jpg)
 
 App Service de QA y PROD en Azure con el contenedor en ejecución:
 
-![](style-radar/docs/images/evidencias/azure-app-service-qa.png)
+![](style-radar/docs/evidencias/azure-app-service-qa.png)
 
-![](style-radar/docs/images/evidencias/azure-app-service-prod.png)
+![](style-radar/docs/evidencias/azure-app-service-prod.png)
 
 Swagger en Azure:
 
-![](style-radar/docs/images/evidencias/swagger-qa.jpg)
+![](style-radar/docs/evidencias/swagger-qa.jpg)
 
-![](style-radar/docs/images/evidencias/swagger-prod.jpg)
+![](style-radar/docs/evidencias/swagger-prod.png)
 
 ## Arquitectura implementada
 
