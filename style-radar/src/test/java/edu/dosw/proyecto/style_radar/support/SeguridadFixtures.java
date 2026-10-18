@@ -3,9 +3,12 @@ package edu.dosw.proyecto.style_radar.support;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.dosw.proyecto.style_radar.model.entity.AdministradorAlmacenEntity;
+import edu.dosw.proyecto.style_radar.model.entity.AlmacenEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
@@ -54,5 +57,20 @@ public abstract class SeguridadFixtures {
     protected void releer() {
         em.flush();
         em.clear();
+    }
+
+    protected AlmacenEntity almacen(String nit) {
+        AlmacenEntity a = new AlmacenEntity(nit, "Radar", "Catalogo", "123", "store@example.co", new ArrayList<>());
+        em.persist(a);
+        return a;
+    }
+
+    protected UsuarioEntity adminDeAlmacen(AlmacenEntity almacen) {
+        UsuarioEntity u = usuarioConRol(Rol.ADMIN_ALMACEN);
+        AdministradorAlmacenEntity v = new AdministradorAlmacenEntity();
+        v.setUsuario(u); v.setAlmacen(almacen); v.setAsignadoPor(u);
+        v.setFechaAsignacion(Instant.now());
+        em.persist(v);
+        return u;
     }
 }
