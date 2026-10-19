@@ -1,6 +1,7 @@
 package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.response.AdministradorAlmacenResponseDTO;
@@ -25,6 +26,7 @@ public interface AsociacionAdministradorAlmacenApi {
             @ApiResponse(responseCode = "409", description = "Conflicto concurrente o de integridad"),
             @ApiResponse(responseCode = "422", description = "Usuario objetivo sin ADMIN_ALMACEN"),
             @ApiResponse(responseCode = "500", description = "Fallo técnico")})
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PutMapping("/{nit}/administradores/{usuarioId}")
     ResponseEntity<AdministradorAlmacenResponseDTO> asociar(@PathVariable String nit, @PathVariable Long usuarioId,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor);

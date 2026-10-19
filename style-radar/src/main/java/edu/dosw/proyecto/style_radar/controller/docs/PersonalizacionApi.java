@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -31,6 +32,7 @@ public interface PersonalizacionApi {
         @ApiResponse(responseCode = "404", description = "Usuario inexistente durante una consulta autenticada válida"),
         @ApiResponse(responseCode = "500", description = "Error interno")
     })
+    @PreAuthorize("hasRole('COMPRADOR')")
     @GetMapping("/feed")
     ResponseEntity<PageResponseDTO<CatalogoItemResponseDTO>> feed(
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
@@ -47,6 +49,7 @@ public interface PersonalizacionApi {
         @ApiResponse(responseCode = "404", description = "Usuario inexistente durante una consulta autenticada válida"),
         @ApiResponse(responseCode = "500", description = "Error interno")
     })
+    @PreAuthorize("hasRole('COMPRADOR')")
     @GetMapping("/recomendaciones")
     ResponseEntity<RecomendacionesResponseDTO> recomendaciones(
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,

@@ -3,6 +3,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.request.*;
@@ -27,6 +28,7 @@ public interface AlertaApi {
             @ApiResponse(responseCode = "409", description = "Alerta activa duplicada o conflicto concurrente"),
             @ApiResponse(responseCode = "422", description = "Busqueda vacia o item disponible"),
             @ApiResponse(responseCode = "500", description = "Error tecnico")})
+    @PreAuthorize("hasRole('COMPRADOR')")
     @PostMapping("/alertas")
     ResponseEntity<AlertaResponseDTO> crear(@Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody CrearAlertaRequestDTO request);
@@ -35,6 +37,7 @@ public interface AlertaApi {
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Alertas propias"),
             @ApiResponse(responseCode = "401", description = "Requiere JWT valido y cuenta activa"),
             @ApiResponse(responseCode = "500", description = "Error tecnico")})
+    @PreAuthorize("hasRole('COMPRADOR')")
     @GetMapping("/alertas")
     ResponseEntity<List<AlertaResponseDTO>> consultar(@Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal);
 
@@ -45,6 +48,7 @@ public interface AlertaApi {
             @ApiResponse(responseCode = "404", description = "Alerta inexistente o no accesible"),
             @ApiResponse(responseCode = "409", description = "Conflicto concurrente"),
             @ApiResponse(responseCode = "500", description = "Error tecnico")})
+    @PreAuthorize("hasRole('COMPRADOR')")
     @PatchMapping("/alertas/{id}")
     ResponseEntity<AlertaResponseDTO> desactivar(@Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
             @PathVariable Long id, @Valid @RequestBody DesactivarAlertaRequestDTO request);
@@ -55,6 +59,7 @@ public interface AlertaApi {
             @ApiResponse(responseCode = "400", description = "Paginacion invalida"),
             @ApiResponse(responseCode = "401", description = "Requiere JWT valido y cuenta activa"),
             @ApiResponse(responseCode = "500", description = "Error tecnico")})
+    @PreAuthorize("hasRole('COMPRADOR')")
     @GetMapping("/notificaciones")
     ResponseEntity<PageResponseDTO<NotificacionResponseDTO>> notificaciones(
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
