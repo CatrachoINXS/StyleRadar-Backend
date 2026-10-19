@@ -20,4 +20,5 @@ public class PrendaResponseDTO {
     private String marca;
     private String color;
     private Estilo estilo;
+    private Boolean disponible;
 }

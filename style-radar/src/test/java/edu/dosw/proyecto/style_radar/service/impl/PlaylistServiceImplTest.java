@@ -32,8 +32,10 @@ import edu.dosw.proyecto.style_radar.model.domain.VisibilidadPlaylist;
 import edu.dosw.proyecto.style_radar.model.entity.PlaylistEntity;
 import edu.dosw.proyecto.style_radar.model.entity.PrendaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
+import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.PlaylistRepository;
 import edu.dosw.proyecto.style_radar.repository.PrendaRepository;
+import edu.dosw.proyecto.style_radar.repository.PublicacionSegundaManoRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.validator.PlaylistValidator;
 import edu.dosw.proyecto.style_radar.validator.UsuarioValidator;
@@ -53,6 +55,12 @@ class PlaylistServiceImplTest {
     private UsuarioRepository usuarioRepository;
 
     @Mock
+    private ItemCatalogoRepository itemCatalogoRepository;
+
+    @Mock
+    private PublicacionSegundaManoRepository publicacionSegundaManoRepository;
+
+    @Mock
     private PlaylistEntityMapper playlistEntityMapper;
 
     @Mock
@@ -70,6 +78,8 @@ class PlaylistServiceImplTest {
                 playlistRepository,
                 prendaRepository,
                 usuarioRepository,
+                itemCatalogoRepository,
+                publicacionSegundaManoRepository,
                 playlistEntityMapper,
                 playlistValidator,
                 usuarioValidator,

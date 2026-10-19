@@ -23,11 +23,13 @@ class PlaylistsPopularesServiceTest {
     @Mock PlaylistRepository repository;
     @Mock PrendaRepository prendas;
     @Mock UsuarioRepository usuarios;
+    @Mock ItemCatalogoRepository items;
+    @Mock PublicacionSegundaManoRepository publicaciones;
     @Mock PlaylistEntityMapper mapper;
     @Mock UsuarioValidator usuarioValidator;
     PlaylistServiceImpl service;
     @BeforeEach void preparar() {
-        service = new PlaylistServiceImpl(repository, prendas, usuarios, mapper,
+        service = new PlaylistServiceImpl(repository, prendas, usuarios, items, publicaciones, mapper,
                 new PlaylistValidator(repository, prendas), usuarioValidator, Clock.systemUTC());
     }
     @ParameterizedTest @CsvSource({"-1,20", "0,0", "0,-1", "0,101"})

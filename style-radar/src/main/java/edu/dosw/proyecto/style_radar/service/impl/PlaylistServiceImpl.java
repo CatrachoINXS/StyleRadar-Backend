@@ -17,14 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.dosw.proyecto.style_radar.exception.RecursoNoEncontradoException;
 import edu.dosw.proyecto.style_radar.exception.ReglaDeNegocioException;
 import edu.dosw.proyecto.style_radar.mapper.PlaylistEntityMapper;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
+import edu.dosw.proyecto.style_radar.model.domain.EstadoPublicacion;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.Playlist;
 import edu.dosw.proyecto.style_radar.model.domain.VisibilidadPlaylist;
 import edu.dosw.proyecto.style_radar.model.entity.PlaylistEntity;
 import edu.dosw.proyecto.style_radar.model.entity.PrendaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
+import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.PlaylistRepository;
 import edu.dosw.proyecto.style_radar.repository.PrendaRepository;
+import edu.dosw.proyecto.style_radar.repository.PublicacionSegundaManoRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.IPlaylistService;
 import edu.dosw.proyecto.style_radar.validator.PlaylistValidator;
@@ -40,6 +44,8 @@ public class PlaylistServiceImpl implements IPlaylistService {
     private final PlaylistRepository playlistRepository;
     private final PrendaRepository prendaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ItemCatalogoRepository itemCatalogoRepository;
+    private final PublicacionSegundaManoRepository publicacionSegundaManoRepository;
     private final PlaylistEntityMapper playlistEntityMapper;
     private final PlaylistValidator playlistValidator;
     private final UsuarioValidator usuarioValidator;
@@ -241,7 +247,27 @@ public class PlaylistServiceImpl implements IPlaylistService {
             playlists.stream().filter(p -> p.getPrendas() != null).forEach(p ->
                     p.setPrendas(p.getPrendas().stream().filter(prenda -> !ocultas.contains(prenda.getId())).toList()));
         }
+        marcarDisponibilidad(playlists);
         return playlists;
+    }
+
+    /** Indica en cada prenda si está disponible (catálogo con stock o publicación activa en segunda mano). */
+    private void marcarDisponibilidad(List<Playlist> playlists) {
+        var idsPrenda = playlists.stream().filter(p -> p.getPrendas() != null)
+                .flatMap(p -> p.getPrendas().stream()).map(edu.dosw.proyecto.style_radar.model.domain.Prenda::getId)
+                .distinct().toList();
+        if (idsPrenda.isEmpty()) {
+            return;
+        }
+        var disponiblesCatalogo = new HashSet<>(
+                itemCatalogoRepository.findIdsPrendaDisponible(EstadoItem.AGOTADA));
+        var disponiblesSegundaMano = new HashSet<>(
+                publicacionSegundaManoRepository.findIdsPrendaDisponible(EstadoPublicacion.DISPONIBLE));
+        playlists.stream().filter(p -> p.getPrendas() != null).flatMap(p -> p.getPrendas().stream())
+                .distinct().forEach(prenda -> {
+                    prenda.setDisponible(disponiblesCatalogo.contains(prenda.getId())
+                            || disponiblesSegundaMano.contains(prenda.getId()));
+                });
     }
 
     @Override

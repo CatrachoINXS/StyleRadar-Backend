@@ -30,7 +30,7 @@ class PrendaEntityMapperTest {
         PrendaEntity entity = mapper.toEntity(prenda);
 
         // Assert
-        assertThat(entity).usingRecursiveComparison().isEqualTo(prenda);
+        assertThat(entity).usingRecursiveComparison().ignoringFields("disponible").isEqualTo(prenda);
     }
 
     @Test
@@ -49,6 +49,6 @@ class PrendaEntityMapperTest {
         Prenda prenda = mapper.toDomain(entity);
 
         // Assert
-        assertThat(prenda).usingRecursiveComparison().isEqualTo(entity);
+        assertThat(prenda).usingRecursiveComparison().ignoringFields("disponible").isEqualTo(entity);
     }
 }

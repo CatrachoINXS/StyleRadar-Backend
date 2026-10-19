@@ -15,6 +15,7 @@ import java.time.Instant;
 import org.springframework.data.jpa.repository.Lock;
 import jakarta.persistence.LockModeType;
 
+import edu.dosw.proyecto.style_radar.model.domain.EstadoItem;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.service.VisibilidadModeracion;
 
@@ -70,4 +71,13 @@ public interface ItemCatalogoRepository extends JpaRepository<ItemCatalogoEntity
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from ItemCatalogoEntity i where i.id = :id")
     Optional<ItemCatalogoEntity> findForUpdate(@Param("id") Long id);
+
+    /** Indica si existe al menos un ítem de catálogo con la prenda dada que no esté agotada. */
+    @Query("select count(i) > 0 from ItemCatalogoEntity i where i.prenda.id = :prendaId and i.estado != :estadoAgotado")
+    boolean existsDisponiblePorPrenda(@Param("prendaId") Long prendaId,
+            @Param("estadoAgotado") EstadoItem estadoAgotado);
+
+    /** IDs de prenda que tienen al menos un ítem de catálogo disponible (no agotado). */
+    @Query("select distinct i.prenda.id from ItemCatalogoEntity i where i.estado != :estadoAgotado")
+    List<Long> findIdsPrendaDisponible(@Param("estadoAgotado") EstadoItem estadoAgotado);
 }
