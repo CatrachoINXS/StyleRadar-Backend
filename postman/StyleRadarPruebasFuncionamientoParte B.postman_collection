@@ -1,0 +1,3207 @@
+{
+  "info": {
+    "_postman_id": "93f65216-cffc-4666-9d8d-b24ce9464f9e",
+    "name": "StyleRadar · Set de pruebas de funcionamiento · Parte B",
+    "description": "Parte B del set de funcionamiento StyleRadar: probador virtual, alertas, segunda mano, chat, donaciones, fundaciones aliadas, playlists y flujo E2E. Basado en OpenAPI v1. Completar variables de precondiciones/datos semilla antes de ejecutar; no contiene credenciales reales.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "59045240",
+    "_collection_link": "https://go.postman.co/collection/59045240-93f65216-cffc-4666-9d8d-b24ce9464f9e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "00 · Preparación de sesión (ejecutar primero)",
+      "item": [
+        {
+          "name": "Login comprador de pruebas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });\npm.test('Token JWT y rol esperado', function () { const b = pm.response.json(); pm.expect(b.accessToken).to.be.a('string').and.not.empty; pm.expect(b.roles).to.include('COMPRADOR'); });\nif (pm.response.code === 200) pm.collectionVariables.set('tokenNuevo', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"comprador@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login administrador StyleRadar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });\npm.test('Token JWT y rol esperado', function () { const b = pm.response.json(); pm.expect(b.accessToken).to.be.a('string').and.not.empty; pm.expect(b.roles).to.include('ADMIN_STYLERADAR'); });\nif (pm.response.code === 200) pm.collectionVariables.set('tokenAdmin', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@styleradar.co\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login representante de fundación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Token JWT y rol esperado', function () { const b = pm.response.json(); pm.expect(b.accessToken).to.be.a('string').and.not.empty; pm.expect(b.roles).to.include('REPRESENTANTE_FUNDACION'); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('tokenFundacion', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailFundacion}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Autentica los usuarios de prueba preconfigurados. Configure demoPassword y los correos/roles existentes en el ambiente."
+    },
+    {
+      "name": "RF-23–RF-27 · Probador virtual",
+      "item": [
+        {
+          "name": "RF-23 · Cargar foto frontal (seleccionar archivo antes de ejecutar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });\npm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });\npm.test(\"Devuelve metadatos de foto\", function () { const b=pm.response.json(); pm.expect(b.contentType).to.match(/^image\\/(jpeg|png)$/); pm.expect(b.ancho).to.be.at.least(300); pm.expect(b.alto).to.be.at.least(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "foto",
+                  "type": "file",
+                  "src": [
+                    "archivos/prenda.jpg"
+                  ]
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            },
+            "description": "Requiere que tokenNuevo sea de un usuario COMPRADOR y seleccionar manualmente un archivo válido."
+          },
+          "response": []
+        },
+        {
+          "name": "RF-23 · Rechazar request sin archivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            },
+            "description": "Escenario negativo: multipart sin la parte foto."
+          },
+          "response": []
+        },
+        {
+          "name": "RF-23 · Consultar metadatos de la foto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Incluye metadatos de imagen\", function () { const b=pm.response.json(); pm.expect(b.contentType).to.be.a('string'); pm.expect(b.ancho).to.be.a('number'); pm.expect(b.alto).to.be.a('number'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RF-24–RF-26 · Generar composición PNG",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });\npm.test(\"La respuesta es PNG\", function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/image\\/png/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemCatalogoId\": {{itemCatalogoId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/pruebas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "pruebas"
+              ]
+            },
+            "description": "Requiere foto cargada y itemCatalogoId válido de una prenda SUPERIOR, INFERIOR o VESTIDO."
+          },
+          "response": []
+        },
+        {
+          "name": "RF-24–RF-26 · Prenda inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemCatalogoId\": 999999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/pruebas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "pruebas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RF-27 · Eliminar foto cargada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 204 esperado', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "RF-27 · No existe foto después de eliminar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            },
+            "description": "Verifica que la eliminación se reflejó."
+          },
+          "response": []
+        },
+        {
+          "name": "Probador · Sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/probador/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "probador",
+                "foto"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "RF-23 a RF-27. La carga válida requiere seleccionar un archivo en Postman."
+    },
+    {
+      "name": "Alertas · Disponibilidad",
+      "item": [
+        {
+          "name": "Consultar mis alertas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"La respuesta es una lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "alertas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear alerta con objetivo ausente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "alertas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear alerta con dos objetivos (inválido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busquedaGuardadaId\": 1,\n  \"itemCatalogoId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "alertas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar alertas sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/alertas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "alertas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Crear alerta exige exactamente un objetivo válido; las pruebas de negocio requieren item agotado o búsqueda guardada válida."
+    },
+    {
+      "name": "RF-42 · Segunda mano y donación",
+      "item": [
+        {
+          "name": "Buscar publicaciones disponibles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve página de resultados\", function () { const b=pm.response.json(); pm.expect(b).to.be.an('object'); pm.expect(b.content).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/segunda-mano?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "segunda-mano"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Buscar con tipo inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/segunda-mano?page=0&size=10&tipo=HAT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "segunda-mano"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "tipo",
+                  "value": "HAT"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publicar prenda de segunda mano",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Publicación creada\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; pm.expect(b.estado).to.eql('DISPONIBLE'); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('publicacionId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenda\": {\n    \"nombre\": \"Prenda prueba Sprint3\",\n    \"descripcion\": \"Publicación automática para pruebas\",\n    \"tipo\": \"SUPERIOR\",\n    \"marca\": \"StyleRadar QA\",\n    \"color\": \"Azul\",\n    \"estilo\": \"CASUAL\"\n  },\n  \"talla\": \"M\",\n  \"estadoConservacion\": \"BUEN_ESTADO\",\n  \"precio\": 25000,\n  \"fotos\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/segunda-mano",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "segunda-mano"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publicar con precio negativo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });\npm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prenda\": {\n    \"nombre\": \"Prenda inválida\",\n    \"descripcion\": \"Prueba negativa\",\n    \"tipo\": \"SUPERIOR\",\n    \"marca\": \"QA\",\n    \"color\": \"Rojo\",\n    \"estilo\": \"CASUAL\"\n  },\n  \"talla\": \"M\",\n  \"estadoConservacion\": \"BUEN_ESTADO\",\n  \"precio\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/segunda-mano",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "segunda-mano"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar publicación propia para donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Estado destinado a donación\", function () { pm.expect(pm.response.json().estado).to.eql('EN_DONACION'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/segunda-mano/{{publicacionId}}/donacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "segunda-mano",
+                "{{publicacionId}}",
+                "donacion"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Marcar publicación inexistente para donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/segunda-mano/999999999/donacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "segunda-mano",
+                "999999999",
+                "donacion"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Publicación, búsqueda y marcado de prenda propia para donación."
+    },
+    {
+      "name": "RF-40–RF-41 · Chat de segunda mano",
+      "item": [
+        {
+          "name": "Iniciar chat con publicación inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/segunda-mano/999999999/conversaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "segunda-mano",
+                "999999999",
+                "conversaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar mensaje al chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Mensaje creado\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; pm.expect(b.texto).to.include('coordinar'); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('mensajeId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Hola, ¿podemos coordinar la entrega?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversaciones/{{conversacionId}}/mensajes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversaciones",
+                "{{conversacionId}}",
+                "mensajes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar mensaje vacío",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversaciones/{{conversacionId}}/mensajes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversaciones",
+                "{{conversacionId}}",
+                "mensajes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar mensajes del chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve colección de mensajes\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversaciones/{{conversacionId}}/mensajes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversaciones",
+                "{{conversacionId}}",
+                "mensajes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar conversaciones propias",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/conversaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "conversaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar mensajes sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversaciones/{{conversacionId}}/mensajes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversaciones",
+                "{{conversacionId}}",
+                "mensajes"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Inicio de conversación con vendedor e intercambio de mensajes privados."
+    },
+    {
+      "name": "RF-43 · Consulta de fundaciones",
+      "item": [
+        {
+          "name": "Consultar fundaciones activas cercanas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve una lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });",
+                  "pm.test(\"Las fundaciones retornadas están activas\", function () { pm.response.json().forEach(f => pm.expect(f.activa).to.eql(true)); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones?latitud={{latitud}}&longitud={{longitud}}&tipo=SUPERIOR",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones"
+              ],
+              "query": [
+                {
+                  "key": "latitud",
+                  "value": "{{latitud}}"
+                },
+                {
+                  "key": "longitud",
+                  "value": "{{longitud}}"
+                },
+                {
+                  "key": "tipo",
+                  "value": "SUPERIOR"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Coordenadas fuera de rango",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones?latitud=120&longitud=-74",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones"
+              ],
+              "query": [
+                {
+                  "key": "latitud",
+                  "value": "120"
+                },
+                {
+                  "key": "longitud",
+                  "value": "-74"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consulta de fundaciones sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones?latitud={{latitud}}&longitud={{longitud}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones"
+              ],
+              "query": [
+                {
+                  "key": "latitud",
+                  "value": "{{latitud}}"
+                },
+                {
+                  "key": "longitud",
+                  "value": "{{longitud}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Consulta de fundaciones activas y filtro por tipo de prenda."
+    },
+    {
+      "name": "RF-44–RF-49 · Solicitudes de donación",
+      "item": [
+        {
+          "name": "Enviar solicitud de donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Solicitud inicia en PENDIENTE\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; pm.expect(b.estado).to.eql('PENDIENTE'); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('solicitudId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publicacionId\": {{publicacionId}},\n  \"fundacionId\": {{fundacionId}},\n  \"mensaje\": \"Donación de prueba automatizada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/donaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "donaciones"
+              ]
+            },
+            "description": "Requiere publicación propia marcada EN_DONACION y fundación activa que acepte SUPERIOR."
+          },
+          "response": []
+        },
+        {
+          "name": "No permitir solicitud duplicada para prenda en curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 409 esperado', function () { pm.response.to.have.status(409); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"publicacionId\": {{publicacionId}},\n  \"fundacionId\": {{fundacionId}},\n  \"mensaje\": \"Duplicado intencional\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/donaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "donaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar mis solicitudes de donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/donaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "donaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Fundación consulta sus solicitudes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones/mi-fundacion/solicitudes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones",
+                "mi-fundacion",
+                "solicitudes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar solicitud sin motivo (inválido)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });\npm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aceptar\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones/mi-fundacion/solicitudes/{{solicitudId}}/decision",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones",
+                "mi-fundacion",
+                "solicitudes",
+                "{{solicitudId}}",
+                "decision"
+              ]
+            },
+            "description": "El contrato exige motivo al rechazar; verificar que el backend rechace la solicitud sin motivo."
+          },
+          "response": []
+        },
+        {
+          "name": "Aceptar solicitud",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Solicitud aceptada\", function () { pm.expect(pm.response.json().estado).to.eql('ACEPTADA'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aceptar\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones/mi-fundacion/solicitudes/{{solicitudId}}/decision",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones",
+                "mi-fundacion",
+                "solicitudes",
+                "{{solicitudId}}",
+                "decision"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Coordinar punto y franja de recogida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Solicitud coordinada\", function () { pm.expect(pm.response.json().estado).to.eql('COORDINADA'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"puntoEntrega\": \"Entrada principal de la fundación\",\n  \"franjaInicio\": \"{{fechaInicioRecogida}}\",\n  \"franjaFin\": \"{{fechaFinRecogida}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/donaciones/{{solicitudId}}/recogida",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "donaciones",
+                "{{solicitudId}}",
+                "recogida"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirmar recepción",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Solicitud recibida\", function () { pm.expect(pm.response.json().estado).to.eql('RECIBIDA'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones/mi-fundacion/solicitudes/{{solicitudId}}/recepcion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones",
+                "mi-fundacion",
+                "solicitudes",
+                "{{solicitudId}}",
+                "recepcion"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Decisión sobre solicitud inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenFundacion}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aceptar\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/fundaciones/mi-fundacion/solicitudes/999999999/decision",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "fundaciones",
+                "mi-fundacion",
+                "solicitudes",
+                "999999999",
+                "decision"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Solicitudes sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/donaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "donaciones"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Las pruebas del ciclo requieren credenciales REPRESENTANTE_FUNDACION y datos de QA controlados. Para repetir la colección, preparar una nueva publicación por ejecución."
+    },
+    {
+      "name": "RF-63–RF-65 · Administración de fundaciones",
+      "item": [
+        {
+          "name": "Registrar fundación aliada",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('timestamp', String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Fundación registrada\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; pm.expect(b.activa).to.eql(true); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('fundacionNuevaId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fundación QA {{timestamp}}\",\n  \"descripcion\": \"Fundación temporal para pruebas automatizadas\",\n  \"direccion\": \"Calle 10 # 20-30, Bogotá\",\n  \"telefono\": \"6015551234\",\n  \"email\": \"fundacion.qa.{{timestamp}}@example.test\",\n  \"latitud\": 4.6486,\n  \"longitud\": -74.0628,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\",\n    \"INFERIOR\"\n  ],\n  \"representanteId\": {{representanteFundacionId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones"
+              ]
+            },
+            "description": "representanteFundacionId debe ser un usuario activo con rol REPRESENTANTE_FUNDACION no asignado a otra fundación."
+          },
+          "response": []
+        },
+        {
+          "name": "Registrar fundación con email inválido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fundación inválida\",\n  \"direccion\": \"Dirección\",\n  \"email\": \"no-es-email\",\n  \"latitud\": 4.6,\n  \"longitud\": -74,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\"\n  ],\n  \"representanteId\": {{representanteFundacionId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar fundación creada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });\npm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Fundación\",\n  \"descripcion\": \"Editada por Postman\",\n  \"direccion\": \"Calle 10 # 20-30, Bogotá\",\n  \"telefono\": \"6015551234\",\n  \"email\": \"fundacion.qa.editada@example.test\",\n  \"latitud\": 4.6486,\n  \"longitud\": -74.0628,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\",\n    \"INFERIOR\"\n  ],\n  \"representanteId\": {{representanteFundacionId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones/{{fundacionNuevaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones",
+                "{{fundacionNuevaId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar fundación inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"No existe\",\n  \"direccion\": \"Calle\",\n  \"email\": \"noexiste@example.test\",\n  \"latitud\": 4.6,\n  \"longitud\": -74,\n  \"categoriasAceptadas\": [\n    \"SUPERIOR\"\n  ],\n  \"representanteId\": {{representanteFundacionId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones/999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones",
+                "999999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Desactivar fundación creada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Fundación desactivada\", function () { pm.expect(pm.response.json().activa).to.eql(false); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones/{{fundacionNuevaId}}/desactivar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones",
+                "{{fundacionNuevaId}}",
+                "desactivar"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Admin fundaciones sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/fundaciones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "fundaciones"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Requiere tokenAdmin y un representante activo no asignado. No ejecutar repetidamente contra PROD sin autorización."
+    },
+    {
+      "name": "RF-71–RF-72 · Playlists",
+      "item": [
+        {
+          "name": "Crear playlist pública",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('timestamp', String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Playlist creada\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; pm.expect(b.totalPrendas).to.eql(0); });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('playlistId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Playlist QA {{timestamp}}\",\n  \"descripcion\": \"Creada por pruebas automatizadas\",\n  \"visibilidad\": \"PUBLICA\",\n  \"estilo\": \"CASUAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear playlist sin nombre",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 400 esperado', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"visibilidad\": \"PUBLICA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar prenda del catálogo a playlist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"La playlist contiene al menos una prenda\", function () { const b=pm.response.json(); pm.expect(b.id).to.eql(Number(pm.collectionVariables.get('playlistId'))); pm.expect(b.totalPrendas).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prendaId\": {{prendaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists/{{playlistId}}/prendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists",
+                "{{playlistId}}",
+                "prendas"
+              ]
+            },
+            "description": "Configurar prendaId con el campo prendaId de una prenda existente del catálogo."
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar prenda inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prendaId\": 999999999\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists/{{playlistId}}/prendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists",
+                "{{playlistId}}",
+                "prendas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar mi playlist por ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"La respuesta corresponde a la playlist\", function () { const b=pm.response.json(); pm.expect(b.id).to.eql(Number(pm.collectionVariables.get('playlistId'))); pm.expect(b.prendas).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists/{{playlistId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists",
+                "{{playlistId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar mis playlists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Guardar playlist visible en mi perfil (RF-71)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve playlist\", function () { pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('playlistPublicaAjenaId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists/{{playlistPublicaAjenaId}}/guardar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists",
+                "{{playlistPublicaAjenaId}}",
+                "guardar"
+              ]
+            },
+            "description": "playlistPublicaAjenaId debe ser una playlist pública creada por otro usuario."
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar playlists guardadas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists-guardadas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists-guardadas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar playlists públicas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Devuelve lista\", function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar playlists populares (RF-72)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });\npm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists/populares",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists",
+                "populares"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Playlist inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 404 esperado', function () { pm.response.to.have.status(404); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenNuevo}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists/999999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists",
+                "999999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar prenda sin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 401 esperado', function () { pm.response.to.have.status(401); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prendaId\": {{prendaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists/{{playlistId}}/prendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists",
+                "{{playlistId}}",
+                "prendas"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Incluye creación, agregado de prenda, consulta, guardado de playlist en perfil y consulta de guardadas. Para probar el límite de 15, preparar 15 prendas válidas."
+    },
+    {
+      "name": "E2E · Registro → login → buscar prenda → playlist → verificar",
+      "item": [
+        {
+          "name": "E2E-01 Registrar comprador único",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('e2eEmail', `e2e.${Date.now()}@example.test`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Usuario registrado\", function () { const b=pm.response.json(); pm.expect(b.id).to.be.ok; });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('e2eUsuarioId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario E2E StyleRadar\",\n  \"email\": \"{{e2eEmail}}\",\n  \"telefono\": \"3001112233\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/registro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "registro"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E2E-02 Iniciar sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Token de acceso presente\", function () { const b=pm.response.json(); pm.expect(b.accessToken).to.be.a('string').and.not.empty; pm.expect(b.roles).to.include('COMPRADOR'); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('e2eToken', pm.response.json().accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{e2eEmail}}\",\n  \"password\": \"{{demoPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E2E-03 Buscar prendas del catálogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"La búsqueda devuelve contenido\", function () { const b=pm.response.json(); pm.expect(b.content).to.be.an('array'); pm.expect(b.content.length).to.be.greaterThan(0); });",
+                  "if (pm.response.code === 200) { const b = pm.response.json(); const item = (b.content || []).find(x => x.prendaId); if (item) { pm.collectionVariables.set('e2eItemCatalogoId', item.itemId); pm.collectionVariables.set('e2ePrendaId', item.prendaId); } }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/catalogo/buscar?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "catalogo",
+                "buscar"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E2E-04 Crear playlist para la prenda encontrada",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('timestamp', String(Date.now()));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 201 esperado', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Playlist creada\", function () { pm.expect(pm.response.json().id).to.be.ok; });",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('e2ePlaylistId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Playlist E2E {{timestamp}}\",\n  \"descripcion\": \"Flujo completo de pruebas\",\n  \"visibilidad\": \"PRIVADA\",\n  \"estilo\": \"CASUAL\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E2E-05 Guardar prenda encontrada en playlist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Prenda guardada\", function () { const b=pm.response.json(); pm.expect(b.id).to.eql(Number(pm.collectionVariables.get('e2ePlaylistId'))); pm.expect(b.totalPrendas).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prendaId\": {{e2ePrendaId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/usuarios/me/playlists/{{e2ePlaylistId}}/prendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "usuarios",
+                "me",
+                "playlists",
+                "{{e2ePlaylistId}}",
+                "prendas"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E2E-06 Consultar playlist y verificar resultado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP 200 esperado', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Content-Type JSON cuando corresponde', function () { pm.expect(pm.response.headers.get('Content-Type') || '').to.match(/json/i); });",
+                  "pm.test(\"Playlist contiene la prenda guardada\", function () { const b=pm.response.json(); pm.expect(b.prendas).to.be.an('array'); pm.expect(b.prendas.length).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{e2eToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/playlists/{{e2ePlaylistId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "playlists",
+                "{{e2ePlaylistId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Este flujo crea un usuario nuevo por ejecución. demoPassword debe configurarse en el ambiente. Depende de que el catálogo tenga al menos una prenda visible."
+    }
+  ],
+  "variable": [
+    {
+      "key": "tokenComprador",
+      "value": ""
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenFundacion",
+      "value": ""
+    },
+    {
+      "key": "tokenNuevo",
+      "value": ""
+    },
+    {
+      "key": "emailNuevo",
+      "value": ""
+    },
+    {
+      "key": "nuevoUsuarioId",
+      "value": ""
+    },
+    {
+      "key": "itemCatalogoId",
+      "value": ""
+    },
+    {
+      "key": "prendaId",
+      "value": ""
+    },
+    {
+      "key": "playlistId",
+      "value": ""
+    },
+    {
+      "key": "publicacionId",
+      "value": ""
+    },
+    {
+      "key": "conversacionId",
+      "value": ""
+    },
+    {
+      "key": "mensajeId",
+      "value": ""
+    },
+    {
+      "key": "fundacionId",
+      "value": ""
+    },
+    {
+      "key": "solicitudId",
+      "value": ""
+    },
+    {
+      "key": "alertaId",
+      "value": ""
+    },
+    {
+      "key": "busquedaGuardadaId",
+      "value": ""
+    },
+    {
+      "key": "fotoProbadorPath",
+      "value": ""
+    },
+    {
+      "key": "emailComprador",
+      "value": "comprador@styleradar.co"
+    },
+    {
+      "key": "emailFundacion",
+      "value": "fundacion@styleradar.co"
+    },
+    {
+      "key": "emailAdmin",
+      "value": "admin@styleradar.co"
+    },
+    {
+      "key": "demoPassword",
+      "value": ""
+    },
+    {
+      "key": "latitud",
+      "value": "4.6486"
+    },
+    {
+      "key": "longitud",
+      "value": "-74.0628"
+    },
+    {
+      "key": "fechaInicioRecogida",
+      "value": "2026-11-01T10:00:00Z"
+    },
+    {
+      "key": "fechaFinRecogida",
+      "value": "2026-11-01T12:00:00Z"
+    },
+    {
+      "key": "timestamp",
+      "value": ""
+    },
+    {
+      "key": "e2eEmail",
+      "value": ""
+    },
+    {
+      "key": "e2eUsuarioId",
+      "value": ""
+    },
+    {
+      "key": "e2eToken",
+      "value": ""
+    },
+    {
+      "key": "e2eItemCatalogoId",
+      "value": ""
+    },
+    {
+      "key": "e2ePrendaId",
+      "value": ""
+    },
+    {
+      "key": "e2ePlaylistId",
+      "value": ""
+    },
+    {
+      "key": "fundacionNuevaId",
+      "value": ""
+    },
+    {
+      "key": "playlistPublicaAjenaId",
+      "value": ""
+    },
+    {
+      "key": "representanteFundacionId",
+      "value": ""
+    }
+  ]
+}
