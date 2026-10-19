@@ -148,7 +148,7 @@ class ModeracionHttpIntegrationTest extends AlertasFixtures {
                 .content("{\"nombre\":\"Editada\",\"descripcion\":\"Descripción\",\"tipo\":\"SUPERIOR\","
                         + "\"marca\":\"Radar\",\"color\":\"Negro\",\"estilo\":\"FORMAL\",\"precio\":100,"
                         + "\"estadoModeracion\":\"APROBADA\",\"decision\":\"APROBADA\",\"administradorId\":999}")
-                .header("Authorization", "Bearer " + t)).andExpect(status().isOk());
+                .header("Authorization", "Bearer " + t)).andExpect(status().isForbidden());
         releer();
         var item = items.findById(id).orElseThrow();
         assertThat(item.getEstadoModeracion()).isEqualTo(EstadoModeracion.PENDIENTE);

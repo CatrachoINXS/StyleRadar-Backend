@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.request.*;
@@ -28,6 +29,7 @@ public interface VerificacionAlmacenApi {
     @Operation(summary = "Consultar almacenes para verificación", description = "ROLE_ADMIN_STYLERADAR. "
             + "estado opcional; sin filtro incluye NULL legado sin aprobación. Filtros muestran estados reales. "
             + "page=0, size=20; máximo 100. Orden nombreComercial ASC, nit ASC; incluye almacenes sin coordenadas.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @GetMapping("/verificacion")
     ResponseEntity<PageResponseDTO<VerificacionAlmacenResponseDTO>> consultar(
             @Valid @ParameterObject @ModelAttribute VerificacionConsultaRequestDTO request,
@@ -35,6 +37,7 @@ public interface VerificacionAlmacenApi {
 
     @Operation(summary = "Revisar datos de un almacén", description = "ROLE_ADMIN_STYLERADAR. "
             + "Datos existentes, contacto y última decisión; no realiza validación legal externa.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @GetMapping("/{nit}/verificacion")
     ResponseEntity<VerificacionAlmacenResponseDTO> consultarUno(@PathVariable String nit,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal);
@@ -42,6 +45,7 @@ public interface VerificacionAlmacenApi {
     @Operation(summary = "Aprobar o rechazar vinculación pendiente", description = "ROLE_ADMIN_STYLERADAR. "
             + "Solo PENDIENTE. Identidad y fecha del servidor. Rechazo exige motivo no vacío de máximo 1000 caracteres; "
             + "aprobación permite omitirlo. No aprueba publicaciones ni genera notificaciones retroactivas.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PatchMapping("/{nit}/verificacion")
     ResponseEntity<VerificacionAlmacenResponseDTO> decidir(@PathVariable String nit,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
@@ -53,6 +57,7 @@ public interface VerificacionAlmacenApi {
     @Operation(summary = "Iniciar o reabrir revisión", description = "ROLE_ADMIN_STYLERADAR. "
             + "NULL, APROBADO o RECHAZADO pasan a PENDIENTE; PENDIENTE repetido devuelve 422. Sin body. "
             + "Conserva metadatos de la última decisión hasta finalizar la nueva evaluación.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PostMapping("/{nit}/verificacion/solicitar-revision")
     ResponseEntity<VerificacionAlmacenResponseDTO> solicitarRevision(@PathVariable String nit,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal);

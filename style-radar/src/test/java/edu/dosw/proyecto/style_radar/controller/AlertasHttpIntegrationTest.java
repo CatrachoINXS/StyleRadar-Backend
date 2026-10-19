@@ -5,6 +5,11 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import java.time.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import edu.dosw.proyecto.style_radar.model.domain.Rol;
+import edu.dosw.proyecto.style_radar.model.entity.AdministradorAlmacenEntity;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
@@ -228,7 +233,12 @@ class AlertasHttpIntegrationTest extends AlertasFixtures {
     void retirarItemMantieneContrato204ConOSinAlerta(boolean conAlerta) throws Exception {
         // Arrange
         Long id = publicar(); if (conAlerta) service.crear(usuario.getId(), null, id);
-        String t = token();
+        usuario.setRoles(new HashSet<>(Set.of(Rol.ADMIN_ALMACEN)));
+        var vinculo = new AdministradorAlmacenEntity();
+        vinculo.setUsuario(usuario); vinculo.setAlmacen(almacen); vinculo.setAsignadoPor(usuario);
+        vinculo.setFechaAsignacion(Instant.now());
+        em.persist(vinculo);
+        String t = token();   // token() hace releer(), que hace flush
         // Act & Assert
         mvc.perform(delete("/api/v1/almacenes/alertas/catalogo/" + id).header("Authorization", "Bearer " + t))
                 .andExpect(status().isNoContent());

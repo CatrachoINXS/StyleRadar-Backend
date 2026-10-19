@@ -1,6 +1,7 @@
 package edu.dosw.proyecto.style_radar.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,7 @@ public class InventarioController implements InventarioApi {
     private final CatalogoItemMapper catalogoItemMapper;
 
     @Override
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     public ResponseEntity<CatalogoItemResponseDTO> registrarTallas(
             @PathVariable String nit,
             @PathVariable Long itemId,
@@ -35,6 +37,7 @@ public class InventarioController implements InventarioApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     public ResponseEntity<CatalogoItemResponseDTO> actualizarDisponibilidad(
             @PathVariable String nit,
             @PathVariable Long itemId,
