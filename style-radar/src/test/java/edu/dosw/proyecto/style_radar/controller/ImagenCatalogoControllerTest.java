@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -103,6 +104,14 @@ class ImagenCatalogoControllerTest {
         mockMvc.perform(post(PATH))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("La solicitud contiene parámetros inválidos"));
+    }
+
+    @Test
+    void unsupportedMethodShouldReturnMethodNotAllowed() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get(PATH))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405));
     }
 
     @Test
