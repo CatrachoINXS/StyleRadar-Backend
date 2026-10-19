@@ -63,7 +63,7 @@ Los ambientes no contienen secretos: la contraseña de los usuarios de demostrac
 2. Escribir el valor de `demoPassword` en el ambiente.
 3. Abrir el **Collection Runner**, seleccionar la colección completa y ejecutar.
 
-Resultado contra PROD del 18 de octubre de 2026: **91 requests y 188 validaciones, sin fallas**.
+Resultado contra PROD con la versión final v1.2.2, el 19 de octubre de 2026: **91 requests y 188 validaciones, sin fallas**.
 
 ![](style-radar/docs/evidencias/postman-prod.png)
 
