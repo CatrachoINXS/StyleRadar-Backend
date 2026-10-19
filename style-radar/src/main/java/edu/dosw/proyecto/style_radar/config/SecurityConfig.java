@@ -85,6 +85,10 @@ public class SecurityConfig {
                                 "/api/v1/almacenes/{nit}/catalogo/resumen",
                                 "/api/v1/almacenes/{nit}/catalogo/novedades",
                                 "/api/v1/almacenes/{nit}/distancia").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/almacenes/{nit}/catalogo/**").hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/almacenes/{nit}/catalogo/**").hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/almacenes/{nit}/catalogo/**").hasRole("ADMIN_ALMACEN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/almacenes/{nit}/catalogo/**").hasRole("ADMIN_ALMACEN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
                 .build();

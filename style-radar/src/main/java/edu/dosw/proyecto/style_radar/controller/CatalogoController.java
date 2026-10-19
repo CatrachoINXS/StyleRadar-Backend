@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +37,7 @@ public class CatalogoController implements CatalogoApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     public ResponseEntity<CatalogoItemResponseDTO> publicar(
             @PathVariable String nit,
             @Valid @RequestBody CatalogoItemRequestDTO request) {
@@ -45,6 +47,7 @@ public class CatalogoController implements CatalogoApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     public ResponseEntity<CatalogoItemResponseDTO> actualizar(
             @PathVariable String nit,
             @PathVariable Long itemId,
@@ -55,6 +58,7 @@ public class CatalogoController implements CatalogoApi {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     public ResponseEntity<Void> retirar(@PathVariable String nit, @PathVariable Long itemId) {
         catalogoService.retirar(nit, itemId);
         return ResponseEntity.noContent().build();

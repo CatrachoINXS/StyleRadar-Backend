@@ -15,7 +15,6 @@ En las tablas de response, la columna *Restricciones* muestra los valores posibl
 Los roles posibles son:
 
 - **Público:** no requiere token.
-- **Autenticado (cualquier rol):** exige un JWT válido, sin importar el rol.
 - **Un rol específico:** el resto de endpoints exige el rol indicado. Sin token la respuesta es `401` y con otro rol es `403`.
 
 Las fechas usan el formato ISO-8601 en UTC y los precios están en pesos colombianos (COP).
@@ -42,8 +41,8 @@ Las fechas usan el formato ISO-8601 en UTC y los precios están en pesos colombi
 | PUT | `/api/v1/usuarios/me/preferencias-estilo` | COMPRADOR | 200 | RF-03 |
 | PUT | `/api/v1/usuarios/me/tallas-habituales` | COMPRADOR | 200 | RF-04 |
 | GET | `/api/v1/usuarios/{id}` | ADMIN_STYLERADAR | 200 | RF-66 |
-| GET | `/api/v1/usuarios/me/feed` | Autenticado (cualquier rol) | 200 | RF-05 |
-| GET | `/api/v1/usuarios/me/recomendaciones` | Autenticado (cualquier rol) | 200 | RF-06 |
+| GET | `/api/v1/usuarios/me/feed` | COMPRADOR | 200 | RF-05 |
+| GET | `/api/v1/usuarios/me/recomendaciones` | COMPRADOR | 200 | RF-06 |
 | GET | `/api/v1/catalogo/buscar` | Público (sin token) | 200 | RF-07 a RF-16, RF-54, RF-57 |
 | GET | `/api/v1/prendas` | Público (sin token) | 200 | RF-07 |
 | GET | `/api/v1/almacenes` | Público (sin token) | 200 | RF-17, RF-18 |
@@ -51,12 +50,12 @@ Las fechas usan el formato ISO-8601 en UTC y los precios están en pesos colombi
 | GET | `/api/v1/almacenes/{nit}/catalogo/novedades` | Público (sin token) | 200 | RF-20 |
 | GET | `/api/v1/almacenes/{nit}/distancia` | Público (sin token) | 200 | RF-21 |
 | GET | `/api/v1/almacenes/{nit}/catalogo` | Público (sin token) | 200 | RF-22, RF-60 |
-| POST | `/api/v1/almacenes/{nit}/catalogo` | Autenticado (cualquier rol) | 201 | RF-50, RF-53, RF-54 |
-| PUT | `/api/v1/almacenes/{nit}/catalogo/{itemId}` | Autenticado (cualquier rol) | 200 | RF-53, RF-55 |
-| DELETE | `/api/v1/almacenes/{nit}/catalogo/{itemId}` | Autenticado (cualquier rol) | 204 | RF-58 |
-| POST | `/api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes` | Autenticado (cualquier rol) | 201 | RF-51 |
-| PUT | `/api/v1/almacenes/{nit}/catalogo/{itemId}/tallas` | Autenticado (cualquier rol) | 200 | RF-52 |
-| PATCH | `/api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}` | Autenticado (cualquier rol) | 200 | RF-56, RF-57, RF-59 |
+| POST | `/api/v1/almacenes/{nit}/catalogo` | ADMIN_ALMACEN | 201 | RF-50, RF-53, RF-54 |
+| PUT | `/api/v1/almacenes/{nit}/catalogo/{itemId}` | ADMIN_ALMACEN | 200 | RF-53, RF-55 |
+| DELETE | `/api/v1/almacenes/{nit}/catalogo/{itemId}` | ADMIN_ALMACEN | 204 | RF-58 |
+| POST | `/api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes` | ADMIN_ALMACEN | 201 | RF-51 |
+| PUT | `/api/v1/almacenes/{nit}/catalogo/{itemId}/tallas` | ADMIN_ALMACEN | 200 | RF-52 |
+| PATCH | `/api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}` | ADMIN_ALMACEN | 200 | RF-56, RF-57, RF-59 |
 | GET | `/api/v1/admin/catalogo/moderacion` | ADMIN_STYLERADAR | 200 | RF-61 |
 | PATCH | `/api/v1/admin/catalogo/{itemId}/moderacion` | ADMIN_STYLERADAR | 200 | RF-61 |
 | POST | `/api/v1/admin/catalogo/{itemId}/moderacion/solicitar-revision` | ADMIN_STYLERADAR | 200 | RF-61 |
@@ -407,7 +406,7 @@ Response: `UsuarioResponseDTO`.
 
 ### `GET /api/v1/usuarios/me/feed`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 200 OK · **RF:** RF-05
+**Rol:** COMPRADOR · **Respuesta exitosa:** 200 OK · **RF:** RF-05
 
 Obtener mi feed personalizado.
 
@@ -483,7 +482,7 @@ Objeto anidado `CatalogoItemResponseDTO`:
 
 ### `GET /api/v1/usuarios/me/recomendaciones`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 200 OK · **RF:** RF-06
+**Rol:** COMPRADOR · **Respuesta exitosa:** 200 OK · **RF:** RF-06
 
 Obtener mis recomendaciones de prendas.
 
@@ -969,7 +968,7 @@ Response: lista de `CatalogoItemResponseDTO`.
 
 ### `POST /api/v1/almacenes/{nit}/catalogo`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 201 Created · **RF:** RF-50, RF-53, RF-54
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 201 Created · **RF:** RF-50, RF-53, RF-54
 
 Publicar prenda.
 
@@ -1046,7 +1045,7 @@ Response: `CatalogoItemResponseDTO`.
 
 ### `PUT /api/v1/almacenes/{nit}/catalogo/{itemId}`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 200 OK · **RF:** RF-53, RF-55
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 200 OK · **RF:** RF-53, RF-55
 
 Editar prenda del catálogo.
 
@@ -1124,7 +1123,7 @@ Response: `CatalogoItemResponseDTO`.
 
 ### `DELETE /api/v1/almacenes/{nit}/catalogo/{itemId}`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 204 No Content · **RF:** RF-58
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 204 No Content · **RF:** RF-58
 
 Retirar prenda.
 
@@ -1140,7 +1139,7 @@ Response: sin cuerpo.
 
 ### `POST /api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 201 Created · **RF:** RF-51
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 201 Created · **RF:** RF-51
 
 Registrar fotografía.
 
@@ -1176,7 +1175,7 @@ Response: `ImagenCatalogoResponseDTO`.
 
 ### `PUT /api/v1/almacenes/{nit}/catalogo/{itemId}/tallas`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 200 OK · **RF:** RF-52
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 200 OK · **RF:** RF-52
 
 Registrar tallas.
 
@@ -1244,7 +1243,7 @@ Response: `CatalogoItemResponseDTO`.
 
 ### `PATCH /api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}`
 
-**Rol:** Autenticado (cualquier rol) · **Respuesta exitosa:** 200 OK · **RF:** RF-56, RF-57, RF-59
+**Rol:** ADMIN_ALMACEN · **Respuesta exitosa:** 200 OK · **RF:** RF-56, RF-57, RF-59
 
 Actualizar disponibilidad.
 

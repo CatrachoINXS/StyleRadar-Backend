@@ -394,7 +394,8 @@ El sistema maneja cuatro roles: `COMPRADOR`, `ADMIN_ALMACEN`, `REPRESENTANTE_FUN
 | `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | GET, POST | `COMPRADOR` |
 | `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | GET, PATCH | `REPRESENTANTE_FUNDACION` |
 | `PATCH /api/v1/donaciones/{id}/recogida` | PATCH | `COMPRADOR` (donante) o `REPRESENTANTE_FUNDACION` (solo participantes) |
-| Resto de endpoints (alertas, notificaciones, feed, recomendaciones y gestión del catálogo e inventario) | Todos | Cualquier usuario autenticado con JWT. En las rutas `/me` el recurso pertenece siempre al usuario del token |
+| `POST`, `PUT`, `PATCH` y `DELETE` en `/api/v1/almacenes/{nit}/catalogo/**` (publicar, editar, retirar, tallas, inventario e imágenes) | POST, PUT, PATCH, DELETE | `ADMIN_ALMACEN` |
+| `/api/v1/usuarios/me/alertas/**`, `/api/v1/usuarios/me/notificaciones`, `/api/v1/usuarios/me/feed`, `/api/v1/usuarios/me/recomendaciones` | GET, POST, PATCH | `COMPRADOR` |
 
 Las peticiones sin token reciben `401` y las que no tienen el rol requerido reciben `403`. Cada endpoint de usuarios, segunda mano, playlists, fundaciones, donaciones, probador y chat declara `@PreAuthorize` en su interfaz `controller/docs/*Api`; en las rutas `/me` el usuario sale siempre del JWT, nunca de la URL. CORS solo admite los orígenes de `CORS_ALLOWED_ORIGINS`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
 
@@ -580,7 +581,7 @@ Swagger en Azure:
 
 | Limitación | Impacto | Cómo se resolvería |
 |---|---|---|
-| La gestión del catálogo pide iniciar sesión, pero no comprueba que el usuario administre ese almacén. | Un usuario con sesión podría modificar el catálogo de otro almacén. | Exigir el rol `ADMIN_ALMACEN` y su vínculo con el almacén, como ya se hace en las suscripciones. |
+| La gestión del catálogo exige el rol `ADMIN_ALMACEN`, pero no comprueba que el usuario administre ese almacén en particular. | Un administrador de almacén podría modificar el catálogo de otro almacén. | Verificar su vínculo con el almacén, como ya se hace en las suscripciones. |
 | Las suscripciones se registran sin pago, porque PSE no está integrado. | Los planes no tienen cobro real. | Integrar la pasarela de pagos por medio de un adaptador, como en el probador virtual. |
 | El chat no funciona en tiempo real. | Los mensajes nuevos se ven al consultar la conversación. | Enviar los mensajes con WebSockets. |
 | Una sesión iniciada no se puede cerrar antes de que venza su token. | El token sigue siendo válido hasta su vencimiento, salvo que la cuenta se inactive o se bloquee. | Registrar los tokens revocados o usar tokens de corta duración. |

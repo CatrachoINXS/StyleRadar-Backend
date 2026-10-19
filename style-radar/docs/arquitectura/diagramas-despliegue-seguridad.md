@@ -164,7 +164,9 @@ La autenticación es sin estado. Cada petición protegida envía el encabezado `
 | `POST /api/v1/segunda-mano`, `POST /api/v1/playlists`, `/api/v1/playlists/{id}/like`, `/guardar`, `/api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/**`, `GET /api/v1/fundaciones` | GET, POST | `COMPRADOR` |
 | `/api/v1/fundaciones/mi-fundacion/solicitudes/**` | GET, PATCH | `REPRESENTANTE_FUNDACION` |
 | `PATCH /api/v1/donaciones/{id}/recogida` | PATCH | `COMPRADOR` donante o `REPRESENTANTE_FUNDACION` de la fundación |
-| Consultas de segunda mano y playlists, alertas, notificaciones, feed, recomendaciones y gestión del catálogo e inventario | Todos | Cualquier usuario autenticado |
+| `POST`, `PUT`, `PATCH` y `DELETE` en `/api/v1/almacenes/{nit}/catalogo/**` (publicar, editar, retirar, tallas, inventario e imágenes) | POST, PUT, PATCH, DELETE | `ADMIN_ALMACEN` |
+| `/api/v1/usuarios/me/alertas/**`, `/api/v1/usuarios/me/notificaciones`, `/api/v1/usuarios/me/feed`, `/api/v1/usuarios/me/recomendaciones` | GET, POST, PATCH | `COMPRADOR` |
+| Consultas de segunda mano y playlists | GET | Cualquier usuario autenticado |
 
 Una petición sin token, con token vencido o de una cuenta no activa recibe `401` con el mensaje "Autenticación inválida". Si el token es válido pero el rol no tiene permiso, la respuesta es `403` con "Acceso denegado". Las pruebas de estos tres escenarios contra PROD están en [`docs/evidencias/seguridad-prod.png`](../evidencias/seguridad-prod.png).
 
