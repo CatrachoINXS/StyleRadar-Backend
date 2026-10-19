@@ -231,9 +231,8 @@ Los valores de ejemplo están en `style-radar/.env.example`. El archivo `.env` c
 | `CORS_ALLOWED_ORIGINS` | Orígenes del frontend permitidos, separados por coma. | `http://localhost:3000` |
 | `STYLERADAR_DEMO_ENABLED` | Carga al iniciar los datos de demostración: 3 almacenes, 10 prendas, 3 planes, una fundación y un usuario por rol. No duplica datos al reiniciar. | `false` |
 | `STYLERADAR_DEMO_PASSWORD` | Contraseña de los usuarios de demostración. Sin valor no se crean. | `change-me` |
-| `PROBADOR_IA_API_KEY` | Clave de la API de Gemini (Google AI Studio) para el probador virtual. Sin valor se usa la composición local. | `change-me` |
-| `PROBADOR_IA_MODELO` | Modelo de Gemini para generar la prueba virtual. | `gemini-3.1-flash-lite-image` |
-| `PROBADOR_IA_URL` | URL base de la API de Gemini. | `https://generativelanguage.googleapis.com/v1beta` |
+| `PROBADOR_IA_API_KEY` | Clave de la API de FASHN para el probador virtual. Sin valor se usa la composición local. | `change-me` |
+| `PROBADOR_IA_URL` | URL base de la API de FASHN. | `https://api.fashn.ai/v1` |
 | `DOCKER_IMAGE` | Nombre de la imagen en Docker Hub. | `usuario/styleradar` |
 | `IMAGE_TAG` | Tag de la imagen construida. | `latest` |
 
@@ -248,7 +247,7 @@ Como actores tenemos a los *usuarios compradores, a los almacenes de moda, a las
 Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal y como se menciona en el diagrama.
 
 ### Sistemas externos
-Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones, contemplada en el diseño pero aún no integrada (ver [Limitaciones conocidas](#limitaciones-conocidas)), y *Google Gemini* como servicio del probador virtual, que genera una imagen del usuario comprador con determinada prenda.
+Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones, contemplada en el diseño pero aún no integrada (ver [Limitaciones conocidas](#limitaciones-conocidas)), y *FASHN* como servicio de prueba virtual, que genera una imagen del usuario comprador con determinada prenda.
 
 ## Diagrama de clases
 
@@ -284,7 +283,7 @@ Cada módulo se encarga de una parte específica de la plataforma:
 - **Donaciones:** solicitudes de donación de prendas de segunda mano, su decisión, recogida y recepción.
 - **Fundaciones:** registro, edición, desactivación y consulta de las fundaciones aliadas cercanas.
 - **Chat:** conversaciones y mensajes entre el comprador y el vendedor de una prenda de segunda mano.
-- **Probador virtual:** foto del comprador y generación de la prueba. El servicio depende de la interfaz `ProbadorIA`, implementada por el adaptador `GeminiProbadorIA`, que se comunica con Google Gemini. Si el servicio externo no responde, se usa la composición local de `ComposicionProbador`.
+- **Probador virtual:** foto del comprador y generación de la prueba. El servicio depende de la interfaz `ProbadorIA`, implementada por el adaptador `FashnProbadorIA`, que se comunica con FASHN. Si el servicio externo no responde, se usa la composición local de `ComposicionProbador`.
 
 Además, existen componentes transversales para la seguridad (`SecurityConfig`, `JwtAuthFilter`, `JwtUtil`), el manejo uniforme de errores (`GlobalExceptionHandler`), la documentación de la API (`SwaggerConfig`) y el manejo del tiempo (`TimeConfig`).
 
@@ -300,7 +299,7 @@ Los actores (usuario comprador, almacén, fundación aliada y administrador) usa
 Sobre los sistemas externos:
 
 - **Mapbox:** lo usa el Front-End para mostrar el mapa.
-- **Google Gemini:** lo usa el Back-End para generar la imagen del probador virtual.
+- **FASHN:** lo usa el Back-End para generar la imagen del probador virtual.
 - **PSE:** se muestra con línea punteada porque está contemplado en el diseño, pero no está integrado. Las suscripciones se registran sin cobro.
 
 ## Diagrama de base de datos
@@ -430,7 +429,7 @@ La propuesta contempla notificaciones a compradores cuando se publica una prenda
 
 #### Adapter — implementado en el probador virtual
 
-El probador virtual depende de la interfaz `ProbadorIA`, y `GeminiProbadorIA` la adapta a la API de Gemini: envía la foto del usuario, la foto de la prenda y la instrucción de la prueba, y devuelve la imagen generada. `ProbadorVirtualServiceImpl` no conoce los detalles del proveedor; si Gemini no está configurado, falla o tarda más de 30 segundos, genera la composición local con `ComposicionProbador`. La adaptación de pasarelas de pago sigue como diseño propuesto.
+El probador virtual depende de la interfaz `ProbadorIA`, y `FashnProbadorIA` la adapta a la API de FASHN: envía la foto del usuario, la foto de la prenda y su categoría, y devuelve la imagen generada. `ProbadorVirtualServiceImpl` no conoce los detalles del proveedor, por eso el cambio de proveedor solo requirió reemplazar el adaptador. Si FASHN no está configurado, falla o tarda más de 30 segundos, se genera la composición local con `ComposicionProbador`. La adaptación de pasarelas de pago sigue como diseño propuesto.
 
 ![](style-radar/docs/images/patron_adapter1_ilustracion.png)
 
@@ -559,7 +558,7 @@ Swagger en Azure:
 | RF-19, RF-20 | Catálogo resumido y novedades semanales | `GET /api/v1/almacenes/{nit}/catalogo/resumen`, `GET /api/v1/almacenes/{nit}/catalogo/novedades` |
 | RF-21 | Distancia entre usuario y almacén | `GET /api/v1/almacenes/{nit}/distancia` |
 | RF-22 | Catálogo de un almacén | `GET /api/v1/almacenes/{nit}/catalogo` |
-| RF-23 a RF-27 | Probador virtual: foto, prueba con Gemini o composición local, eliminación | `/api/v1/usuarios/me/probador/foto`, `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-23 a RF-27 | Probador virtual: foto, prueba con FASHN o composición local, eliminación | `/api/v1/usuarios/me/probador/foto`, `POST /api/v1/usuarios/me/probador/pruebas` |
 | RF-28 | Búsquedas guardadas | `/api/v1/usuarios/me/busquedas-guardadas` |
 | RF-29 a RF-32 | Alertas de disponibilidad, detección, notificaciones y desactivación | `/api/v1/usuarios/me/alertas`, `GET /api/v1/usuarios/me/notificaciones` |
 | RF-33 a RF-35 | Publicar prenda de segunda mano con estado de conservación y precio | `POST /api/v1/segunda-mano` |
@@ -590,7 +589,7 @@ Swagger en Azure:
 
 | Integrante | Rol | Aporte |
 |---|---|---|
-| Juan Nicolás Álvarez Muñoz | Backend | Dockerización, imagen en Docker Hub, pipelines de CI/CD para QA y PROD, ambientes en Azure, diagramas (clases, componentes, base de datos, despliegue y secuencia) y documentación de despliegue. En el Sprint 4: datos de demostración, validación sobre PostgreSQL, set de pruebas de funcionamiento (parte A), probador virtual con Gemini, evidencias, documento de arquitectura y release final. |
+| Juan Nicolás Álvarez Muñoz | Backend | Dockerización, imagen en Docker Hub, pipelines de CI/CD para QA y PROD, ambientes en Azure, diagramas (clases, componentes, base de datos, despliegue y secuencia) y documentación de despliegue. En el Sprint 4: datos de demostración, validación sobre PostgreSQL, set de pruebas de funcionamiento (parte A), probador virtual con FASHN, evidencias, documento de arquitectura y release final. |
 | Daniel Valero Quiroga | Backend | Catálogo, inventario y búsqueda; autenticación con JWT; almacenes y geolocalización; personalización; alertas; moderación; verificación de almacenes; estados de cuenta; suscripciones y playlists populares. |
 | Juan Diego Valderrama Gaviria | Backend | Usuarios, preferencias y búsquedas guardadas; segunda mano; playlists; configuración de PostgreSQL y JPA; manejo global de errores y configuración de Swagger. |
 | Cristian Camilo Ortiz Sánchez | Diseño y documentación | Creación del repositorio, diagrama de clases inicial y diagramas de componentes iniciales. |

@@ -86,7 +86,7 @@ Dentro del Back-End se ven los trece módulos funcionales, con el mismo código 
 Los sistemas externos se conectan así:
 
 - **Mapbox:** lo usa el Front-End para dibujar el mapa. El Back-End solo entrega las coordenadas de los almacenes y calcula las distancias.
-- **Google Gemini:** lo usa el módulo de probador virtual para generar la imagen de la prueba.
+- **FASHN:** lo usa el módulo de probador virtual para generar la imagen de la prueba.
 - **PSE:** aparece con línea punteada porque está contemplado en el diseño de suscripciones, pero no está integrado. Las suscripciones se registran sin cobro.
 
 ## Diagrama de componentes específico
@@ -117,7 +117,7 @@ El diagrama específico muestra la organización interna del Back-End en Spring 
 | Chat | Conversaciones y mensajes entre comprador y vendedor. |
 | Probador virtual | Foto del comprador y generación de la prueba virtual. |
 
-El módulo de **probador virtual** tiene una diferencia respecto a los demás. `ProbadorVirtualServiceImpl` depende de la interfaz `ProbadorIA`, que implementa el adaptador `GeminiProbadorIA`; este adaptador es el único componente que se comunica con el sistema externo Google Gemini por HTTPS. Es la aplicación del patrón **Adapter**: si el proveedor cambia, solo se reemplaza el adaptador. Cuando Gemini no responde o no está configurado, el servicio usa `ComposicionProbador`, que arma una composición local de la prenda sobre la foto.
+El módulo de **probador virtual** tiene una diferencia respecto a los demás. `ProbadorVirtualServiceImpl` depende de la interfaz `ProbadorIA`, que implementa el adaptador `FashnProbadorIA`; este adaptador es el único componente que se comunica con el sistema externo FASHN por HTTPS. Es la aplicación del patrón **Adapter**: si el proveedor cambia, solo se reemplaza el adaptador. Cuando FASHN no responde o no está configurado, el servicio usa `ComposicionProbador`, que arma una composición local de la prenda sobre la foto.
 
 La franja gris inferior agrupa los componentes transversales:
 
