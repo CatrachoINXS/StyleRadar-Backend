@@ -29,8 +29,8 @@ StyleRadar es una plataforma web que conecta a compradores con almacenes de moda
 - [CI/CD](#cicd)
 - [Evidencias](#evidencias)
 - [Arquitectura implementada](#arquitectura-implementada)
-- [Alcance implementado por este backend](#alcance-implementado-por-este-backend)
-- [Trazabilidad funcional del Sprint 2](#trazabilidad-funcional-del-sprint-2)
+- [Trazabilidad funcional](#trazabilidad-funcional)
+- [Limitaciones conocidas](#limitaciones-conocidas)
 - [Integrantes](#integrantes)
 
 ## Ejecución de pruebas
@@ -42,7 +42,7 @@ mvn test
 mvn verify
 ```
 
-`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1469 pruebas sin fallos y 94,8 % de cobertura de líneas**.
+`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1471 pruebas sin fallos y 94,8 % de cobertura de líneas**.
 
 ![](style-radar/docs/evidencias/pruebas-mvn-verify.png)
 
@@ -249,7 +249,7 @@ Como actores tenemos a los *usuarios compradores, a los almacenes de moda, a las
 Cada uno de los susodichos interactúa de manera diferente en la plataforma, tal y como se menciona en el diagrama.
 
 ### Sistemas externos
-Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones y la *API del Probador Virtual* que se conecta a un servicio de IA para generar una imagen del usuario comprador con determinada prenda.
+Como sistemas externos están *Mapbox* para que los usuarios compradores puedan saber a donde tienen que ir para comprar su prenda. *PSE* como pasarela de pagos para las suscripciones, contemplada en el diseño pero aún no integrada (ver [Limitaciones conocidas](#limitaciones-conocidas)), y *Google Gemini* como servicio del probador virtual, que genera una imagen del usuario comprador con determinada prenda.
 
 ## Diagrama de clases
 
@@ -366,12 +366,12 @@ El documento de arquitectura del backend está en [`style-radar/docs/arquitectur
 
 ## Swagger/OpenAPI
 
-Con la aplicación en ejecución, la interfaz y el documento OpenAPI están disponibles en:
+La documentación de todos los endpoints está disponible en Swagger UI y en el documento OpenAPI:
 
-- `/swagger-ui.html`
-- `/v3/api-docs`
+- PROD: https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html y `/v3/api-docs`
+- Local: `http://localhost:8080/swagger-ui/index.html`
 
-Las interfaces del paquete `controller/docs` describen únicamente los endpoints implementados de prendas, catálogo, inventario, imágenes y búsqueda.
+Los endpoints protegidos se prueban con el botón **Authorize**, usando el token que devuelve `POST /api/v1/auth/login`.
 
 ## Roles y permisos
 
@@ -398,7 +398,7 @@ El sistema maneja cuatro roles: `COMPRADOR`, `ADMIN_ALMACEN`, `REPRESENTANTE_FUN
 | `GET /api/v1/fundaciones` (cercanas), `/api/v1/usuarios/me/donaciones` | GET, POST | `COMPRADOR` |
 | `/api/v1/fundaciones/mi-fundacion/solicitudes/**` (consultar, decidir, recepción) | GET, PATCH | `REPRESENTANTE_FUNDACION` |
 | `PATCH /api/v1/donaciones/{id}/recogida` | PATCH | `COMPRADOR` (donante) o `REPRESENTANTE_FUNDACION` (solo participantes) |
-| Resto de endpoints (alertas, notificaciones, feed y gestión del catálogo) | Todos | Cualquier usuario autenticado con JWT. Los servicios validan además que el usuario sea el dueño del recurso o administrador del almacén correspondiente |
+| Resto de endpoints (alertas, notificaciones, feed, recomendaciones y gestión del catálogo e inventario) | Todos | Cualquier usuario autenticado con JWT. En las rutas `/me` el recurso pertenece siempre al usuario del token |
 
 Las peticiones sin token reciben `401` y las que no tienen el rol requerido reciben `403`. Cada endpoint de usuarios, segunda mano, playlists, fundaciones, donaciones, probador y chat declara `@PreAuthorize` en su interfaz `controller/docs/*Api`; en las rutas `/me` el usuario sale siempre del JWT, nunca de la URL. CORS solo admite los orígenes de `CORS_ALLOWED_ORIGINS`. Al registrar una fundación, su representante recibe el rol `REPRESENTANTE_FUNDACION`.
 
@@ -563,91 +563,51 @@ El módulo mantiene una separación por responsabilidades:
 
 El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> Persistence Mapper -> Repository -> Entity -> PostgreSQL`; los casos simples omiten capas que no aportan transformación o reglas.
 
-## Alcance implementado por este backend
-
-- Publicación, consulta, edición y retiro de ítems del catálogo de un almacén.
-- Inventario por talla y cálculo derivado del stock disponible.
-- Registro de múltiples imágenes y respuesta basada en metadatos.
-- Cálculo de estados: agotada, últimas unidades, nueva prenda y disponible.
-- Búsqueda global con texto libre, filtros combinados y paginación.
-- Orden por distancia y reputación del almacén.
-- Fallback de prendas similares cuando una búsqueda textual no tiene coincidencias directas.
-
-### Alcance Sprint 3 — Juan Diego Valderrama (líder técnico)
+## Trazabilidad funcional
 
 | RF | Funcionalidad | Endpoint |
 |---|---|---|
-| RF-23 | Cargar fotografía frontal (JPEG/PNG, ≤ 5 MB, ≥ 300x400, vertical) | `POST /api/v1/usuarios/me/probador/foto` |
-| RF-24, RF-25, RF-26 | Seleccionar prenda, generar la prueba con Gemini (o la composición local si no está disponible) y mostrarla (PNG) | `POST /api/v1/usuarios/me/probador/pruebas` |
-| RF-27 | Eliminar la fotografía del probador | `DELETE /api/v1/usuarios/me/probador/foto` |
-| RF-40 | Iniciar chat con el vendedor (sin tiempo real; WebSockets en el Corte 3) | `POST /api/v1/segunda-mano/{id}/conversaciones` |
-| RF-41 | Coordinar la entrega por mensajes privados | `GET/POST /api/v1/conversaciones/{id}/mensajes` |
-| RF-42 | Marcar prenda de segunda mano para donación | `PATCH /api/v1/usuarios/me/segunda-mano/{id}/donacion` |
-| RF-43 | Consultar fundaciones activas cercanas, filtrables por tipo de prenda | `GET /api/v1/fundaciones` |
-| RF-44, RF-45 | Seleccionar fundación y enviar la solicitud | `POST /api/v1/usuarios/me/donaciones` |
-| RF-46 | Consultar solicitudes de la fundación | `GET /api/v1/fundaciones/mi-fundacion/solicitudes` |
-| RF-47 | Aceptar o rechazar (motivo obligatorio al rechazar) | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/decision` |
-| RF-48 | Coordinar punto y franja de recogida | `PATCH /api/v1/donaciones/{id}/recogida` |
-| RF-49 | Confirmar recepción; la prenda queda DONADA | `PATCH /api/v1/fundaciones/mi-fundacion/solicitudes/{id}/recepcion` |
-| RF-63, RF-64, RF-65 | Registrar, editar y desactivar fundaciones aliadas | `/api/v1/admin/fundaciones` |
-| RF-71, RNF-12 | Guardar playlist en el perfil; máximo 15 prendas por playlist | `POST /api/v1/playlists/{id}/guardar` |
+| RF-01 | Registrar usuario | `POST /api/v1/auth/registro`, `POST /api/v1/usuarios` |
+| RF-02 | Iniciar sesión | `POST /api/v1/auth/login` |
+| RF-03, RF-04 | Preferencias de estilo y tallas habituales | `PUT /api/v1/usuarios/me/preferencias-estilo`, `PUT /api/v1/usuarios/me/tallas-habituales` |
+| RF-05, RF-06 | Feed personalizado y recomendaciones | `GET /api/v1/usuarios/me/feed`, `GET /api/v1/usuarios/me/recomendaciones` |
+| RF-07 a RF-16 | Búsqueda por texto, filtros, orden por distancia o reputación y prendas similares | `GET /api/v1/catalogo/buscar` |
+| RF-17, RF-18 | Almacenes en el mapa y filtro por categoría | `GET /api/v1/almacenes` |
+| RF-19, RF-20 | Catálogo resumido y novedades semanales | `GET /api/v1/almacenes/{nit}/catalogo/resumen`, `GET /api/v1/almacenes/{nit}/catalogo/novedades` |
+| RF-21 | Distancia entre usuario y almacén | `GET /api/v1/almacenes/{nit}/distancia` |
+| RF-22 | Catálogo de un almacén | `GET /api/v1/almacenes/{nit}/catalogo` |
+| RF-23 a RF-27 | Probador virtual: foto, prueba con Gemini o composición local, eliminación | `/api/v1/usuarios/me/probador/foto`, `POST /api/v1/usuarios/me/probador/pruebas` |
+| RF-28 | Búsquedas guardadas | `/api/v1/usuarios/me/busquedas-guardadas` |
+| RF-29 a RF-32 | Alertas de disponibilidad, detección, notificaciones y desactivación | `/api/v1/usuarios/me/alertas`, `GET /api/v1/usuarios/me/notificaciones` |
+| RF-33 a RF-35 | Publicar prenda de segunda mano con estado de conservación y precio | `POST /api/v1/segunda-mano` |
+| RF-36 | Buscar prendas de otros usuarios | `GET /api/v1/segunda-mano` |
+| RF-37 a RF-39 | Editar, marcar como vendida y retirar una publicación | `/api/v1/usuarios/me/segunda-mano/{id}` |
+| RF-40, RF-41 | Chat con el vendedor y coordinación de entrega | `POST /api/v1/segunda-mano/{id}/conversaciones`, `/api/v1/conversaciones/{id}/mensajes` |
+| RF-42 a RF-49 | Donaciones: marcar prenda, fundaciones cercanas, solicitud, decisión, recogida y recepción | `PATCH /api/v1/usuarios/me/segunda-mano/{id}/donacion`, `/api/v1/usuarios/me/donaciones`, `GET /api/v1/fundaciones`, `/api/v1/fundaciones/mi-fundacion/solicitudes`, `PATCH /api/v1/donaciones/{id}/recogida` |
+| RF-50 a RF-55, RF-58 | Publicar, editar y retirar prendas del catálogo con fotos, tallas, precio y atributos | `/api/v1/almacenes/{nit}/catalogo`, `/api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes`, `/tallas` |
+| RF-56, RF-57, RF-59, RF-60 | Disponibilidad por talla y estados AGOTADA, ULTIMAS_UNIDADES y NUEVA_PRENDA | `PATCH /api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}` |
+| RF-61 | Moderación de publicaciones | `/api/v1/admin/catalogo/moderacion` |
+| RF-62 | Verificación de almacenes | `/api/v1/admin/almacenes/verificacion` |
+| RF-63 a RF-65 | Registrar, editar y desactivar fundaciones | `/api/v1/admin/fundaciones` |
+| RF-66 | Cambiar estado de usuario | `PATCH /api/v1/admin/usuarios/{id}/estado` |
+| RF-67, RF-68 | Suscripción de almacenes y cancelación de la renovación | `/api/v1/almacenes/{nit}/suscripciones` |
+| RF-69 a RF-71 | Crear playlists, gestionar sus prendas, me gusta y guardado | `/api/v1/playlists`, `/api/v1/usuarios/me/playlists` |
+| RF-72 | Playlists populares | `GET /api/v1/playlists/populares` |
 
-Ciclo de una donación: `PENDIENTE → ACEPTADA | RECHAZADA → COORDINADA → RECIBIDA`. Una prenda solo tiene una solicitud en curso; si se rechaza, puede ofrecerse a otra fundación.
+## Limitaciones conocidas
 
-## Trazabilidad funcional del Sprint 2
-
-Durante este Sprint se implementó el módulo de catálogo, inventario y búsqueda de StyleRadar, cubriendo los siguientes requerimientos funcionales:
-
-| Requerimiento | Funcionalidad |
-|---|---|
-| RF-07 | Búsqueda de prendas mediante texto libre |
-| RF-08 | Filtro de prendas por tipo |
-| RF-09 | Filtro de prendas por color |
-| RF-10 | Filtro de prendas por talla disponible |
-| RF-11 | Filtro de prendas por rango de precio |
-| RF-12 | Filtro de prendas por marca |
-| RF-13 | Filtro de prendas por estilo |
-| RF-14 | Ordenamiento de resultados por distancia |
-| RF-15 | Ordenamiento por reputación del almacén |
-| RF-16 | Consulta de prendas similares cuando no existen coincidencias directas |
-| RF-22 | Consulta del catálogo de un almacén |
-| RF-50 | Publicación de prendas en el catálogo |
-| RF-51 | Registro de fotografías de prendas |
-| RF-52 | Registro de tallas disponibles |
-| RF-53 | Registro del precio de una prenda |
-| RF-54 | Registro de atributos utilizados para búsqueda |
-| RF-55 | Edición de prendas del catálogo |
-| RF-56 | Actualización de disponibilidad por talla |
-| RF-57 | Ocultamiento de prendas agotadas en resultados públicos |
-| RF-58 | Retiro de prendas del catálogo |
-| RF-59 | Identificación automática de últimas unidades |
-| RF-60 | Identificación automática de nuevas llegadas |
-
-### Endpoints principales
-
-El módulo expone, entre otros, los siguientes endpoints:
-
-```text
-GET    /api/v1/prendas
-
-GET    /api/v1/almacenes/{nit}/catalogo
-POST   /api/v1/almacenes/{nit}/catalogo
-PUT    /api/v1/almacenes/{nit}/catalogo/{itemId}
-DELETE /api/v1/almacenes/{nit}/catalogo/{itemId}
-
-PUT    /api/v1/almacenes/{nit}/catalogo/{itemId}/tallas
-PATCH  /api/v1/almacenes/{nit}/catalogo/{itemId}/inventario/{talla}
-
-POST   /api/v1/almacenes/{nit}/catalogo/{itemId}/imagenes
-
-GET    /api/v1/catalogo/buscar
-```
+| Limitación | Impacto | Cómo se resolvería |
+|---|---|---|
+| La gestión del catálogo, el inventario y las imágenes exige un usuario autenticado, pero no valida que sea el administrador del almacén del NIT. | Un usuario autenticado podría modificar el catálogo de otro almacén. | Exigir el rol `ADMIN_ALMACEN` y verificar su asociación con el NIT, como ya se hace en las suscripciones. |
+| Las suscripciones se registran sin pago; PSE no está integrado. | No hay cobro real de los planes. | Integrar la pasarela con un adaptador, igual que el probador virtual. |
+| El chat no es en tiempo real. | Los mensajes se consultan; no llegan de forma instantánea. | Usar WebSockets para el envío de mensajes. |
+| Los tokens JWT no se pueden revocar antes de su vencimiento. | Un token sigue siendo válido hasta que expira, salvo que la cuenta se inactive o bloquee. | Mantener una lista de tokens revocados o usar tokens de corta duración con renovación. |
 
 ## Integrantes
 
 | Integrante | Rol | Aporte |
 |---|---|---|
-| Juan Nicolás Álvarez Muñoz | Backend | Dockerización, imagen en Docker Hub, pipelines de CI/CD para QA y PROD, ambientes en Azure, diagramas (clases, componentes, base de datos y despliegue) y documentación de despliegue. |
+| Juan Nicolás Álvarez Muñoz | Backend | Dockerización, imagen en Docker Hub, pipelines de CI/CD para QA y PROD, ambientes en Azure, diagramas (clases, componentes, base de datos, despliegue y secuencia) y documentación de despliegue. En el Sprint 4: datos de demostración, validación sobre PostgreSQL, set de pruebas de funcionamiento (parte A), probador virtual con Gemini, evidencias, documento de arquitectura y release final. |
 | Daniel Valero Quiroga | Backend | Catálogo, inventario y búsqueda; autenticación con JWT; almacenes y geolocalización; personalización; alertas; moderación; verificación de almacenes; estados de cuenta; suscripciones y playlists populares. |
 | Juan Diego Valderrama Gaviria | Backend | Usuarios, preferencias y búsquedas guardadas; segunda mano; playlists; configuración de PostgreSQL y JPA; manejo global de errores y configuración de Swagger. |
 | Cristian Camilo Ortiz Sánchez | Diseño y documentación | Creación del repositorio, diagrama de clases inicial y diagramas de componentes iniciales. |
