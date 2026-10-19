@@ -28,7 +28,6 @@ StyleRadar es una plataforma web que conecta a compradores con almacenes de moda
 - [Decisión de persistencia](#decisión-de-persistencia)
 - [CI/CD](#cicd)
 - [Evidencias](#evidencias)
-- [Arquitectura implementada](#arquitectura-implementada)
 - [Trazabilidad funcional](#trazabilidad-funcional)
 - [Limitaciones conocidas](#limitaciones-conocidas)
 - [Integrantes](#integrantes)
@@ -371,8 +370,6 @@ La documentación de todos los endpoints está disponible en Swagger UI y en el 
 - PROD: https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html y `/v3/api-docs`
 - Local: `http://localhost:8080/swagger-ui/index.html`
 
-Los endpoints protegidos se prueban con el botón **Authorize**, usando el token que devuelve `POST /api/v1/auth/login`.
-
 ## Roles y permisos
 
 El sistema maneja cuatro roles: `COMPRADOR`, `ADMIN_ALMACEN`, `REPRESENTANTE_FUNDACION` y `ADMIN_STYLERADAR`. Los permisos se definen en `SecurityConfig`:
@@ -549,20 +546,6 @@ Swagger en Azure:
 
 ![](style-radar/docs/evidencias/swagger-prod.png)
 
-## Arquitectura implementada
-
-El módulo mantiene una separación por responsabilidades:
-
-1. Los `Controller` atienden HTTP y delegan la conversión de contratos a los mappers de presentación.
-2. El modelo de `Domain` representa los datos usados por los casos de uso.
-3. Los `Service` coordinan reglas, validadores y operaciones del módulo.
-4. Los `Validator` y calculadores contienen reglas específicas de inventario, estados, distancia y similitud.
-5. Los mappers de persistencia convierten entre dominio y entidades JPA.
-6. Los `Repository` acceden a PostgreSQL mediante Spring Data JPA.
-7. Las `Entity` representan tablas, restricciones y relaciones de persistencia.
-
-El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> Persistence Mapper -> Repository -> Entity -> PostgreSQL`; los casos simples omiten capas que no aportan transformación o reglas.
-
 ## Trazabilidad funcional
 
 | RF | Funcionalidad | Endpoint |
@@ -598,10 +581,10 @@ El flujo habitual es `Controller -> Mapper -> Domain -> Service -> Validator -> 
 
 | Limitación | Impacto | Cómo se resolvería |
 |---|---|---|
-| La gestión del catálogo, el inventario y las imágenes exige un usuario autenticado, pero no valida que sea el administrador del almacén del NIT. | Un usuario autenticado podría modificar el catálogo de otro almacén. | Exigir el rol `ADMIN_ALMACEN` y verificar su asociación con el NIT, como ya se hace en las suscripciones. |
-| Las suscripciones se registran sin pago; PSE no está integrado. | No hay cobro real de los planes. | Integrar la pasarela con un adaptador, igual que el probador virtual. |
-| El chat no es en tiempo real. | Los mensajes se consultan; no llegan de forma instantánea. | Usar WebSockets para el envío de mensajes. |
-| Los tokens JWT no se pueden revocar antes de su vencimiento. | Un token sigue siendo válido hasta que expira, salvo que la cuenta se inactive o bloquee. | Mantener una lista de tokens revocados o usar tokens de corta duración con renovación. |
+| La gestión del catálogo pide iniciar sesión, pero no comprueba que el usuario administre ese almacén. | Un usuario con sesión podría modificar el catálogo de otro almacén. | Exigir el rol `ADMIN_ALMACEN` y su vínculo con el almacén, como ya se hace en las suscripciones. |
+| Las suscripciones se registran sin pago, porque PSE no está integrado. | Los planes no tienen cobro real. | Integrar la pasarela de pagos por medio de un adaptador, como en el probador virtual. |
+| El chat no funciona en tiempo real. | Los mensajes nuevos se ven al consultar la conversación. | Enviar los mensajes con WebSockets. |
+| Una sesión iniciada no se puede cerrar antes de que venza su token. | El token sigue siendo válido hasta su vencimiento, salvo que la cuenta se inactive o se bloquee. | Registrar los tokens revocados o usar tokens de corta duración. |
 
 ## Integrantes
 
