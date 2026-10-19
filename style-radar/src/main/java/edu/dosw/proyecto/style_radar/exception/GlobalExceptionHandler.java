@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -155,7 +157,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             MethodArgumentTypeMismatchException.class,
             HttpMessageNotReadableException.class,
-            MissingServletRequestPartException.class
+            MissingServletRequestPartException.class,
+            HttpMediaTypeNotSupportedException.class
     })
     public ResponseEntity<ErrorResponseDTO> handleInvalidHttpRequest(
             Exception exception, HttpServletRequest request) {
@@ -165,6 +168,14 @@ public class GlobalExceptionHandler {
                 "La solicitud contiene parámetros inválidos",
                 request.getRequestURI(),
                 Map.of());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException exception, HttpServletRequest request) {
+        log.warn("Método {} no permitido en {}", exception.getMethod(), request.getRequestURI());
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "El método HTTP no está permitido para esta ruta",
+                request.getRequestURI(), Map.of());
     }
 
     @ExceptionHandler(Exception.class)
