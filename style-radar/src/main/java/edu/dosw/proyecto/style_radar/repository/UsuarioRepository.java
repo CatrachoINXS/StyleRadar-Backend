@@ -68,10 +68,10 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     @Query("select (count(u) > 0) from UsuarioEntity u where lower(trim(u.email)) = :email")
     boolean existsByEmailNormalizado(@Param("email") String email);
 
-    @EntityGraph(attributePaths = { "preferenciasEstilo", "tallasHabituales", "roles" })
+    @EntityGraph(attributePaths = { "preferenciasEstilo", "tallasHabitualesPorTipo", "roles" })
     Optional<UsuarioEntity> findByEmail(String email);
 
     @Override
-    @EntityGraph(attributePaths = { "preferenciasEstilo", "tallasHabituales", "roles" })
+    @EntityGraph(attributePaths = { "preferenciasEstilo", "tallasHabitualesPorTipo", "roles" })
     Optional<UsuarioEntity> findById(Long id);
 }

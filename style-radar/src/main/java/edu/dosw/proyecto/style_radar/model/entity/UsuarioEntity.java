@@ -10,6 +10,7 @@ import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
 import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
+import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -77,12 +78,9 @@ public class UsuarioEntity {
     @Builder.Default
     private Set<Estilo> preferenciasEstilo = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "usuario_tallas_habituales", joinColumns = @JoinColumn(name = "usuario_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "talla")
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private Set<Talla> tallasHabituales = new HashSet<>();
+    private Set<UsuarioTallaHabitualEntity> tallasHabitualesPorTipo = new HashSet<>();
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -96,8 +94,9 @@ public class UsuarioEntity {
     // Conserva el constructor previo; la trazabilidad de cuentas históricas es nullable.
     public UsuarioEntity(Long id, String nombre, String email, String telefono, Instant fechaRegistro,
             Set<Rol> roles, EstadoCuenta estadoCuenta, Set<Estilo> preferenciasEstilo,
-            Set<Talla> tallasHabituales, List<BusquedaGuardadaEntity> busquedasGuardadas) {
+            Set<UsuarioTallaHabitualEntity> tallasHabitualesPorTipo,
+            List<BusquedaGuardadaEntity> busquedasGuardadas) {
         this(id, nombre, email, telefono, fechaRegistro, roles, estadoCuenta, preferenciasEstilo,
-                tallasHabituales, busquedasGuardadas, null, null, null);
+                tallasHabitualesPorTipo, busquedasGuardadas, null, null, null);
     }
 }

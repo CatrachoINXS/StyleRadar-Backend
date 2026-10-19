@@ -71,7 +71,7 @@ class GestionEstadoCuentaServiceTest {
     void seisTransicionesConFechaServidorYActorAutenticado(EstadoCuenta anterior, EstadoCuenta nuevo) {
         // Arrange
         objetivo.setEstadoCuenta(anterior); objetivo.setTelefono("123");
-        objetivo.getPreferenciasEstilo().add(Estilo.FORMAL); objetivo.getTallasHabituales().add(Talla.M);
+        objetivo.getPreferenciasEstilo().add(Estilo.FORMAL); objetivo.getTallasHabitualesPorTipo().clear();
         var roles = Set.copyOf(objetivo.getRoles()); var fechaRegistro = objetivo.getFechaRegistro();
         // Act
         var r = service.cambiar(2L, principal, request(nuevo, "  Revisión  "));
@@ -80,7 +80,7 @@ class GestionEstadoCuentaServiceTest {
         assertThat(r.administradorCambioEstadoId()).isEqualTo(1L); assertThat(r.motivoCambioEstado()).isEqualTo("Revisión");
         assertThat(objetivo.getRoles()).isEqualTo(roles); assertThat(objetivo.getFechaRegistro()).isEqualTo(fechaRegistro);
         assertThat(objetivo.getPreferenciasEstilo()).containsExactly(Estilo.FORMAL);
-        assertThat(objetivo.getTallasHabituales()).containsExactly(Talla.M); assertThat(objetivo.getTelefono()).isEqualTo("123");
+        assertThat(objetivo.getTallasHabitualesPorTipo()).isEmpty(); assertThat(objetivo.getTelefono()).isEqualTo("123");
         verifyNoInteractions(credenciales); verify(usuarios).flush(); verify(usuarios, never()).delete(any());
     }
 

@@ -94,7 +94,7 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
             case "listar" -> get(base + "/playlists");
             case "consulta" -> get("/api/v1/playlists/" + coleccion.getId());
             case "preferencias" -> put(base + "/preferencias-estilo").content("{\"preferencias\":[\"FORMAL\"]}");
-            case "tallas" -> put(base + "/tallas-habituales").content("{\"tallas\":[\"M\"]}");
+            case "tallas" -> put(base + "/tallas-habituales").content("{\"tallasPorTipo\":[{\"tipoPrenda\":\"SUPERIOR\",\"tallas\":[\"M\"]}]}");
             case "guardarBusqueda" -> post(base + "/busquedas-guardadas").content("{\"nombre\":\"Nueva\",\"query\":\"Camisa\"}");
             case "leerBusquedas" -> get(base + "/busquedas-guardadas");
             case "eliminarBusqueda" -> delete(base + "/busquedas-guardadas/" + busqueda.getId());
@@ -112,7 +112,7 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
     String estadoPersistido() {
         releer();
         var resultado = new ArrayList<Object>();
-        for (String tabla : List.of("usuarios", "usuario_preferencias_estilo", "usuario_tallas_habituales",
+        for (String tabla : List.of("usuarios", "usuario_preferencias_estilo", "usuario_tallas_habituales_por_tipo",
                 "busquedas_guardadas", "playlists", "playlist_prendas", "playlist_likes",
                 "publicaciones_segunda_mano", "prendas")) {
             var filas = em.createNativeQuery("select * from " + tabla).getResultList();
@@ -206,7 +206,7 @@ class CierreSeguridadHttpIntegrationTest extends PlaylistsPopularesFixtures {
         releer();
         var persistido = em.find(UsuarioEntity.class, usuario.getId());
         assertThat(persistido.getPreferenciasEstilo()).containsExactly(Estilo.FORMAL);
-        assertThat(persistido.getTallasHabituales()).containsExactly(Talla.M);
+        assertThat(persistido.getTallasHabitualesPorTipo()).hasSize(1);
         assertThat(em.find(BusquedaGuardadaEntity.class, busqueda.getId())).isNull();
     }
 

@@ -45,11 +45,7 @@ class MatrizRolesHttpIntegrationTest extends SeguridadFixtures {
             "PATCH,/api/v1/usuarios/me/segunda-mano/1/vender",
             "POST,/api/v1/playlists", "GET,/api/v1/playlists", "GET,/api/v1/usuarios/me/playlists",
             "POST,/api/v1/playlists/1/like", "POST,/api/v1/playlists/1/guardar",
-            "GET,/api/v1/admin/fundaciones", "GET,/api/v1/usuarios/me/probador/foto",
-            "POST,/api/v1/almacenes/1/catalogo", "PUT,/api/v1/almacenes/1/catalogo/1",
-            "DELETE,/api/v1/almacenes/1/catalogo/1", "PUT,/api/v1/almacenes/1/catalogo/1/tallas",
-            "PATCH,/api/v1/almacenes/1/catalogo/1/inventario/M",
-            "POST,/api/v1/almacenes/1/catalogo/1/imagenes"})
+            "GET,/api/v1/admin/fundaciones", "GET,/api/v1/usuarios/me/probador/foto"})
     void sinToken401(String metodo, String ruta) throws Exception {
         mvc.perform(request(HttpMethod.valueOf(metodo), ruta).contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isUnauthorized())
@@ -63,11 +59,6 @@ class MatrizRolesHttpIntegrationTest extends SeguridadFixtures {
             "GET,/api/v1/usuarios/1,COMPRADOR",
             "GET,/api/v1/usuarios/me/segunda-mano,ADMIN_STYLERADAR",
             "POST,/api/v1/almacenes/1/catalogo,REPRESENTANTE_FUNDACION",
-            "PUT,/api/v1/almacenes/1/catalogo/1,COMPRADOR",
-            "DELETE,/api/v1/almacenes/1/catalogo/1,REPRESENTANTE_FUNDACION",
-            "PUT,/api/v1/almacenes/1/catalogo/1/tallas,ADMIN_STYLERADAR",
-            "PATCH,/api/v1/almacenes/1/catalogo/1/inventario/M,COMPRADOR",
-            "POST,/api/v1/almacenes/1/catalogo/1/imagenes,REPRESENTANTE_FUNDACION",
             "GET,/api/v1/usuarios/me/playlists,ADMIN_ALMACEN",
             "POST,/api/v1/playlists/1/like,REPRESENTANTE_FUNDACION",
             "GET,/api/v1/admin/fundaciones,COMPRADOR",

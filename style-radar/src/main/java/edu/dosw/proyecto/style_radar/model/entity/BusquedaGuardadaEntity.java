@@ -16,6 +16,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -56,6 +58,14 @@ public class BusquedaGuardadaEntity {
 
     @Enumerated(EnumType.STRING)
     private Estilo estilo;
+
+    @DecimalMin(value = "-90.0", inclusive = true)
+    @DecimalMax(value = "90.0", inclusive = true)
+    private Double latitud;
+
+    @DecimalMin(value = "-180.0", inclusive = true)
+    @DecimalMax(value = "180.0", inclusive = true)
+    private Double longitud;
 
     @Column(nullable = false, updatable = false)
     private Instant fechaCreacion;

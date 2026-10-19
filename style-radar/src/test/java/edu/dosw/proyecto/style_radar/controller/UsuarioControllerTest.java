@@ -165,7 +165,12 @@ class UsuarioControllerTest {
     void actualizarTallasHabitualesShouldReturnOk() throws Exception {
         String requestBody = """
                 {
-                  "tallas": ["M", "L"]
+                  "tallasPorTipo": [
+                    {
+                      "tipoPrenda": "SUPERIOR",
+                      "tallas": ["M", "L"]
+                    }
+                  ]
                 }
                 """;
         Usuario domain = Usuario.builder().id(1L).tallasHabituales(Set.of(Talla.M, Talla.L)).build();

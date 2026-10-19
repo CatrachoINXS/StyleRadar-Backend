@@ -4,6 +4,7 @@ import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -43,6 +44,14 @@ public class GuardarBusquedaRequestDTO {
     private String marca;
 
     private Estilo estilo;
+
+    @DecimalMin(value = "-90.0", inclusive = true, message = "latitud debe estar entre -90 y 90")
+    @DecimalMax(value = "90.0", inclusive = true, message = "latitud debe estar entre -90 y 90")
+    private Double latitud;
+
+    @DecimalMin(value = "-180.0", inclusive = true, message = "longitud debe estar entre -180 y 180")
+    @DecimalMax(value = "180.0", inclusive = true, message = "longitud debe estar entre -180 y 180")
+    private Double longitud;
 
     @AssertTrue(message = "precioMin no puede ser mayor que precioMax")
     public boolean isRangoPrecioValido() {

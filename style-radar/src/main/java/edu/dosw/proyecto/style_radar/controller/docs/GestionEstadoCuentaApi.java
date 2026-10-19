@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.request.*;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
         @ApiResponse(responseCode = "422", description = "Autocambio o pérdida del último administrador operativo"),
         @ApiResponse(responseCode = "500", description = "Error técnico")})
 public interface GestionEstadoCuentaApi {
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @GetMapping
     @Operation(summary = "Consultar cuentas", description = "ROLE_ADMIN_STYLERADAR. Filtro opcional ACTIVA, INACTIVA, BLOQUEADA. "
             + "ACTIVA incluye NULL histórico efectivo, sin migrarlo. page=0, size=20, máximo 100; orden id ASC; paginación en BD.")
@@ -32,12 +34,14 @@ public interface GestionEstadoCuentaApi {
             @Valid @ParameterObject @ModelAttribute CuentasConsultaRequestDTO request,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor);
 
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @GetMapping("/{id}")
     @Operation(summary = "Consultar cuenta y última decisión", description = "ROLE_ADMIN_STYLERADAR. Estado efectivo y última modificación, "
             + "sin credenciales ni datos privados. NULL histórico se muestra ACTIVA; metadatos nulos no representan una decisión.")
     ResponseEntity<CuentaAdministrativaResponseDTO> consultarUno(@PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor);
 
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PatchMapping("/{id}/estado")
     @Operation(summary = "Activar, inactivar o bloquear una cuenta", description = "ROLE_ADMIN_STYLERADAR. "
             + "ACTIVA, INACTIVA, BLOQUEADA; todas las transiciones entre estados distintos. BLOQUEADA exige motivo no vacío; "

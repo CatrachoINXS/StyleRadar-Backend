@@ -5,8 +5,8 @@ import java.util.Set;
 
 import edu.dosw.proyecto.style_radar.model.domain.BusquedaGuardada;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
-import edu.dosw.proyecto.style_radar.model.domain.Talla;
 import edu.dosw.proyecto.style_radar.model.domain.Usuario;
+import edu.dosw.proyecto.style_radar.model.dto.request.ActualizarTallasHabitualesRequestDTO;
 
 public interface IUsuarioService {
 
@@ -16,7 +16,7 @@ public interface IUsuarioService {
 
     Usuario actualizarPreferenciasEstilo(Long id, Set<Estilo> preferencias);
 
-    Usuario actualizarTallasHabituales(Long id, Set<Talla> tallas);
+    Usuario actualizarTallasHabituales(Long id, ActualizarTallasHabitualesRequestDTO request);
 
     BusquedaGuardada guardarBusqueda(Long usuarioId, BusquedaGuardada busqueda);
 

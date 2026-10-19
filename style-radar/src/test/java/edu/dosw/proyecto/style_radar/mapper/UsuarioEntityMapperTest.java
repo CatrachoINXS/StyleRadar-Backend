@@ -3,6 +3,7 @@ package edu.dosw.proyecto.style_radar.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ class UsuarioEntityMapperTest {
                 .telefono("3101234567")
                 .fechaRegistro(Instant.parse("2026-09-01T10:00:00Z"))
                 .preferenciasEstilo(Set.of(Estilo.FORMAL))
-                .tallasHabituales(Set.of(Talla.L))
+                .tallasHabituales(new HashSet<>())
                 .build();
 
         UsuarioEntity entity = mapper.toEntity(domain);
@@ -36,7 +37,7 @@ class UsuarioEntityMapperTest {
         assertThat(entity.getNombre()).isEqualTo("Carlos Pérez");
         assertThat(entity.getEmail()).isEqualTo("carlos@example.com");
         assertThat(entity.getPreferenciasEstilo()).containsExactly(Estilo.FORMAL);
-        assertThat(entity.getTallasHabituales()).containsExactly(Talla.L);
+        assertThat(entity.getTallasHabitualesPorTipo()).isEmpty();
     }
 
     @Test
@@ -48,7 +49,7 @@ class UsuarioEntityMapperTest {
                 .telefono("3101234567")
                 .fechaRegistro(Instant.parse("2026-09-01T10:00:00Z"))
                 .preferenciasEstilo(Set.of(Estilo.FORMAL))
-                .tallasHabituales(Set.of(Talla.L))
+                .tallasHabitualesPorTipo(new HashSet<>())
                 .build();
 
         Usuario domain = mapper.toDomain(entity);

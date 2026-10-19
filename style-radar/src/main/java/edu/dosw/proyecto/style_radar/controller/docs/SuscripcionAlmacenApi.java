@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.request.*;
@@ -29,6 +30,7 @@ public interface SuscripcionAlmacenApi {
             + "Solo recibe planId existente. Período desde Clock UTC; una vigente por NIT. "
             + "No registra pagos ni facturas. La intención de renovación inicia habilitada, sin motor automático.")
     @ApiResponse(responseCode = "201", description = "Suscripción registrada, sin afirmar pago")
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     @PostMapping
     ResponseEntity<SuscripcionAlmacenResponseDTO> crear(@PathVariable String nit,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor,
@@ -36,6 +38,7 @@ public interface SuscripcionAlmacenApi {
 
     @Operation(summary = "Consultar suscripción vigente propia", description = "ROLE_ADMIN_ALMACEN con asociación "
             + "persistida al NIT. Vigencia [inicioPeriodo, finPeriodo) UTC; ausencia o vencimiento devuelve 404.")
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     @GetMapping("/vigente")
     ResponseEntity<SuscripcionAlmacenResponseDTO> vigente(@PathVariable String nit,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor);
@@ -44,6 +47,7 @@ public interface SuscripcionAlmacenApi {
             + "al NIT. Solo renovacionHabilitada=false. La suscripción debe pertenecer al NIT y estar vigente. "
             + "Idempotente: conserva la primera fecha de cancelación, estado ACTIVA, plan e inicio/fin del período. "
             + "No cancela anticipadamente ni ejecuta cobros; true devuelve 400.")
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     @PatchMapping("/{id}/renovacion")
     ResponseEntity<SuscripcionAlmacenResponseDTO> cancelar(@PathVariable String nit, @PathVariable Long id,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal actor,
@@ -52,6 +56,7 @@ public interface SuscripcionAlmacenApi {
     @Operation(summary = "Consultar historial propio", description = "ROLE_ADMIN_ALMACEN con asociación persistida "
             + "al NIT. page=0, size=20, máximo 100; fechaCreacion DESC, id DESC en BD. "
             + "Estado efectivo FINALIZADA al vencer, aunque la fila todavía conserve ACTIVA. Conserva historial.")
+    @PreAuthorize("hasRole('ADMIN_ALMACEN')")
     @GetMapping
     ResponseEntity<PageResponseDTO<SuscripcionAlmacenResponseDTO>> historial(@PathVariable String nit,
             @Valid @ParameterObject @ModelAttribute SuscripcionesConsultaRequestDTO request,

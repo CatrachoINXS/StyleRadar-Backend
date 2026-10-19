@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import edu.dosw.proyecto.style_radar.model.domain.*;
 import edu.dosw.proyecto.style_radar.model.entity.*;
+import edu.dosw.proyecto.style_radar.model.entity.UsuarioTallaHabitualEntity;
 import edu.dosw.proyecto.style_radar.repository.*;
 import edu.dosw.proyecto.style_radar.service.IPersonalizacionService;
 import jakarta.persistence.EntityManager;
@@ -31,15 +32,43 @@ public abstract class PersonalizacionFixtures {
     }
 
     protected UsuarioEntity usuario(String email, Set<Estilo> estilos, Set<Talla> tallas) {
+        var tallasPorTipo = tallas.stream()
+                .map(t -> {
+                    var th = UsuarioTallaHabitualEntity.builder()
+                            .tipoPrenda(TipoPrenda.SUPERIOR)
+                            .talla(t)
+                            .build();
+                    th.setUsuario(null); // se asigna por cascade al persistir el usuario
+                    return th;
+                })
+                .collect(java.util.stream.Collectors.toSet());
         var u = UsuarioEntity.builder().nombre("Comprador").email(email).fechaRegistro(FECHA)
-                .preferenciasEstilo(new HashSet<>(estilos)).tallasHabituales(new HashSet<>(tallas)).build();
+                .preferenciasEstilo(new HashSet<>(estilos))
+                .tallasHabitualesPorTipo(tallasPorTipo).build();
+        tallasPorTipo.forEach(th -> th.setUsuario(u));
         em.persist(u);
         return u;
     }
 
     protected void perfil(Set<Estilo> estilos, Set<Talla> tallas) {
         usuario.setPreferenciasEstilo(new HashSet<>(estilos));
-        usuario.setTallasHabituales(new HashSet<>(tallas));
+        if (tallas == null) {
+            usuario.getTallasHabitualesPorTipo().clear();
+            return;
+        }
+        Set<Talla> actuales = usuario.getTallasHabitualesPorTipo().stream()
+                .map(UsuarioTallaHabitualEntity::getTalla)
+                .collect(java.util.stream.Collectors.toSet());
+        usuario.getTallasHabitualesPorTipo().removeIf(th -> !tallas.contains(th.getTalla()));
+        for (var t : tallas) {
+            if (!actuales.contains(t)) {
+                var th = new UsuarioTallaHabitualEntity();
+                th.setUsuario(usuario);
+                th.setTipoPrenda(TipoPrenda.SUPERIOR);
+                th.setTalla(t);
+                usuario.getTallasHabitualesPorTipo().add(th);
+            }
+        }
     }
 
     protected ItemCatalogoEntity item(String nombre, Estilo estilo, Talla talla, int unidades, long recencia) {

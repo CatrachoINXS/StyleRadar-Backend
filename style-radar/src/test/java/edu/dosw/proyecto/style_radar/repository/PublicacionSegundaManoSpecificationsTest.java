@@ -51,7 +51,7 @@ class PublicacionSegundaManoSpecificationsTest {
                 .telefono("3000000000")
                 .fechaRegistro(FECHA)
                 .preferenciasEstilo(new HashSet<>())
-                .tallasHabituales(new HashSet<>())
+                .tallasHabitualesPorTipo(new HashSet<>())
                 .busquedasGuardadas(new ArrayList<>())
                 .build();
         entityManager.persist(usuario);

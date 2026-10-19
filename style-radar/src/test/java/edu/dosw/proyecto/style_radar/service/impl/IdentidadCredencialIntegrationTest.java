@@ -31,9 +31,11 @@ import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.Rol;
 import edu.dosw.proyecto.style_radar.model.domain.Talla;
+import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.model.domain.Usuario;
 import edu.dosw.proyecto.style_radar.model.entity.CredencialEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
+import edu.dosw.proyecto.style_radar.model.entity.UsuarioTallaHabitualEntity;
 import edu.dosw.proyecto.style_radar.repository.CredencialRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.ICredencialService;
@@ -136,7 +138,12 @@ class IdentidadCredencialIntegrationTest {
         usuario.setRoles(new HashSet<>(roles));
         usuario.setEstadoCuenta(estado);
         usuario.setPreferenciasEstilo(new HashSet<>(Set.of(Estilo.CASUAL)));
-        usuario.setTallasHabituales(new HashSet<>(Set.of(Talla.M)));
+        var tallaM = UsuarioTallaHabitualEntity.builder()
+                .tipoPrenda(TipoPrenda.SUPERIOR)
+                .talla(Talla.M)
+                .build();
+        tallaM.setUsuario(usuario);
+        usuario.setTallasHabitualesPorTipo(new HashSet<>(Set.of(tallaM)));
 
         // Act
         usuarioRepository.saveAndFlush(usuario);

@@ -2,6 +2,7 @@ package edu.dosw.proyecto.style_radar.controller.docs;
 
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import edu.dosw.proyecto.style_radar.model.dto.request.*;
@@ -28,12 +29,14 @@ public interface ModeracionCatalogoApi {
     @Operation(summary = "Consultar publicaciones para moderación", description = "ROLE_ADMIN_STYLERADAR. "
             + "estado=PENDIENTE, page=0, size=20; máximo 100. Orden fechaPublicacion ASC, itemId ASC. "
             + "NULL histórico se incluye en NO_REQUERIDA.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @GetMapping("/moderacion")
     ResponseEntity<PageResponseDTO<ModeracionItemResponseDTO>> consultar(
             @Valid @ParameterObject @ModelAttribute ModeracionConsultaRequestDTO request);
 
     @Operation(summary = "Aprobar o rechazar publicación pendiente", description = "ROLE_ADMIN_STYLERADAR. "
             + "Identidad y fecha del servidor. Rechazar exige motivo de 1 a 1000 caracteres; aprobación lo permite omitir.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PatchMapping("/{itemId}/moderacion")
     ResponseEntity<ModeracionItemResponseDTO> decidir(@PathVariable Long itemId,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal,
@@ -45,6 +48,7 @@ public interface ModeracionCatalogoApi {
     @Operation(summary = "Solicitar revisión manual", description = "ROLE_ADMIN_STYLERADAR. "
             + "Establece PENDIENTE (ejemplo: estadoModeracion=PENDIENTE). Sin body. "
             + "Permite nueva revisión tras decisión; PENDIENTE repetido devuelve 422. Conserva la última decisión.")
+    @PreAuthorize("hasRole('ADMIN_STYLERADAR')")
     @PostMapping("/{itemId}/moderacion/solicitar-revision")
     ResponseEntity<ModeracionItemResponseDTO> solicitarRevision(@PathVariable Long itemId,
             @Parameter(hidden = true) @AuthenticationPrincipal UsuarioPrincipal principal);

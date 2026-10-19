@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import edu.dosw.proyecto.style_radar.model.dto.request.ActualizarTallasHabitualesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.request.TallaHabitualPorTipoRequestDTO;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -143,14 +146,22 @@ class UsuarioServiceImplTest {
     @Test
     void actualizarTallasHabitualesShouldUpdateAndReturnUser() {
         UsuarioEntity entity = UsuarioEntity.builder().id(1L).build();
-        UsuarioEntity savedEntity = UsuarioEntity.builder().id(1L).tallasHabituales(Set.of(Talla.M, Talla.L)).build();
+        UsuarioEntity savedEntity = UsuarioEntity.builder().id(1L).build();
         Usuario savedDomain = Usuario.builder().id(1L).tallasHabituales(Set.of(Talla.M, Talla.L)).build();
+
+        ActualizarTallasHabitualesRequestDTO request = ActualizarTallasHabitualesRequestDTO.builder()
+                .tallasPorTipo(List.of(
+                        TallaHabitualPorTipoRequestDTO.builder()
+                                .tipoPrenda(TipoPrenda.SUPERIOR)
+                                .tallas(Set.of(Talla.M, Talla.L))
+                                .build()))
+                .build();
 
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(entity));
         when(usuarioRepository.save(entity)).thenReturn(savedEntity);
         when(usuarioEntityMapper.toDomain(savedEntity)).thenReturn(savedDomain);
 
-        Usuario result = usuarioService.actualizarTallasHabituales(1L, Set.of(Talla.M, Talla.L));
+        Usuario result = usuarioService.actualizarTallasHabituales(1L, request);
 
         assertThat(result.getTallasHabituales()).containsExactlyInAnyOrder(Talla.M, Talla.L);
         verify(usuarioRepository).save(entity);

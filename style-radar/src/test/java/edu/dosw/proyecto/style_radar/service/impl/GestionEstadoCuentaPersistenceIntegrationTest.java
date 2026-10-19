@@ -47,7 +47,7 @@ class GestionEstadoCuentaPersistenceIntegrationTest {
         var u = UsuarioEntity.builder().nombre("RF66").email(UUID.randomUUID() + "@example.co")
                 .fechaRegistro(Instant.parse("2026-10-01T12:00:00Z")).roles(new HashSet<>(Set.of(rol)))
                 .estadoCuenta(estado).telefono("123").preferenciasEstilo(new HashSet<>(Set.of(Estilo.FORMAL)))
-                .tallasHabituales(new HashSet<>(Set.of(Talla.M))).build();
+                .tallasHabitualesPorTipo(new HashSet<>()).build();
         em.persist(u); propias.add(u.getId()); if (credencial) em.persist(new CredencialEntity(u, HASH)); return u;
     }
     @BeforeEach void prepararDatosComprometidos() {
@@ -90,7 +90,7 @@ class GestionEstadoCuentaPersistenceIntegrationTest {
             assertThat(u.getTelefono()).isEqualTo("123"); assertThat(u.getNombre()).isEqualTo("RF66");
             assertThat(u.getFechaRegistro()).isEqualTo(Instant.parse("2026-10-01T12:00:00Z"));
             assertThat(u.getRoles()).containsExactly(Rol.COMPRADOR); assertThat(u.getPreferenciasEstilo()).containsExactly(Estilo.FORMAL);
-            assertThat(u.getTallasHabituales()).containsExactly(Talla.M);
+            assertThat(u.getTallasHabitualesPorTipo()).isEmpty();
             assertThat(credenciales.findById(objetivoId).orElseThrow().getPasswordHash()).isEqualTo(HASH); return null;
         });
     }
@@ -151,7 +151,7 @@ class GestionEstadoCuentaPersistenceIntegrationTest {
             var u = em.find(UsuarioEntity.class, objetivoId);
             assertThat(Hibernate.isInitialized(u.getRoles())).isFalse();
             assertThat(Hibernate.isInitialized(u.getPreferenciasEstilo())).isFalse();
-            assertThat(Hibernate.isInitialized(u.getTallasHabituales())).isFalse();
+            assertThat(Hibernate.isInitialized(u.getTallasHabitualesPorTipo())).isFalse();
             assertThat(Hibernate.isInitialized(u.getBusquedasGuardadas())).isFalse(); em.clear();
             u = usuarios.findAdministracionById(objetivoId).orElseThrow();
             assertThat(Hibernate.isInitialized(u.getRoles())).isTrue();

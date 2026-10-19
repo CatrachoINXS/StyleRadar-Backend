@@ -22,6 +22,8 @@ public class BusquedaGuardada {
     private Double precioMax;
     private String marca;
     private Estilo estilo;
+    private Double latitud;
+    private Double longitud;
     private Instant fechaCreacion;
     private Long usuarioId;
 }

@@ -15,10 +15,13 @@ import edu.dosw.proyecto.style_radar.model.domain.BusquedaGuardada;
 import edu.dosw.proyecto.style_radar.model.domain.Estilo;
 import edu.dosw.proyecto.style_radar.model.domain.EstadoCuenta;
 import edu.dosw.proyecto.style_radar.model.domain.Rol;
-import edu.dosw.proyecto.style_radar.model.domain.Talla;
+import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.model.domain.Usuario;
+import edu.dosw.proyecto.style_radar.model.dto.request.ActualizarTallasHabitualesRequestDTO;
+import edu.dosw.proyecto.style_radar.model.dto.request.TallaHabitualPorTipoRequestDTO;
 import edu.dosw.proyecto.style_radar.model.entity.BusquedaGuardadaEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
+import edu.dosw.proyecto.style_radar.model.entity.UsuarioTallaHabitualEntity;
 import edu.dosw.proyecto.style_radar.repository.BusquedaGuardadaRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
 import edu.dosw.proyecto.style_radar.service.IUsuarioService;
@@ -57,8 +60,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
         if (entity.getPreferenciasEstilo() == null) {
             entity.setPreferenciasEstilo(new HashSet<>());
         }
-        if (entity.getTallasHabituales() == null) {
-            entity.setTallasHabituales(new HashSet<>());
+        if (entity.getTallasHabitualesPorTipo() == null) {
+            entity.setTallasHabitualesPorTipo(new HashSet<>());
         }
 
         UsuarioEntity guardado = usuarioRepository.save(entity);
@@ -91,12 +94,23 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
-    public Usuario actualizarTallasHabituales(Long id, Set<Talla> tallas) {
-        log.info("Actualizando tallas habituales para el usuario con ID: {}", id);
+    public Usuario actualizarTallasHabituales(Long id, ActualizarTallasHabitualesRequestDTO request) {
+        log.info("Actualizando tallas habituales por tipo de prenda para el usuario con ID: {}", id);
         UsuarioEntity entity = obtenerEntityPorId(id);
-        entity.setTallasHabituales(tallas != null ? new HashSet<>(tallas) : new HashSet<>());
+        entity.getTallasHabitualesPorTipo().clear();
+        if (request != null && request.getTallasPorTipo() != null) {
+            for (TallaHabitualPorTipoRequestDTO entrada : request.getTallasPorTipo()) {
+                for (var talla : entrada.getTallas()) {
+                    UsuarioTallaHabitualEntity tallaHabitual = new UsuarioTallaHabitualEntity();
+                    tallaHabitual.setUsuario(entity);
+                    tallaHabitual.setTipoPrenda(entrada.getTipoPrenda());
+                    tallaHabitual.setTalla(talla);
+                    entity.getTallasHabitualesPorTipo().add(tallaHabitual);
+                }
+            }
+        }
         UsuarioEntity actualizado = usuarioRepository.save(entity);
-        log.info("Tallas habituales actualizadas para el usuario ID: {}", id);
+        log.info("Tallas habituales por tipo actualizadas para el usuario ID: {}", id);
         return usuarioEntityMapper.toDomain(actualizado);
     }
 

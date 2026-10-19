@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,7 +41,12 @@ class PersonalizacionServiceImplTest {
     void preparar() {
         service = new PersonalizacionServiceImpl(usuarios, busquedas, items, mapper,
                 new EstadoItemCalculator(Clock.fixed(Instant.parse("2026-10-09T12:00:00Z"), ZoneOffset.UTC)));
-        usuario = UsuarioEntity.builder().id(7L).preferenciasEstilo(Set.of(Estilo.FORMAL)).tallasHabituales(Set.of(Talla.M)).build();
+        var tallaM = UsuarioTallaHabitualEntity.builder()
+                .tipoPrenda(TipoPrenda.SUPERIOR)
+                .talla(Talla.M)
+                .build();
+        usuario = UsuarioEntity.builder().id(7L).preferenciasEstilo(Set.of(Estilo.FORMAL))
+                .tallasHabitualesPorTipo(new HashSet<>(Set.of(tallaM))).build();
     }
 
     @Test

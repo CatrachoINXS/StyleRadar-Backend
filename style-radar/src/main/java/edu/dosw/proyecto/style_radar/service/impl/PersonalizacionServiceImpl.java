@@ -1,6 +1,8 @@
 package edu.dosw.proyecto.style_radar.service.impl;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -10,10 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Isolation;
 import edu.dosw.proyecto.style_radar.exception.RecursoNoEncontradoException;
 import edu.dosw.proyecto.style_radar.mapper.ItemCatalogoEntityMapper;
+import edu.dosw.proyecto.style_radar.model.domain.BusquedaCatalogoCriteria;
+import edu.dosw.proyecto.style_radar.model.domain.Estilo;
+import edu.dosw.proyecto.style_radar.model.domain.Talla;
+import edu.dosw.proyecto.style_radar.model.domain.TipoPrenda;
 import edu.dosw.proyecto.style_radar.model.domain.ItemCatalogo;
 import edu.dosw.proyecto.style_radar.model.domain.ResultadoRecomendaciones;
 import edu.dosw.proyecto.style_radar.model.entity.ItemCatalogoEntity;
 import edu.dosw.proyecto.style_radar.model.entity.UsuarioEntity;
+import edu.dosw.proyecto.style_radar.model.entity.UsuarioTallaHabitualEntity;
 import edu.dosw.proyecto.style_radar.repository.BusquedaGuardadaRepository;
 import edu.dosw.proyecto.style_radar.repository.ItemCatalogoRepository;
 import edu.dosw.proyecto.style_radar.repository.UsuarioRepository;
@@ -34,12 +41,22 @@ public class PersonalizacionServiceImpl implements IPersonalizacionService {
     private final ItemCatalogoEntityMapper mapper;
     private final EstadoItemCalculator estados;
 
+    private Set<Talla> tallasDelUsuario(UsuarioEntity usuario) {
+        Set<Talla> tallas = new HashSet<>();
+        if (usuario.getTallasHabitualesPorTipo() != null) {
+            for (UsuarioTallaHabitualEntity entrada : usuario.getTallasHabitualesPorTipo()) {
+                tallas.add(entrada.getTalla());
+            }
+        }
+        return tallas;
+    }
+
     @Override
     public Page<ItemCatalogo> obtenerFeed(Long usuarioId, int page, int size) {
         var usuario = usuario(usuarioId);
         var criterios = busquedas.findByUsuario_IdOrderByFechaCreacionDesc(usuarioId).stream()
                 .map(CriteriosBusquedaGuardada::criterios).filter(CriteriosBusquedaGuardada::significativa).toList();
-        var ids = items.findIdsFeed(usuario.getPreferenciasEstilo(), usuario.getTallasHabituales(), criterios,
+        var ids = items.findIdsFeed(usuario.getPreferenciasEstilo(), tallasDelUsuario(usuario), criterios,
                 PageRequest.of(page, size));
         var resultado = cargar(ids);
         registrar(usuarioId, "feed", resultado);
@@ -49,8 +66,9 @@ public class PersonalizacionServiceImpl implements IPersonalizacionService {
     @Override
     public ResultadoRecomendaciones obtenerRecomendaciones(Long usuarioId, int page, int size) {
         var usuario = usuario(usuarioId);
-        boolean general = usuario.getPreferenciasEstilo().isEmpty() && usuario.getTallasHabituales().isEmpty();
-        var ids = items.findIdsRecomendaciones(usuario.getPreferenciasEstilo(), usuario.getTallasHabituales(),
+        Set<Talla> tallas = tallasDelUsuario(usuario);
+        boolean general = usuario.getPreferenciasEstilo().isEmpty() && tallas.isEmpty();
+        var ids = items.findIdsRecomendaciones(usuario.getPreferenciasEstilo(), tallas,
                 PageRequest.of(page, size));
         var resultado = cargar(ids);
         registrar(usuarioId, "recomendaciones", resultado);

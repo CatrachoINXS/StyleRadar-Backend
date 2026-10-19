@@ -65,7 +65,7 @@ public class UsuarioController implements UsuarioApi {
     public ResponseEntity<UsuarioResponseDTO> actualizarTallasHabituales(
             @AuthenticationPrincipal UsuarioPrincipal principal,
             @Valid @RequestBody ActualizarTallasHabitualesRequestDTO request) {
-        Usuario actualizado = usuarioService.actualizarTallasHabituales(principal.getUsuarioId(), request.getTallas());
+        Usuario actualizado = usuarioService.actualizarTallasHabituales(principal.getUsuarioId(), request);
         return ResponseEntity.ok(usuarioMapper.toResponse(actualizado));
     }
 
