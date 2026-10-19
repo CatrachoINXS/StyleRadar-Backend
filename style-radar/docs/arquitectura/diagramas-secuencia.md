@@ -53,13 +53,13 @@ Todos los diagramas usan el mismo código de colores:
 
 ## Publicar una prenda en el catálogo
 
-**RF-50 · Publicar prenda en el catálogo** (incluye RF-53 y RF-54) · `POST /api/v1/almacenes/{nit}/catalogo` · Usuario autenticado
+**RF-50 · Publicar prenda en el catálogo** (incluye RF-53 y RF-54) · `POST /api/v1/almacenes/{nit}/catalogo` · `ADMIN_ALMACEN`
 
 ![Secuencia de publicación de prenda](../uml/secuencia/SecuenciaPublicarPrenda.png)
 
 **Camino feliz:**
 
-1. `JwtAuthFilter` valida la firma y la vigencia del token y carga el usuario activo.
+1. `JwtAuthFilter` valida la firma y la vigencia del token y carga el usuario activo, y `SecurityConfig` exige el rol `ADMIN_ALMACEN`.
 2. `CatalogoController` valida el `CatalogoItemRequestDTO` con `@Valid`.
 3. `CatalogoItemMapper` convierte el DTO en el objeto de dominio `Prenda`.
 4. `CatalogoServiceImpl` busca el almacén por NIT.
@@ -71,6 +71,7 @@ Todos los diagramas usan el mismo código de colores:
 **Rutas de error:**
 
 - **Sin autenticación:** sin token, con token vencido o con una cuenta inactiva, `SecurityErrorHandler` responde `401`.
+- **Rol incorrecto:** si el usuario no tiene el rol `ADMIN_ALMACEN`, la respuesta es `403 Forbidden` con "Acceso denegado".
 - **Datos inválidos:** si falta un campo obligatorio, un texto supera su longitud máxima o el precio no es mayor que cero, la respuesta es `400` con el detalle de cada campo.
 - **Almacén inexistente:** si no hay un almacén con ese NIT, el servicio lanza `RecursoNoEncontradoException` y la API responde `404`.
 
