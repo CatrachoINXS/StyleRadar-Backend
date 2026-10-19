@@ -41,7 +41,7 @@ mvn test
 mvn verify
 ```
 
-`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1471 pruebas sin fallos y 94,8 % de cobertura de líneas**.
+`mvn verify` ejecuta las pruebas y valida con JaCoCo que la cobertura de líneas sea de al menos 85 %. Resultado actual: **1490 pruebas sin fallos y 94,8 % de cobertura de líneas**.
 
 ![](style-radar/docs/evidencias/pruebas-mvn-verify.png)
 
