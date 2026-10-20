@@ -7,6 +7,8 @@ StyleRadar es una plataforma web que conecta a compradores con almacenes de moda
 - QA: https://styleradar-backend-qa.azurewebsites.net/swagger-ui/index.html
 - PROD: https://styleradar-backend-prod.azurewebsites.net/swagger-ui/index.html
 
+**Video de respaldo del demo:** https://drive.google.com/file/d/1W6dklNVi8Bp8LQUx1dkGrkMlly0gRjd7/view?usp=sharing
+
 ## Índice
 
 - [Ejecución de pruebas](#ejecución-de-pruebas)
