@@ -356,7 +356,7 @@ Los diagramas de secuencia muestran, para cada funcionalidad principal, el recor
 
 ## Documento de arquitectura
 
-El documento de arquitectura del backend está en [`style-radar/docs/arquitectura`](style-radar/docs/arquitectura):
+El documento de arquitectura completo está en PDF: [`StyleRadar-Documento-Backend.pdf`](style-radar/docs/arquitectura/StyleRadar-Documento-Backend.pdf). Sus secciones también están en [`style-radar/docs/arquitectura`](style-radar/docs/arquitectura):
 
 | Sección | Contenido |
 |---|---|
